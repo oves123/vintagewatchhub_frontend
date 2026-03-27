@@ -1,0 +1,1085 @@
+"use client";
+
+import { useEffect, useState, Suspense } from "react";
+import Navbar from "../../components/Navbar";
+import { getUserProfile, updateUserProfile, getUserActivity, API_BASE_URL, API_URL, getSellerReviews, createReview, markOrderShipped, markOrderDelivered, confirmOrderReceived, confirmOrderSale, cancelDeal, disputeDeal, getUserDeals } from "../../services/api";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+
+function ProfileContent() {
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [activity, setActivity] = useState({ buyOrders: [], sellOrders: [], listings: [], chattedProducts: [] });
+  const [offers, setOffers] = useState([]);
+  const [deals, setDeals] = useState([]);
+  const [activeTab, setActiveTab] = useState("personal");
+  const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [buyingSubTab, setBuyingSubTab] = useState("active"); // active, shipped, delivered, completed
+  const [sellingSubTab, setSellingSubTab] = useState("offers"); // offers, ongoing, sold
+  const [receivedReviews, setReceivedReviews] = useState({ reviews: [], stats: { average_rating: 0, review_count: 0 } });
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ order_id: null, seller_id: null, rating: 5, comment: "", product_title: "", product_id: null });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [trackingForm, setTrackingForm] = useState({ order_id: null, tracking_number: "", courier_name: "" });
+  const [isSubmittingTracking, setIsSubmittingTracking] = useState(false);
+  const [toast, setToast] = useState(null); 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      router.push("/login?redirect=/profile");
+      return;
+    }
+    const userData = JSON.parse(storedUser);
+    setUser(userData);
+
+    const initialTab = searchParams.get("tab");
+    if (initialTab) setActiveTab(initialTab);
+
+    const loadData = async () => {
+      try {
+        const [profData, actData, offersData, dealsData, reviewsData] = await Promise.all([
+          getUserProfile(userData.id),
+          getUserActivity(userData.id),
+          fetch(`${API_URL}/offers/user/${userData.id}`, {
+             headers: { 
+                "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json"
+             }
+          }).then(res => res.ok ? res.json() : []).catch(() => []),
+          fetch(`${API_URL}/orders/user-deals/${userData.id}`, {
+            headers: { 
+               "Authorization": `Bearer ${localStorage.getItem("token")}`
+            }
+          }).then(res => res.json()).catch(() => []),
+          getSellerReviews(userData.id)
+        ]);
+
+        setProfile(profData);
+        setActivity(actData);
+        setOffers(offersData);
+        setDeals(dealsData);
+        setReceivedReviews(reviewsData);
+        setProfileForm({
+          name: profData.name || "",
+          phone: profData.phone || "",
+          city: profData.city || "",
+          state: profData.state || "",
+          pincode: profData.pincode || "",
+          bio: profData.bio || ""
+        });
+      } catch (err) {
+        console.error("Failed to fetch profile data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [router, searchParams]);
+
+  const loadActivity = () => {
+    if (user) {
+      fetch(`${API_URL}/offers/user/${user.id}`, {
+         headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      }).then(r => r.ok ? r.json() : []).then(setOffers).catch(() => []);
+      
+      fetch(`${API_URL}/orders/user-deals/${user.id}`, {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      }).then(r => r.json()).then(setDeals).catch(() => []);
+
+      getUserActivity(user.id).then(setActivity).catch(() => []);
+    }
+  };
+
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    phone: "",
+    city: "",
+    state: "",
+    pincode: "",
+    bio: ""
+  });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const handleProfileUpdate = async (updatedData = null) => {
+    setIsUpdating(true);
+    try {
+      const dataToSend = updatedData || profileForm;
+      const res = await updateUserProfile(user.id, dataToSend);
+      setProfile(res.user);
+      setProfileForm({
+        ...profileForm,
+        name: res.user.name || "",
+        phone: res.user.phone || "",
+        city: res.user.city || "",
+        state: res.user.state || "",
+        pincode: res.user.pincode || "",
+        bio: res.user.bio || ""
+      });
+      showToast(updatedData ? "Configuration synchronized." : "Identity updated.");
+      return true;
+    } catch (err) {
+      showToast("Error updating profile. Please try again.", "error");
+      return false;
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleSaveTracking = async (orderId) => {
+    if (!trackingForm.tracking_number.trim()) {
+      showToast("Please enter a tracking number.", "error");
+      return;
+    }
+
+    setIsSubmittingTracking(true);
+    try {
+      const res = await markOrderShipped(orderId, user.id, {
+        tracking_number: trackingForm.tracking_number,
+        courier_name: trackingForm.courier_name
+      });
+      if (res.message) {
+        showToast("Order marked as shipped!");
+        setTrackingForm({ order_id: null, tracking_number: "", courier_name: "" });
+        loadActivity();
+      } else {
+        showToast(res.message || "Failed to mark as shipped.", "error");
+      }
+    } catch (err) {
+      showToast("Error updating shipping status.", "error");
+    } finally {
+      setIsSubmittingTracking(false);
+    }
+  };
+
+  const handleOfferResponse = async (offerId, status, counter_amount = null) => {
+    try {
+      const res = await fetch(`${API_URL}/offers/${offerId}/respond`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({ status, counter_amount })
+      });
+      const data = await res.json();
+      if (res.ok) {
+          showToast(`Offer ${status} successfully.`);
+          loadActivity();
+      } else {
+          showToast(data.message || "Action failed", "error");
+      }
+    } catch (err) {
+        showToast("Action failure", "error");
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm("Are you sure you want to delete this listing? This action cannot be undone.")) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/products/delete/${productId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Listing deleted successfully.");
+        setActivity(prev => ({
+          ...prev,
+          listings: prev.listings.filter(l => l.id !== productId)
+        }));
+      } else {
+        showToast(data.message || "Failed to delete listing.", "error");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      showToast("An error occurred while deleting the listing.", "error");
+    }
+  };
+
+  const handleMarkAsDelivered = async (orderId) => {
+    if (!window.confirm("Confirm that the item has been delivered to the buyer?")) return;
+    try {
+      const res = await markOrderDelivered(orderId, user.id);
+      if (res.message) {
+        showToast("Marked as delivered.");
+        loadActivity();
+      }
+    } catch (err) {
+      showToast("Error updating delivery status.", "error");
+    }
+  };
+
+  const handleConfirmPurchase = async (orderId) => {
+    if (!window.confirm("Confirm receipt of this item? This will move the deal to DELIVERED state.")) return;
+    try {
+      const res = await confirmOrderReceived(orderId, user.id);
+      if (res.message) {
+        showToast("Receipt confirmed. Please verify the item then finalize completion.");
+        loadActivity();
+        setBuyingSubTab('delivered');
+      }
+    } catch (err) {
+      showToast("Error confirming receipt.", "error");
+    }
+  };
+
+  const handleFinalizeCompletion = async (orderId) => {
+    if (!window.confirm("Is the watch exactly as described? Confirming completion finalized the deal and cannot be reversed.")) return;
+    try {
+      const res = await confirmOrderSale(orderId, user.id);
+      if (res.message) {
+        showToast("Transaction completed! Enjoy your new piece.");
+        loadActivity();
+        setBuyingSubTab('completed');
+      }
+    } catch (err) {
+      showToast("Error finalizing completion.", "error");
+    }
+  };
+
+  const handleCancelDeal = async (orderId) => {
+    const reason = window.prompt("Please provide a reason for cancellation:");
+    if (reason === null) return;
+    if (!reason.trim()) return showToast("Reason is required", "error");
+
+    try {
+      const res = await cancelDeal(orderId, user.id, reason);
+      if (res.message) {
+        showToast("Deal cancelled.");
+        loadActivity();
+      }
+    } catch (err) {
+      showToast("Error cancelling deal.", "error");
+    }
+  };
+
+  const handleDisputeDeal = async (orderId) => {
+    const reason = window.prompt("Please explain the issue for the dispute:");
+    if (reason === null) return;
+    if (!reason.trim()) return showToast("Reason is required", "error");
+
+    try {
+      const res = await disputeDeal(orderId, user.id, reason);
+      if (res.message) {
+        showToast("Dispute raised. Support will review.");
+        loadActivity();
+      }
+    } catch (err) {
+      showToast("Error raising dispute.", "error");
+    }
+  };
+
+  const handleMarkReturned = async (orderId) => {
+    const reason = window.prompt("Explain why the item is being returned (e.g. Courier failed, Buyer rejected):");
+    if (reason === null) return;
+    if (!reason.trim()) return showToast("Reason is required", "error");
+
+    try {
+      const { markOrderReturned } = await import("../../services/api");
+      const res = await markOrderReturned(orderId, user.id, reason);
+      if (res.message) {
+        showToast("Order marked as RETURNED. Listing is now active again.");
+        loadActivity();
+      }
+    } catch (err) {
+      showToast("Error marking as returned.", "error");
+    }
+  };
+
+  const getRemainingTime = (expiresAt) => {
+    if (!expiresAt) return null;
+    const now = new Date();
+    const expiry = new Date(expiresAt);
+    const diff = expiry - now;
+    if (diff <= 0) return "EXPIRED";
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
+
+  const openReviewModal = (order) => {
+    setReviewForm({
+      order_id: order.id,
+      seller_id: order.seller_id,
+      rating: 5,
+      comment: "",
+      product_title: order.title,
+      product_id: null
+    });
+    setIsReviewModalOpen(true);
+  };
+
+  const submitReview = async () => {
+    setIsSubmittingReview(true);
+    try {
+      const res = await createReview({
+        seller_id: reviewForm.seller_id,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment,
+        order_id: reviewForm.order_id || null
+      });
+      if (res.review) {
+        loadActivity();
+        setIsReviewModalOpen(false);
+        showToast("Review submitted successfully!");
+      } else {
+        showToast(res.message || "Failed to submit review", "error");
+      }
+    } catch (err) {
+      showToast("Transmission error: " + err.message, "error");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+
+  if (loading) return (
+    <div className="min-h-screen bg-white">
+      <Navbar />
+      <main className="max-w-[1200px] mx-auto px-6 py-12 md:py-20 animate-pulse">
+        <div className="w-48 h-10 bg-gray-100 rounded mb-4" />
+        <div className="w-64 h-3 bg-gray-50 rounded mb-16" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+          <aside className="lg:col-span-3 space-y-6">
+             {[1,2,3,4,5].map(i => <div key={i} className="w-32 h-4 bg-gray-100 rounded" />)}
+          </aside>
+          <div className="lg:col-span-9 space-y-12">
+             <div className="w-full h-64 bg-gray-50 rounded-xl" />
+             <div className="grid grid-cols-2 gap-8">
+                <div className="h-32 bg-gray-50 rounded-xl" />
+                <div className="h-32 bg-gray-50 rounded-xl" />
+             </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+
+  const navigation = [
+    { id: "personal", label: "My Profile" },
+    { id: "buying", label: "Buyer Hub" },
+    { id: "selling", label: "Seller Hub" },
+    { id: "feedback", label: "Feedback" },
+    { id: "security", label: "Security" }
+  ];
+
+  return (
+    <div className="bg-white min-h-screen pb-24 font-sans text-[#121212]">
+      <Navbar />
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] animate-in slide-in-from-top-4 duration-500">
+           <div className={`px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl backdrop-blur-md ${toast.type === 'error' ? 'bg-rose-500 text-white' : 'bg-black/90 text-white'}`}>
+              {toast.message}
+           </div>
+        </div>
+      )}
+
+
+      <main className="max-w-[1200px] mx-auto px-6 py-12 md:py-20">
+        
+        {/* Header - Minimalist */}
+        <div className="mb-16 flex flex-col md:flex-row md:items-center gap-8">
+           <div className="w-24 h-24 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+              {profile?.profile_image ? (
+                <img src={profile.profile_image} alt={profile.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-2xl font-black text-gray-200 uppercase">{profile?.name?.charAt(0) || 'U'}</span>
+              )}
+           </div>
+           <div>
+              <h1 className="text-4xl font-bold tracking-tight text-gray-900 uppercase">My Account</h1>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-3">
+                 Member ID: {profile?.id} / Status: {profile?.is_verified ? 'Verified Collector' : 'Standard'}
+              </p>
+           </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+          
+          {/* Navigation - Text Only */}
+          <aside className="lg:col-span-3">
+             <nav className="flex flex-col gap-6 sticky top-32">
+                {navigation.map(nav => (
+                   <button 
+                      key={nav.id}
+                      onClick={() => setActiveTab(nav.id)}
+                      className={`text-left text-[11px] font-bold uppercase tracking-[0.15em] transition-all pb-2 border-b w-fit ${activeTab === nav.id ? 'text-blue-600 border-blue-600' : 'text-gray-400 border-transparent hover:text-gray-950 hover:border-gray-200'}`}
+                   >
+                      {nav.label}
+                   </button>
+                ))}
+                
+                <div className="mt-20 pt-8 border-t border-gray-100">
+                   <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest mb-4">Account Metadata</p>
+                   <div className="space-y-3">
+                      <div className="flex justify-between text-[10px] font-bold">
+                         <span className="text-gray-400 uppercase">Rating</span>
+                         <span>{parseFloat(profile?.rating || 0).toFixed(1)} / 5.0</span>
+                      </div>
+                      <div className="flex justify-between text-[10px] font-bold">
+                         <span className="text-gray-400 uppercase">Joined</span>
+                         <span>{profile?.joined_date ? new Date(profile.joined_date).getFullYear() : "2024"}</span>
+                      </div>
+                   </div>
+                </div>
+             </nav>
+          </aside>
+
+          {/* Content Area */}
+          <div className="lg:col-span-9">
+             
+             {/* Personal Information Tab */}
+             {activeTab === "personal" && (
+                <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                   <div className="mb-12">
+                      <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Identity Details</h2>
+                      <p className="text-xs text-gray-400 mt-2 font-medium">Manage your personal collector identity and contact link.</p>
+                   </div>
+
+                   <form onSubmit={(e) => { e.preventDefault(); handleProfileUpdate(); }} className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 max-w-4xl">
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Legal Name</label>
+                          <input 
+                             type="text" value={profileForm.name}
+                             onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
+                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                          />
+                      </div>
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mobile Link</label>
+                          <input 
+                             type="text" value={profileForm.phone}
+                             onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
+                          />
+                      </div>
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">City</label>
+                          <input 
+                             type="text" value={profileForm.city}
+                             onChange={(e) => setProfileForm({...profileForm, city: e.target.value})}
+                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                          />
+                      </div>
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">State</label>
+                          <input 
+                             type="text" value={profileForm.state}
+                             onChange={(e) => setProfileForm({...profileForm, state: e.target.value})}
+                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                          />
+                      </div>
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pincode</label>
+                          <input 
+                             type="text" value={profileForm.pincode}
+                             onChange={(e) => setProfileForm({...profileForm, pincode: e.target.value})}
+                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                          />
+                      </div>
+                      <div className="md:col-span-2 space-y-4 pt-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Collector Biography</label>
+                          <textarea 
+                             rows="4" value={profileForm.bio}
+                             onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
+                             className="w-full border border-gray-100 bg-gray-50/50 p-6 rounded-lg outline-none text-[13px] font-medium leading-relaxed focus:border-blue-600 focus:bg-white transition-all"
+                             placeholder="Briefly describe your watch collection interest..."
+                          />
+                      </div>
+                      <div className="md:col-span-2 pt-8">
+                          <button 
+                             type="submit"
+                             disabled={isUpdating}
+                             className="bg-black text-white px-12 py-4 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-blue-600 transition-all disabled:bg-gray-200"
+                          >
+                             {isUpdating ? 'Synchronizing Node...' : 'Update Information'}
+                          </button>
+                      </div>
+                   </form>
+                </div>
+             )}
+
+              {/* Buyer Hub */}
+              {activeTab === "buying" && (
+                <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                   <div className="mb-12">
+                      <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Buyer Hub</h2>
+                      <p className="text-xs text-gray-400 mt-2 font-medium">Tracking your active watch acquisitions and secured state-machine deals.</p>
+                   </div>
+
+                   {/* Sub Tabs */}
+                   <div className="flex gap-8 border-b border-gray-100 mb-10 overflow-x-auto no-scrollbar">
+                      {['active', 'shipped', 'delivered', 'completed', 'negotiations'].map(sub => (
+                        <button 
+                           key={sub}
+                           onClick={() => setBuyingSubTab(sub)}
+                           className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${buyingSubTab === sub ? 'text-blue-600 border-blue-600' : 'text-gray-300 border-transparent hover:text-gray-900'}`}
+                        >
+                           {sub} {
+                             sub === 'negotiations' ? (
+                                (Array.isArray(offers) && offers.filter(o => o.buyer_id === user.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length > 0) && 
+                                `(${offers.filter(o => o.buyer_id === user.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length})`
+                             ) :
+                             (Array.isArray(deals) && deals.filter(d => d.buyer_id === user.id && (
+                               sub === 'active' ? d.status === 'ACCEPTED' : 
+                               sub === 'shipped' ? d.status === 'SHIPPED' : 
+                               sub === 'delivered' ? d.status === 'DELIVERED' : 
+                               d.status === 'CONFIRMED'
+                             )).length > 0 && `(${deals.filter(d => d.buyer_id === user.id && (
+                               sub === 'active' ? d.status === 'ACCEPTED' : 
+                               sub === 'shipped' ? d.status === 'SHIPPED' : 
+                               sub === 'delivered' ? d.status === 'DELIVERED' : 
+                               d.status === 'CONFIRMED'
+                             )).length})`)
+                           }
+                        </button>
+                      ))}
+                   </div>
+
+                   <div className="space-y-8">
+                      {buyingSubTab === 'negotiations' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           {Array.isArray(offers) && offers.filter(o => o.buyer_id === user.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length > 0 ? (
+                             offers.filter(o => o.buyer_id === user.id && (!o.deal_status || o.deal_status === 'EXPIRED')).map(offer => (
+                               <div key={offer.id} className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-md transition-all">
+                                  <div className="flex items-center gap-4 mb-4">
+                                     <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden">
+                                        {offer.images?.[0] ? <img src={`${API_BASE_URL}/uploads/${offer.images[0]}`} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                                     </div>
+                                     <div className="flex-1 min-w-0">
+                                        <h4 className="text-[13px] font-bold uppercase tracking-tight truncate">{offer.title}</h4>
+                                        <div className="flex items-center gap-2">
+                                           <p className="text-[9px] font-bold text-gray-400 uppercase truncate">To: {offer.seller_name}</p>
+                                           {offer.status === 'pending' && offer.expires_at && (
+                                             <span className="text-[7px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded uppercase">
+                                               Expires in: {getRemainingTime(offer.expires_at)}
+                                             </span>
+                                           )}
+                                        </div>
+                                     </div>
+                                  </div>
+                                  <div className="flex justify-between items-end">
+                                     <div>
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Your bid</p>
+                                        <p className="text-md font-black">₹{parseFloat(offer.amount).toLocaleString()}</p>
+                                     </div>
+                                     <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+                                       offer.status === 'pending' ? 'bg-amber-50 text-amber-600' : 
+                                       offer.status === 'countered' ? 'bg-blue-50 text-blue-600' : 
+                                       offer.status === 'declined' ? 'bg-rose-50 text-rose-600' : 'bg-gray-100 text-gray-400'
+                                     }`}>
+                                        {offer.status}
+                                     </span>
+                                  </div>
+                               </div>
+                             ))
+                           ) : (
+                              <div className="md:col-span-2 py-10 text-center bg-gray-50/50 rounded-2xl border border-gray-100 border-dashed">
+                                 <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">No pending negotiations</p>
+                              </div>
+                           )}
+                        </div>
+                      ) : (
+                        deals.filter(d => d.buyer_id === user.id && (
+                          buyingSubTab === 'active' ? d.status === 'ACCEPTED' : 
+                          buyingSubTab === 'shipped' ? d.status === 'SHIPPED' : 
+                          buyingSubTab === 'delivered' ? d.status === 'DELIVERED' : 
+                          d.status === 'CONFIRMED'
+                        )).length > 0 ? (
+                          deals.filter(d => d.buyer_id === user.id && (
+                            buyingSubTab === 'active' ? d.status === 'ACCEPTED' : 
+                            buyingSubTab === 'shipped' ? d.status === 'SHIPPED' : 
+                            buyingSubTab === 'delivered' ? d.status === 'DELIVERED' : 
+                            d.status === 'CONFIRMED'
+                          )).map(deal => (
+                            <div key={deal.id} className="border border-gray-100 rounded-2xl p-6 bg-white hover:shadow-xl hover:shadow-gray-100 transition-all flex flex-col md:flex-row gap-8 items-center">
+                               <div className="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
+                                  {deal.images?.[0] ? <img src={`${API_BASE_URL}/uploads/${deal.images[0]}`} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                               </div>
+                               <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-1">
+                                     <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                                       deal.status === 'CONFIRMED' ? 'bg-black text-white' : 
+                                       deal.status === 'SHIPPED' ? 'bg-amber-500 text-white' : 
+                                       deal.status === 'DELIVERED' ? 'bg-emerald-500 text-white' : 
+                                       'bg-blue-500 text-white'
+                                     }`}>
+                                        {deal.status === 'ACCEPTED' ? 'Awaiting Shipment' : deal.status}
+                                     </span>
+                                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Deal #D-{deal.id}</span>
+                                  </div>
+                                  <h4 className="text-sm font-bold uppercase tracking-tight mb-2">{deal.title}</h4>
+                                  <div className="flex items-center gap-4">
+                                     <span className="text-lg font-black text-gray-950">₹{parseFloat(deal.amount).toLocaleString()}</span>
+                                     <p className="text-[10px] font-medium text-gray-400 uppercase">Seller: {deal.seller_name}</p>
+                                  </div>
+                               </div>
+
+                               <div className="flex flex-col gap-3 min-w-[180px]">
+                                  {deal.status === 'SHIPPED' && (
+                                    <button 
+                                       onClick={() => handleConfirmPurchase(deal.id)}
+                                       className="w-full py-3 bg-blue-600 text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition"
+                                    >
+                                       Confirm Receipt
+                                    </button>
+                                  )}
+
+                                  {deal.status === 'DELIVERED' && (
+                                     <>
+                                      <button 
+                                          onClick={() => handleFinalizeCompletion(deal.id)}
+                                          className="w-full py-3 bg-emerald-600 text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition"
+                                       >
+                                          Confirm Completion
+                                       </button>
+                                       <button 
+                                          onClick={() => handleDisputeDeal(deal.id)}
+                                          className="w-full py-2 border border-rose-100 text-rose-500 rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-rose-50 transition"
+                                       >
+                                          Item Not As Described
+                                       </button>
+                                     </>
+                                   )}
+                                  
+                                  {deal.status === 'ACCEPTED' && !deal.shipped_at && (
+                                     <button 
+                                        onClick={() => handleCancelDeal(deal.id)}
+                                        className="w-full py-2 border border-gray-100 text-gray-400 rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-gray-50 transition"
+                                     >
+                                        Cancel Order
+                                     </button>
+                                  )}
+
+                                  {['ACCEPTED', 'SHIPPED', 'DELIVERED'].includes(deal.status) && (
+                                      <button 
+                                         onClick={() => handleDisputeDeal(deal.id)}
+                                         className="w-full py-2 text-rose-500 text-[8px] font-bold uppercase tracking-widest hover:underline"
+                                      >
+                                         Raise Dispute
+                                      </button>
+                                   )}
+
+                                   {deal.status === 'DISPUTED' && (
+                                      <div className="w-full py-3 bg-gray-50 text-gray-400 rounded-full text-[9px] font-bold uppercase tracking-widest text-center border border-gray-100 italic">
+                                         Under Admin Review
+                                      </div>
+                                   )}
+
+                                  {deal.status === 'CONFIRMED' && !deal.review_id && (
+                                     <button 
+                                        onClick={() => openReviewModal({...deal, seller_id: deal.seller_id})}
+                                        className="w-full py-3 bg-black text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 transition"
+                                     >
+                                        Leave Feedback
+                                     </button>
+                                  )}
+
+                                  {deal.tracking_number && (
+                                     <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
+                                        <p className="text-[10px] font-bold text-gray-900 truncate">{deal.tracking_number}</p>
+                                     </div>
+                                  )}
+                               </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="py-20 text-center border border-dashed border-gray-100 rounded-3xl">
+                             <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No deals in {buyingSubTab} state</p>
+                          </div>
+                        )
+                      )}
+                   </div>
+                </div>
+              )}
+
+               {/* Seller Hub */}
+               {activeTab === "selling" && (
+                  <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                     <div className="mb-12 flex justify-between items-end">
+                        <div>
+                          <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Seller Hub</h2>
+                          <p className="text-xs text-gray-400 mt-2 font-medium">Professional command center for your high-value inventory and active deal pipelines.</p>
+                        </div>
+                        <button onClick={() => router.push('/sell')} className="bg-black text-white px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-gray-100">Create Listing</button>
+                     </div>
+
+                     {/* Sub Tabs */}
+                     <div className="flex gap-8 border-b border-gray-100 mb-10 overflow-x-auto no-scrollbar">
+                        {['offers', 'ongoing', 'sold', 'inventory'].map(sub => (
+                          <button 
+                             key={sub}
+                             onClick={() => setSellingSubTab(sub)}
+                             className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${sellingSubTab === sub ? 'text-blue-600 border-blue-600' : 'text-gray-300 border-transparent hover:text-gray-900'}`}
+                          >
+                             {sub} {
+                               sub === 'offers' ? (offers.filter(o => o.seller_id === user.id && ['pending', 'countered'].includes(o.status)).length > 0 && `(${offers.filter(o => o.seller_id === user.id && ['pending', 'countered'].includes(o.status)).length})`) : 
+                               sub === 'ongoing' ? (deals.filter(d => d.seller_id === user.id && ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status)).length > 0 && `(${deals.filter(d => d.seller_id === user.id && ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status)).length})`) : 
+                               sub === 'sold' ? (deals.filter(d => d.seller_id === user.id && d.status === 'CONFIRMED').length > 0 && `(${deals.filter(d => d.seller_id === user.id && d.status === 'CONFIRMED').length})`) :
+                               (activity.listings?.length > 0 && `(${activity.listings.length})`)
+                             }
+                          </button>
+                        ))}
+                     </div>
+
+                     <div className="space-y-12">
+                        {/* Deals Dashboard */}
+                        {(sellingSubTab === 'ongoing' || sellingSubTab === 'sold') && (
+                           <div className="space-y-4">
+                              {deals.filter(d => d.seller_id === user.id && (sellingSubTab === 'ongoing' ? ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status) : d.status === 'CONFIRMED')).length > 0 ? (
+                                deals.filter(d => d.seller_id === user.id && (sellingSubTab === 'ongoing' ? ['ACCEPTED', 'SHIPPED', 'DELIVERED'].includes(d.status) : d.status === 'CONFIRMED')).map(deal => (
+                                  <div key={deal.id} className="border border-gray-100 rounded-2xl p-6 bg-white hover:shadow-xl transition-all flex flex-col md:flex-row gap-8 items-center">
+                                     <div className="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
+                                        {deal.images?.[0] ? <img src={`${API_BASE_URL}/uploads/${deal.images[0]}`} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                                     </div>
+                                     <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-1">
+                                           <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                                             deal.status === 'SHIPPED' ? 'bg-amber-500 text-white' : 
+                                             deal.status === 'DELIVERED' ? 'bg-emerald-500 text-white' : 
+                                             deal.status === 'CONFIRMED' ? 'bg-black text-white' : 
+                                             deal.status === 'DISPUTED' ? 'bg-rose-500 text-white' :
+                                             deal.status === 'RETURNED' ? 'bg-gray-500 text-white' :
+                                             'bg-blue-50 text-blue-600'
+                                           }`}>
+                                              {deal.status === 'ACCEPTED' ? 'Action Required: Ship' : deal.status}
+                                           </span>
+                                        </div>
+                                        <h4 className="text-sm font-bold uppercase tracking-tight mb-2">{deal.title}</h4>
+                                        <p className="text-[11px] font-bold text-gray-950">Sold for: ₹{parseFloat(deal.amount).toLocaleString()}</p>
+                                     </div>
+
+                                     <div className="flex flex-col gap-3 min-w-[200px]">
+                                        {deal.status === 'ACCEPTED' && (
+                                          <div className="space-y-2">
+                                            <input 
+                                              type="text" 
+                                              placeholder="Courier (e.g. DHL)"
+                                              value={trackingForm.order_id === deal.id ? trackingForm.courier_name : ""}
+                                              onChange={(e) => setTrackingForm({...trackingForm, order_id: deal.id, courier_name: e.target.value})}
+                                              className="text-[10px] font-bold border border-gray-100 rounded-lg px-3 py-2 w-full outline-none focus:border-blue-500"
+                                            />
+                                            <div className="flex gap-2">
+                                              <input 
+                                                type="text" 
+                                                placeholder="Tracking #"
+                                                value={trackingForm.order_id === deal.id ? trackingForm.tracking_number : ""}
+                                                onChange={(e) => setTrackingForm({...trackingForm, order_id: deal.id, tracking_number: e.target.value})}
+                                                className="text-[10px] font-bold border border-gray-100 rounded-lg px-3 py-2 w-full outline-none focus:border-blue-500"
+                                              />
+                                              <button 
+                                                onClick={() => handleSaveTracking(deal.id)}
+                                                className="bg-black text-white px-3 py-2 rounded-lg hover:bg-gray-800 text-[9px] font-black uppercase tracking-widest"
+                                              >
+                                                Ship
+                                              </button>
+                                            </div>
+                                            <button 
+                                               onClick={() => handleCancelDeal(deal.id)}
+                                               className="w-full py-1 text-[8px] font-bold text-gray-400 uppercase tracking-widest hover:underline"
+                                            >
+                                               Cancel Deal
+                                            </button>
+                                          </div>
+                                        )}
+
+                                        {['SHIPPED', 'DELIVERED'].includes(deal.status) && (
+                                          <button 
+                                            onClick={() => handleMarkReturned(deal.id)}
+                                            className="w-full py-2 border border-rose-100 text-rose-500 rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-rose-50 transition"
+                                          >
+                                            Failed Delivery / Return
+                                          </button>
+                                        )}
+
+                                        {deal.status === 'DISPUTED' && (
+                                           <div className="text-center py-3 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 text-[10px] font-bold uppercase italic">
+                                              Locked: Admin Investigation
+                                           </div>
+                                        )}
+
+                                        {deal.status === 'SHIPPED' && (
+                                           <button 
+                                              onClick={() => handleMarkAsDelivered(deal.id)}
+                                              className="w-full py-3 bg-emerald-600 text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-700 transition"
+                                           >
+                                              Confirm Delivered
+                                           </button>
+                                        )}
+
+                                        {deal.tracking_number && (
+                                           <div className="text-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
+                                              <p className="text-[10px] font-bold text-gray-900">{deal.tracking_number}</p>
+                                           </div>
+                                        )}
+                                     </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="py-20 text-center border border-dashed border-gray-100 rounded-3xl bg-gray-50/20">
+                                   <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No deals in {sellingSubTab} state</p>
+                                </div>
+                              )}
+                           </div>
+                        )}
+
+                        {/* Offers Tab */}
+                        {sellingSubTab === 'offers' && (
+                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                              {offers.filter(o => o.seller_id === user.id && ['pending', 'countered'].includes(o.status)).length > 0 ? (
+                                offers.filter(o => o.seller_id === user.id && ['pending', 'countered'].includes(o.status)).map(offer => (
+                                  <div key={offer.id} className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-xl transition-all">
+                                     <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0">
+                                           {offer.images?.[0] ? <img src={`${API_BASE_URL}/uploads/${offer.images[0]}`} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-[13px] font-bold uppercase tracking-tight truncate">{offer.title}</h4>
+                                            <div className="flex items-center gap-2">
+                                              <p className="text-[9px] font-bold text-gray-400 uppercase truncate">From: {offer.buyer_name}</p>
+                                              {offer.expires_at && (
+                                                <span className="text-[7px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded uppercase">
+                                                  Expires: {getRemainingTime(offer.expires_at)}
+                                                </span>
+                                              )}
+                                            </div>
+                                         </div>
+                                     </div>
+                                     <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl mb-4">
+                                        <div>
+                                           <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Offer Price</p>
+                                           <p className="text-lg font-black text-gray-950">₹{parseFloat(offer.amount).toLocaleString()}</p>
+                                        </div>
+                                        <div className="text-right">
+                                           <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Listed at</p>
+                                           <p className="text-xs font-bold text-gray-400">₹{parseFloat(offer.listed_price).toLocaleString()}</p>
+                                        </div>
+                                     </div>
+                                     <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                           onClick={() => handleOfferResponse(offer.id, 'accepted')}
+                                           className="py-3 bg-blue-600 text-white rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 transition"
+                                        >
+                                           Accept Offer
+                                        </button>
+                                        <button 
+                                           onClick={() => handleOfferResponse(offer.id, 'declined')}
+                                           className="py-3 border border-gray-100 text-gray-400 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-gray-50 transition"
+                                        >
+                                           Decline
+                                        </button>
+                                     </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="col-span-full py-20 text-center border border-dashed border-gray-100 rounded-3xl">
+                                   <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No pending offers received</p>
+                                </div>
+                              )}
+                           </div>
+                        )}
+
+                        {/* Inventory Tab */}
+                        {sellingSubTab === 'inventory' && (
+                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {activity.listings?.length > 0 ? (
+                                activity.listings.map(item => (
+                                  <div key={item.id} className="group border border-gray-100 rounded-2xl p-5 hover:bg-white hover:shadow-xl transition-all relative">
+                                     <div className="w-full aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden relative">
+                                        {item.images?.[0] ? <img src={`${API_BASE_URL}/uploads/${item.images[0]}`} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                                        <div className={`absolute top-3 left-3 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${
+                                          item.status === 'approved' || item.status === 'active' ? 'bg-black text-white' : 
+                                          item.status === 'sold' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
+                                        }`}>
+                                           {item.status}
+                                        </div>
+                                     </div>
+                                     <h4 className="text-[11px] font-bold uppercase tracking-tight truncate leading-none mb-2">{item.title}</h4>
+                                     <div className="flex justify-between items-center">
+                                        <span className="text-sm font-black text-gray-950">₹{parseFloat(item.price).toLocaleString()}</span>
+                                        <div className="flex gap-1">
+                                           <button onClick={() => router.push(`/sell?edit=${item.id}`)} className="p-1.5 hover:text-blue-600 transition-colors"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+                                           <button onClick={() => handleDeleteProduct(item.id)} className="p-1.5 hover:text-rose-600 transition-colors"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                                        </div>
+                                     </div>
+                                  </div>
+                                ))
+                              ) : (
+                                 <div className="col-span-full py-12 text-center border border-gray-50 border-dashed rounded-3xl">
+                                    <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Zero items listed</p>
+                                 </div>
+                              )}
+                           </div>
+                        )}
+                     </div>
+                  </div>
+               )}
+
+
+               {/* Feedback Received Tab */}
+               {activeTab === "feedback" && (
+                  <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                     <div className="mb-12 flex justify-between items-end">
+                        <div>
+                          <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Feedback Ledger</h2>
+                          <p className="text-xs text-gray-400 mt-2 font-medium">Verified historical performance and collector sentiment.</p>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-2xl font-black text-gray-900">{receivedReviews.stats.average_rating}</p>
+                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Global Index / {receivedReviews.stats.review_count} nodes</p>
+                        </div>
+                     </div>
+
+                     <div className="space-y-6">
+                        {receivedReviews.reviews?.length > 0 ? (
+                           receivedReviews.reviews.map(review => (
+                              <div key={review.id} className="p-8 border border-gray-100 rounded-2xl bg-gray-50/20">
+                                 <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
+                                          {review.reviewer_name?.charAt(0).toUpperCase()}
+                                       </div>
+                                       <div>
+                                          <p className="text-[11px] font-bold text-gray-900 uppercase">{review.reviewer_name}</p>
+                                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{new Date(review.created_at).toLocaleDateString()}</p>
+                                       </div>
+                                    </div>
+                                    <div className="flex gap-0.5">
+                                       {[1,2,3,4,5].map(s => (
+                                          <svg key={s} className={`w-3 h-3 ${s <= review.rating ? 'text-amber-400' : 'text-gray-200'} fill-current`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                       ))}
+                                    </div>
+                                 </div>
+                                 <p className="text-sm font-medium text-gray-600 leading-relaxed italic">"{review.comment}"</p>
+                              </div>
+                           ))
+                        ) : (
+                           <div className="py-20 text-center border-2 border-dashed border-gray-50 rounded-2xl">
+                              <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No Feedback Logs Found</p>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+               )}
+
+
+                {/* Security Tab */}
+               {activeTab === "security" && (
+                  <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                     <div className="mb-12">
+                        <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Access Control</h2>
+                        <p className="text-xs text-gray-400 mt-2 font-medium">Monitoring active sessions and multi-factor authentication nodes.</p>
+                     </div>
+
+                     <div className="space-y-4">
+                        <div className="p-8 border border-gray-100 rounded-2xl flex justify-between items-center bg-gray-50/20">
+                           <div>
+                              <p className="text-sm font-bold text-gray-900 uppercase tracking-tight">Current Session</p>
+                              <p className="text-[10px] text-gray-400 mt-1 uppercase font-medium">Windows Chrome • IP: 152.16.x.x • Active Now</p>
+                           </div>
+                           <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-sm shadow-emerald-200"></span>
+                        </div>
+                        
+                        <div className="pt-10">
+                           <button className="text-[10px] font-bold text-rose-500 uppercase tracking-widest border-b border-rose-100 pb-1 hover:border-rose-500 transition-all">Revoke All Other Sessions</button>
+                        </div>
+                     </div>
+                  </div>
+               )}
+
+            </div>
+         </div>
+      </main>
+
+      {/* Leave Review Modal */}
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsReviewModalOpen(false)} />
+           <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl p-10 animate-in zoom-in-95 duration-300">
+              <div className="mb-8">
+                 <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Evaluate Transaction</h3>
+                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-2">Logging performance for: {reviewForm.product_title}</p>
+              </div>
+
+              <div className="space-y-8">
+                 <div className="flex flex-col items-center gap-4">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Service Rating</p>
+                    <div className="flex gap-4">
+                       {[1,2,3,4,5].map(star => (
+                          <button 
+                             key={star}
+                             onClick={() => setReviewForm({...reviewForm, rating: star})}
+                             className="group transition-transform hover:scale-125 focus:outline-none"
+                          >
+                             <svg className={`w-10 h-10 ${star <= reviewForm.rating ? 'text-amber-400 fill-current' : 'text-gray-100 hover:text-amber-200'} transition-colors`} viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                             </svg>
+                          </button>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Feedback Log</label>
+                    <textarea 
+                       rows="4"
+                       value={reviewForm.comment}
+                       onChange={(e) => setReviewForm({...reviewForm, comment: e.target.value})}
+                       className="w-full bg-gray-50 border border-gray-100 p-6 rounded-2xl outline-none focus:border-blue-600 focus:bg-white transition-all text-sm font-medium"
+                       placeholder="Detail your acquisition experience..."
+                    />
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4 pt-4">
+                    <button 
+                       onClick={() => setIsReviewModalOpen(false)}
+                       className="py-4 border border-gray-100 rounded-xl text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-all"
+                    >
+                       Cancel
+                    </button>
+                    <button 
+                       onClick={submitReview}
+                       disabled={isSubmittingReview}
+                       className="py-4 bg-black text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all disabled:opacity-50"
+                    >
+                       {isSubmittingReview ? 'Logging...' : 'Submit Records'}
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="flex items-center justify-center h-[60vh] gap-3">
+          <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+          <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Verifying credentials...</span>
+        </div>
+      </div>
+    }>
+      <ProfileContent />
+    </Suspense>
+  );
+}
