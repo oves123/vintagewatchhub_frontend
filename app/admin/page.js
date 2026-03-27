@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Menu, RefreshCw, ChevronRight, Bell, X } from "lucide-react";
 import { API_URL, API_BASE_URL, getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "../../services/api";
 import { useSearchParams } from "next/navigation";
@@ -21,7 +21,7 @@ const TAB_LABELS = {
   chats: "Chats & Messages",
 };
 
-export default function AdminPage() {
+function AdminPageContent() {
   const [activeTab, setActiveTab] = useState("overview");
   const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -580,5 +580,26 @@ export default function AdminPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-5">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full border-4 border-gray-100"/>
+            <div className="absolute inset-0 rounded-full border-4 border-[#1e3a5f] border-t-transparent animate-spin"/>
+          </div>
+          <div className="text-center">
+            <p className="text-[13px] font-black text-gray-900">WatchCollectorHUB</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Initializing Admin Panel...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <AdminPageContent />
+    </Suspense>
   );
 }
