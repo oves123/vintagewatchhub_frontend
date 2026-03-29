@@ -452,8 +452,8 @@ export default function Navbar() {
                 </Link>
                 <Link href="/messages" className="flex items-center justify-between px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
                   <span>💬 Messages</span>
-                  {unreadCount > 0 && (
-                    <span className="bg-[#1e3a5f] text-white text-[10px] font-black px-2 py-0.5 rounded-full">{unreadCount}</span>
+                  {unreadMessagesCount > 0 && (
+                    <span className="bg-[#1e3a5f] text-white text-[10px] font-black px-2 py-0.5 rounded-full">{unreadMessagesCount}</span>
                   )}
                 </Link>
                 <Link href="/watchlist" onClick={(e) => requireAuth(e, '/watchlist')} className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
