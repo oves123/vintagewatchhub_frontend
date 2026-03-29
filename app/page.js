@@ -118,14 +118,34 @@ function HomeContent() {
     // Fetch categories for sidebar
     fetch(`${API_URL}/products/categories`)
       .then(res => res.json())
-      .then(data => setCategories(data))
-      .catch(console.error);
+      .then(data => {
+        if (Array.isArray(data)) {
+          setCategories(data);
+        } else {
+          console.error("Categories API returned non-array:", data);
+          setCategories([]);
+        }
+      })
+      .catch(err => {
+        console.error("Categories fetch error:", err);
+        setCategories([]);
+      });
 
     // Fetch brands for sidebar
     fetch(`${API_URL}/products/brands`)
       .then(res => res.json())
-      .then(data => setBrands(data))
-      .catch(console.error);
+      .then(data => {
+        if (Array.isArray(data)) {
+          setBrands(data);
+        } else {
+          console.error("Brands API returned non-array:", data);
+          setBrands([]);
+        }
+      })
+      .catch(err => {
+        console.error("Brands fetch error:", err);
+        setBrands([]);
+      });
   }, [search, category, brand, minPrice, maxPrice, conditionParam, formatParam, sortParam]);
 
   return (

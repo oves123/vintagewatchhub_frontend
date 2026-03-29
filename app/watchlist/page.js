@@ -19,11 +19,17 @@ export default function WatchlistPage() {
       fetch(`${API_URL}/watchlist/${parsedUser.id}`)
         .then((res) => res.json())
         .then((data) => {
-          setWatchlist(data);
+          if (Array.isArray(data)) {
+            setWatchlist(data);
+          } else {
+            console.error("Watchlist API returned non-array:", data);
+            setWatchlist([]);
+          }
           setLoading(false);
         })
         .catch((err) => {
           console.error("Failed to fetch watchlist:", err);
+          setWatchlist([]);
           setLoading(false);
         });
     } else {
