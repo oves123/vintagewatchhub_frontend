@@ -11,6 +11,7 @@ import Overview from "./components/Overview";
 import UserTab from "./components/UserTab";
 import ProductTab from "./components/ProductTab";
 import { OrdersTab, ChatsTab, ReportsTab } from "./components/OtherTabs";
+import SettingsTab from "./components/SettingsTab";
 
 const TAB_LABELS = {
   overview: "Dashboard",
@@ -19,6 +20,7 @@ const TAB_LABELS = {
   orders: "Orders",
   reports: "Reports & Complaints",
   chats: "Chats & Messages",
+  settings: "Platform Protocol",
 };
 
 function AdminPageContent() {
@@ -514,6 +516,8 @@ function AdminPageContent() {
           {activeTab === "chats" && (
             <ChatsTab chats={chats} tabLoading={tabLoading} onOpenHistory={openChatHistory}/>
           )}
+
+          {activeTab === "settings" && <SettingsTab />}
         </main>
       </div>
 

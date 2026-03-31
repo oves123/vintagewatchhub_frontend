@@ -36,6 +36,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, adminUser, onLog
     { id: "orders",    label: "Orders",           icon: ShoppingCart     },
     { id: "reports",   label: "Reports",          icon: ShieldCheck      },
     { id: "chats",     label: "Chats & Messages", icon: MessageSquare    },
+    { id: "settings",  label: "Platform Protocol", icon: ShieldCheck      },
   ];
 
   const handleTabClick = (id) => {

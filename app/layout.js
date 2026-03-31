@@ -11,13 +11,17 @@ export const metadata = {
   description: "Buy and sell pre-owned watches, rare collections, and authentic accessories at WatchCollectorHub.com",
 };
 
+import TermsGuard from "../components/TermsGuard";
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
         className={`${inter.variable} font-sans antialiased`}
       >
-        {children}
+        <TermsGuard>
+          {children}
+        </TermsGuard>
       </body>
     </html>
   );

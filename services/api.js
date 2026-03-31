@@ -408,3 +408,34 @@ export const confirmDirectDeal = async (chat_id, seller_id, final_price) => {
   });
   return res.json();
 };
+
+// Platform Settings & Terms
+export const getTerms = async () => {
+  const res = await fetch(`${API_URL}/user/terms`);
+  return res.json();
+};
+
+export const acceptTerms = async () => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/user/accept-terms`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    }
+  });
+  return res.json();
+};
+
+export const updatePlatformSetting = async (key, value) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/admin/settings`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify({ key, value })
+  });
+  return res.json();
+};
