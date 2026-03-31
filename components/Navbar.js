@@ -188,6 +188,7 @@ export default function Navbar() {
   const categories = [
     { label: "Home", href: "/" },
     { label: "Pre-Owned Watches", href: "/?category=Pre-Owned Watches" },
+    { label: "New Watches", href: "/?category=New Watches" },
     { label: "Watch Lots", href: "/?category=Watch Lots" },
     { label: "Accessories", href: "/?category=Accessories" },
     { label: "Tools & Parts", href: "/?category=Tools & Parts" },

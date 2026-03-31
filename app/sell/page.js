@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Navbar from "../../components/Navbar";
 import { useRouter } from "next/navigation";
 import { getCategories, createProduct, API_URL, API_BASE_URL } from "../../services/api";
+import { Camera, RefreshCw, X, Circle } from "lucide-react";
 import "./sell.css";
 
 export default function SellPage() {
@@ -37,6 +38,15 @@ export default function SellPage() {
 
    const [images, setImages] = useState([]);
    const [previews, setPreviews] = useState([]);
+   const [showCamera, setShowCamera] = useState(false);
+   const [cameraStream, setCameraStream] = useState(null);
+   const [cameraMode, setCameraMode] = useState('photo'); // 'photo' or 'video'
+   const [isRecording, setIsRecording] = useState(false);
+   const [recordingTime, setRecordingTime] = useState(0);
+   const videoRef = useRef(null);
+   const canvasRef = useRef(null);
+   const mediaRecorderRef = useRef(null);
+   const recordedChunksRef = useRef([]);
 
    useEffect(() => {
       const params = new URLSearchParams(window.location.search);
@@ -88,6 +98,26 @@ export default function SellPage() {
       }).catch(console.error);
    }, [router]);
 
+   // Attach camera stream to video element
+   useEffect(() => {
+      if (showCamera && cameraStream && videoRef.current) {
+         videoRef.current.srcObject = cameraStream;
+      }
+   }, [showCamera, cameraStream]);
+
+   // Recording Timer
+   useEffect(() => {
+      let interval;
+      if (isRecording) {
+         interval = setInterval(() => {
+            setRecordingTime(prev => prev + 1);
+         }, 1000);
+      } else {
+         setRecordingTime(0);
+      }
+      return () => clearInterval(interval);
+   }, [isRecording]);
+
    const selectedCategory = useMemo(() =>
       categories.find(c => c.id === parseInt(formData.category_id)),
       [categories, formData.category_id]);
@@ -130,6 +160,102 @@ export default function SellPage() {
     const removeMedia = (idx) => {
        setImages(images.filter((_, i) => i !== idx));
        setPreviews(previews.filter((_, i) => i !== idx));
+    };
+
+    const startCamera = async () => {
+       try {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+             video: { 
+                facingMode: "environment",
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+             }, 
+             audio: true 
+          });
+          setCameraStream(stream);
+          setShowCamera(true);
+       } catch (err) {
+          alert("Camera access denied or NOT available.");
+          console.error(err);
+       }
+    };
+
+    const stopCamera = () => {
+       if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          setCameraStream(null);
+       }
+       setShowCamera(false);
+    };
+
+    const capturePhoto = () => {
+       if (videoRef.current && canvasRef.current) {
+          const video = videoRef.current;
+          const canvas = canvasRef.current;
+          
+          // Use natural video dimensions
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+          
+          // Create File object from data URL
+          fetch(dataUrl)
+            .then(res => res.blob())
+            .then(blob => {
+               const file = new File([blob], `live_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+               setImages(prev => [...prev, file]);
+               setPreviews(prev => [...prev, { url: dataUrl, type: 'image' }]);
+               stopCamera();
+            });
+       }
+    };
+
+    const startRecording = () => {
+       if (!cameraStream) return;
+       
+       recordedChunksRef.current = [];
+       const options = { mimeType: 'video/webm;codecs=vp9,opus' };
+       if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options.mimeType = 'video/webm';
+       }
+
+       const mediaRecorder = new MediaRecorder(cameraStream, options);
+       mediaRecorderRef.current = mediaRecorder;
+
+       mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+             recordedChunksRef.current.push(e.data);
+          }
+       };
+
+       mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const file = new File([blob], `live_video_${Date.now()}.webm`, { type: 'video/webm' });
+          
+          setImages(prev => [...prev, file]);
+          setPreviews(prev => [...prev, { url, type: 'video' }]);
+          stopCamera();
+       };
+
+       mediaRecorder.start();
+       setIsRecording(true);
+
+       // Auto stop after 20s
+       setTimeout(() => {
+          if (mediaRecorder.state === "recording") stopRecording();
+       }, 20000);
+    };
+
+    const stopRecording = () => {
+       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+          mediaRecorderRef.current.stop();
+          setIsRecording(false);
+       }
     };
 
    const handleSubmit = async (type = 'pending') => {
@@ -356,20 +482,114 @@ export default function SellPage() {
                   {/* STEP 3: Media */}
                   {step === 3 && (
                      <div className="animate-in fade-in duration-500 space-y-10">
-                        <div className="p-12 bg-gray-50 border border-dashed border-gray-300 rounded-2xl text-center relative hover:bg-white hover:border-blue-400 transition-all group overflow-hidden">
-                           <div className="space-y-4 transition-transform group-hover:scale-105 duration-300">
-                              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-gray-100">
-                                 <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                 </svg>
-                              </div>
-                              <div>
-                                 <h3 className="text-lg font-bold text-gray-900">Upload Gallery</h3>
-                                 <p className="text-sm font-medium text-gray-500 mt-1">Drag and drop or click to browse (Max 20)</p>
-                              </div>
-                           </div>
-                           <input type="file" multiple accept="image/*,video/*" onChange={handleMediaChange} className="absolute inset-0 opacity-0 cursor-pointer" title="" />
-                        </div>
+                         <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                            <div className="flex-1 p-10 bg-gray-50 border border-dashed border-gray-300 rounded-2xl text-center relative hover:bg-white hover:border-blue-400 transition-all group overflow-hidden">
+                               <div className="space-y-4 transition-transform group-hover:scale-105 duration-300">
+                                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-gray-100">
+                                     <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                     </svg>
+                                  </div>
+                                  <div>
+                                     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Upload Gallery</h3>
+                                     <p className="text-[10px] font-medium text-gray-400 mt-1 uppercase tracking-tight">Drag or Browse (Max 20)</p>
+                                  </div>
+                               </div>
+                               <input type="file" multiple accept="image/*,video/*" onChange={handleMediaChange} className="absolute inset-0 opacity-0 cursor-pointer" title="" />
+                            </div>
+
+                            <button 
+                               onClick={startCamera}
+                               className="flex-1 p-10 bg-blue-50 border border-dashed border-blue-200 rounded-2xl text-center hover:bg-white hover:border-blue-400 transition-all group flex flex-col items-center justify-center gap-4"
+                            >
+                               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-blue-100 group-hover:scale-110 transition-transform">
+                                  <Camera size={24} className="text-blue-600" />
+                               </div>
+                               <div>
+                                  <h3 className="text-sm font-bold text-blue-600 uppercase tracking-widest">Take Live Photo</h3>
+                                  <p className="text-[10px] font-medium text-blue-400 mt-1 uppercase tracking-tight">Use mobile/pc camera</p>
+                               </div>
+                            </button>
+                         </div>
+
+                         {showCamera && (
+                            <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-10 animate-in fade-in duration-300">
+                               <div className="relative w-full max-w-2xl aspect-[3/4] sm:aspect-video bg-gray-900 rounded-[2rem] overflow-hidden shadow-2xl border border-white/10">
+                                  <video 
+                                     ref={videoRef} 
+                                     autoPlay 
+                                     playsInline 
+                                     className="w-full h-full object-cover"
+                                  />
+                                  <canvas ref={canvasRef} className="hidden" />
+                                  
+                                  {/* Camera UI Overlay */}
+                                  <div className="absolute inset-0 flex flex-col justify-between p-6 sm:p-8">
+                                     <div className="flex justify-between items-start">
+                                        <div className="flex flex-col gap-2">
+                                           <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/20">
+                                              <div className={`w-2 h-2 rounded-full ${isRecording ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
+                                              <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                                                 {isRecording ? `Recording ${recordingTime}s` : 'Live Hub View'}
+                                              </span>
+                                           </div>
+                                           {!isRecording && (
+                                              <div className="flex bg-black/40 backdrop-blur-md rounded-xl p-1 border border-white/10 self-start">
+                                                 <button 
+                                                    onClick={() => setCameraMode('photo')}
+                                                    className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${cameraMode === 'photo' ? 'bg-white text-gray-900 shadow-lg' : 'text-white/60 hover:text-white'}`}
+                                                 >
+                                                    Photo
+                                                 </button>
+                                                 <button 
+                                                    onClick={() => setCameraMode('video')}
+                                                    className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${cameraMode === 'video' ? 'bg-white text-gray-900 shadow-lg' : 'text-white/60 hover:text-white'}`}
+                                                 >
+                                                    Video
+                                                 </button>
+                                              </div>
+                                           )}
+                                        </div>
+                                        <button 
+                                           onClick={stopCamera} 
+                                           disabled={isRecording}
+                                           className="p-3 bg-black/40 backdrop-blur-md text-white rounded-full border border-white/20 hover:bg-rose-500/80 transition-all disabled:opacity-20"
+                                        >
+                                           <X size={20} />
+                                        </button>
+                                     </div>
+
+                                     <div className="flex flex-col items-center gap-6">
+                                        <p className="text-[10px] sm:text-[11px] font-bold text-white/80 uppercase tracking-[0.3em] text-center max-w-xs leading-relaxed drop-shadow-lg">
+                                           {cameraMode === 'photo' ? 'Capture high-res authentication photo' : (isRecording ? 'Recording Hub authentication clip...' : 'Record 15s authentication clip')}
+                                        </p>
+                                        
+                                        {cameraMode === 'photo' ? (
+                                           <button 
+                                              onClick={capturePhoto}
+                                              className="w-20 h-20 bg-white rounded-full flex items-center justify-center p-1 border-4 border-white/30 hover:scale-110 active:scale-95 transition-all shadow-2xl"
+                                           >
+                                              <div className="w-full h-full bg-white rounded-full border-2 border-gray-900 flex items-center justify-center">
+                                                 <div className="w-12 h-12 bg-gray-900 rounded-full" />
+                                              </div>
+                                           </button>
+                                        ) : (
+                                           <button 
+                                              onClick={isRecording ? stopRecording : startRecording}
+                                              className={`w-20 h-20 rounded-full flex items-center justify-center p-1 border-4 transition-all shadow-2xl ${isRecording ? 'bg-rose-500 border-rose-500/30' : 'bg-white border-white/30 hover:scale-110'}`}
+                                           >
+                                              {isRecording ? (
+                                                 <div className="w-8 h-8 bg-white rounded-md" />
+                                              ) : (
+                                                 <div className="w-14 h-14 bg-rose-600 rounded-full border-4 border-white" />
+                                              )}
+                                           </button>
+                                        )}
+                                     </div>
+                                  </div>
+                               </div>
+                            </div>
+                         )}
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                            {previews.map((media, i) => (

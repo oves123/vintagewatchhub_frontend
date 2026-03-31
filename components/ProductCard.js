@@ -19,6 +19,8 @@ export default function ProductCard({ product, horizontal = false }) {
     return imgs;
   }, [product]);
 
+  const isVideo = (url) => url.match(/\.(mp4|mov|webm|quicktime)$/i);
+
   const handleNextImage = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -84,11 +86,20 @@ export default function ProductCard({ product, horizontal = false }) {
     return (
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all group flex flex-col sm:flex-row mb-6">
         <Link href={`/products/${product.id}`} className="block w-full sm:w-48 md:w-64 aspect-[4/3] sm:aspect-square bg-gray-50 flex-shrink-0 relative overflow-hidden">
-          <img
-            src={images[currentImageIndex]}
-            alt={product.title}
-            className="w-full h-full object-contain p-6 transition-transform group-hover:scale-105 duration-500"
-          />
+          {isVideo(images[currentImageIndex]) ? (
+            <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+              <svg className="w-10 h-10 text-white opacity-40 absolute z-10" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+              </svg>
+              <video src={images[currentImageIndex]} className="w-full h-full object-cover" muted playsInline />
+            </div>
+          ) : (
+            <img
+              src={images[currentImageIndex]}
+              alt={product.title}
+              className="w-full h-full object-contain p-6 transition-transform group-hover:scale-105 duration-500"
+            />
+          )}
           {images.length > 1 && (
             <>
               <button onClick={handlePrevImage} className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/90 backdrop-blur border border-gray-100 rounded-full text-gray-700 hover:text-blue-600 shadow-sm opacity-0 group-hover:opacity-100 transition z-10">
@@ -153,11 +164,20 @@ export default function ProductCard({ product, horizontal = false }) {
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 group flex flex-col h-full">
       <Link href={`/products/${product.id}`} className="block aspect-[5/4] bg-gray-50 relative overflow-hidden">
-        <img
-          src={images[currentImageIndex]}
-          alt={product.title}
-          className="w-full h-full object-contain p-6 transition-transform group-hover:scale-105 duration-700"
-        />
+        {isVideo(images[currentImageIndex]) ? (
+          <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+            <svg className="w-10 h-10 text-white opacity-40 absolute z-10" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+            </svg>
+            <video src={images[currentImageIndex]} className="w-full h-full object-cover" muted playsInline />
+          </div>
+        ) : (
+          <img
+            src={images[currentImageIndex]}
+            alt={product.title}
+            className="w-full h-full object-contain p-6 transition-transform group-hover:scale-105 duration-700"
+          />
+        )}
         {images.length > 1 && (
           <>
             <button onClick={handlePrevImage} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/95 backdrop-blur border border-gray-100 rounded-full text-gray-700 hover:text-blue-600 shadow-md opacity-0 group-hover:opacity-100 transition z-10 hover:scale-110">

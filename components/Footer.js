@@ -36,6 +36,7 @@ export default function Footer() {
               {[
                 { label: "Browse Watches", href: "/" },
                 { label: "Pre-Owned Watches", href: "/?category=Pre-Owned Watches" },
+                { label: "New Watches", href: "/?category=New Watches" },
                 { label: "Watch Lots", href: "/?category=Watch Lots" },
                 { label: "Accessories", href: "/?category=Accessories" },
                 { label: "Tools & Parts", href: "/?category=Tools & Parts" },

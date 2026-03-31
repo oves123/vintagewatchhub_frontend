@@ -430,6 +430,7 @@ function HomeContent() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
+                { name: "New Watches", icon: "✨", desc: "Brand new, unworn luxury watches." },
                 { name: "Pre-Owned Watches", icon: "🕰️", desc: "Rare timepieces from across the globe." },
                 { name: "Watch Lots", icon: "📦", desc: "Bulk collections and estate finds." },
                 { name: "Accessories", icon: "🎁", desc: "Premium straps, tools, and storage." },
