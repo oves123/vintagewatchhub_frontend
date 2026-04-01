@@ -86,7 +86,7 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    {["Product","Seller","Category","Type","Price","Views","Status","Actions"].map(h => (
+                    {["Product","Seller","Category","Type","Price","Shipping","Views","Status","Actions"].map(h => (
                       <th key={h} className="text-left px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -112,6 +112,14 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                       <td className="px-4 py-4"><span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-lg text-[9px] font-black uppercase">{p.category_name || "General"}</span></td>
                       <td className="px-4 py-4"><span className="px-2 py-1 bg-blue-50 text-[#1e3a5f] rounded-lg text-[9px] font-black uppercase">{p.product_type || "fixed"}</span></td>
                       <td className="px-4 py-4 text-[12px] font-black text-gray-900">₹{parseFloat(p.price||0).toLocaleString()}</td>
+                      <td className="px-4 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black text-gray-900">
+                             {p.shipping_type === 'free' ? 'FREE' : p.shipping_type === 'contact' ? 'TBD' : `₹${parseFloat(p.shipping_fee||0).toLocaleString()}`}
+                          </span>
+                          <span className="text-[8px] font-bold text-gray-400 uppercase">{p.shipping_type}</span>
+                        </div>
+                      </td>
                       <td className="px-4 py-4 text-[11px] font-bold text-gray-500">{p.views || 0}</td>
                       <td className="px-4 py-4"><span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase ${statusColor(p.status)}`}>{p.status}</span></td>
                       <td className="px-4 py-4">
@@ -149,7 +157,12 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                         <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase whitespace-nowrap ${statusColor(p.status)}`}>{p.status}</span>
                       </div>
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{p.seller_name || "—"} · {p.category_name || "General"}</p>
-                      <p className="text-sm font-black text-[#1e3a5f] mt-1">₹{parseFloat(p.price||0).toLocaleString()}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-sm font-black text-[#1e3a5f]">₹{parseFloat(p.price||0).toLocaleString()}</p>
+                        <span className="text-[9px] font-bold text-gray-400 uppercase">
+                           + {p.shipping_type === 'free' ? 'Free' : p.shipping_type === 'contact' ? 'TBD' : `₹${parseFloat(p.shipping_fee||0).toLocaleString()}`} Ship
+                        </span>
+                      </div>
                     </div>
                   </div>
                   
@@ -202,6 +215,8 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                   ["Type", selectedProduct.product_type || "fixed"],
                   ["Views", selectedProduct.views || 0],
                   ["Condition", selectedProduct.condition_code || "—"],
+                  ["Shipping Fee", selectedProduct.shipping_type === 'free' ? "Free" : selectedProduct.shipping_type === 'contact' ? "TBD" : `₹${parseFloat(selectedProduct.shipping_fee||0).toLocaleString()}`],
+                  ["Shipping Type", selectedProduct.shipping_type || "fixed"],
                   ["Offers Allowed", selectedProduct.allow_offers ? "Yes" : "No"],
                 ].map(([k,v]) => (
                   <div key={k} className="flex justify-between bg-white rounded-xl px-3 py-2 border border-gray-100">

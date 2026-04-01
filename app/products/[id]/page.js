@@ -423,7 +423,21 @@ export default function ProductPage({ params }) {
                   <div className="space-y-6 relative z-10">
                     <div>
                       <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Live Valuation</p>
-                       <span className="text-4xl md:text-5xl font-bold text-gray-950 tracking-tight">₹{parseFloat(product?.price || 0).toLocaleString()}</span>
+                       <div className="flex flex-col gap-1">
+                          <span className="text-4xl md:text-5xl font-bold text-gray-950 tracking-tight">₹{parseFloat(product?.price || 0).toLocaleString()}</span>
+                          <div className="flex items-center gap-1.5 mt-1">
+                             <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                             <span className="text-[11px] font-black uppercase tracking-widest text-gray-500">
+                                {product.shipping_type === 'free' ? (
+                                   <span className="text-emerald-600">Free Shipping</span>
+                                ) : product.shipping_type === 'contact' ? (
+                                   <span className="text-blue-600">Contact for Shipping Quote</span>
+                                ) : (
+                                   <>+ ₹{parseFloat(product.shipping_fee || 0).toLocaleString()} Shipping</>
+                                )}
+                             </span>
+                          </div>
+                       </div>
                     </div>
                     
                     <div className="pt-6">

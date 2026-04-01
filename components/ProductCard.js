@@ -145,8 +145,17 @@ export default function ProductCard({ product, horizontal = false }) {
               <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mb-1.5">
                 Price Guide
               </p>
-              <div className="flex items-baseline gap-1.5">
+              <div className="flex flex-col">
                 <span className="text-2xl font-bold text-gray-950">₹{parseFloat(product.price).toLocaleString()}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-0.5">
+                   {product.shipping_type === 'free' ? (
+                      <span className="text-emerald-600">Free Shipping</span>
+                   ) : product.shipping_type === 'contact' ? (
+                      <span className="text-blue-600">Shipping TBD</span>
+                   ) : (
+                      <>+ ₹{parseFloat(product.shipping_fee || 0).toLocaleString()} Shipping</>
+                   )}
+                </span>
               </div>
               <p className="text-xs text-gray-500 font-semibold mt-1">
                 Free Authentication • Secure Transit
@@ -232,8 +241,17 @@ export default function ProductCard({ product, horizontal = false }) {
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none mb-1.5">
               Price Guide
             </p>
-            <div className="flex items-baseline gap-1.5">
+            <div className="flex flex-col">
               <span className="text-xl font-bold text-gray-950">₹{parseFloat(product.price).toLocaleString()}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-0.5">
+                 {product.shipping_type === 'free' ? (
+                    <span className="text-emerald-600">Free Delivery</span>
+                 ) : product.shipping_type === 'contact' ? (
+                    <span className="text-blue-600">Shipping TBD</span>
+                 ) : (
+                    <>+ ₹{parseFloat(product.shipping_fee || 0).toLocaleString()} Shipping</>
+                 )}
+              </span>
             </div>
           </div>
 

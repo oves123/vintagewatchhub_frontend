@@ -33,7 +33,9 @@ export default function SellPage() {
       payment_info: {
          accepted: ["Hub Wallet", "Stripe", "Bank Transfer"]
       },
-      allow_offers: false
+      allow_offers: false,
+      shipping_fee: "",
+      shipping_type: "fixed"
    });
 
    const [images, setImages] = useState([]);
@@ -81,7 +83,9 @@ export default function SellPage() {
                   payment_info: data.payment_info || {
                      accepted: ["Hub Wallet", "Stripe", "Bank Transfer"]
                   },
-                  allow_offers: data.allow_offers || false
+                  allow_offers: data.allow_offers || false,
+                  shipping_fee: data.shipping_fee ? data.shipping_fee.toString() : "",
+                  shipping_type: data.shipping_type || "fixed"
                });
                if (data.images) {
                   setPreviews(data.images.map(img => ({
@@ -140,6 +144,14 @@ export default function SellPage() {
       setFormData(prev => ({
          ...prev,
          [parent]: { ...prev[parent], [field]: value }
+      }));
+   };
+
+   const handleShippingToggle = (type) => {
+      setFormData(prev => ({
+         ...prev,
+         shipping_type: prev.shipping_type === type ? "fixed" : type,
+         shipping_fee: type === "fixed" ? prev.shipping_fee : ""
       }));
    };
 
@@ -282,6 +294,8 @@ export default function SellPage() {
          finalData.append("shipping_info", JSON.stringify(formData.shipping_info));
          finalData.append("payment_info", JSON.stringify(formData.payment_info));
          finalData.append("allow_offers", formData.allow_offers);
+         finalData.append("shipping_fee", formData.shipping_fee || 0);
+         finalData.append("shipping_type", formData.shipping_type);
 
          images.forEach(img => finalData.append("images", img));
 
@@ -719,47 +733,116 @@ export default function SellPage() {
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pricing standards for the collector hub</p>
                          </div>
 
-                         <div className="price-input-container max-w-xl mx-auto">
-                            <div className="flex flex-col items-center gap-8">
-                                <div className="relative w-full">
-                                   <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center">
-                                      <span className="text-3xl font-black text-blue-600">₹</span>
-                                      <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest mt-1">INR</span>
-                                   </div>
-                                   <input
-                                      type="text"
-                                      name="price"
-                                      value={formData.price}
-                                      onChange={handleInputChange}
-                                      className="w-full text-center text-7xl font-black bg-transparent outline-none text-gray-950 placeholder:text-gray-100 py-10 px-20 border-b-4 border-gray-50 focus:border-blue-600 transition-all rounded-t-3xl"
-                                      placeholder="0.00"
-                                      inputMode="decimal"
-                                   />
-                                </div>
-                                
-                                <div className="w-full">
+                         <div className="max-w-2xl mx-auto space-y-10">
+                            {/* Product Price */}
+                            <div className="relative group bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 hover:border-blue-200 transition-all">
+                               <div className="flex flex-col items-center gap-6">
+                                  <div className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 rounded-full border border-blue-100">
+                                     <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Item Valuation</span>
+                                  </div>
+                                  <div className="relative w-full max-w-sm">
+                                     <div className="absolute left-0 top-1/2 -translate-y-1/2 flex flex-col items-center">
+                                        <span className="text-3xl font-black text-gray-200">₹</span>
+                                        <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest">INR</span>
+                                     </div>
+                                     <input
+                                        type="text"
+                                        name="price"
+                                        value={formData.price}
+                                        onChange={handleInputChange}
+                                        className="w-full text-center text-6xl font-black bg-transparent outline-none text-gray-950 placeholder:text-gray-100 px-10 focus:placeholder:opacity-0 transition-all font-mono"
+                                        placeholder="0.00"
+                                        inputMode="decimal"
+                                     />
+                                  </div>
+                               </div>
+                            </div>
 
-                                 </div>
+                            {/* Shipping Options */}
+                            <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-8">
+                               <div className="flex flex-col items-center gap-2">
+                                  <div className="flex items-center gap-2 px-4 py-1.5 bg-amber-50 rounded-full border border-amber-100">
+                                     <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                                     <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Shipping Configuration</span>
+                                  </div>
+                                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">How will this reach the buyer?</p>
+                               </div>
 
-                                 <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-2xl border border-amber-100 max-w-sm">
-                                    <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                    </svg>
-                                    <p className="text-[10px] text-amber-800 font-bold uppercase tracking-tight leading-relaxed">
-                                       Price listed is a guide. All final settlements are executed via verified hub support.
-                                    </p>
-                                 </div>
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Fixed Fee Input */}
+                                  <div className={`p-6 rounded-2xl border-2 transition-all flex flex-col gap-4 ${formData.shipping_type === 'fixed' ? 'border-gray-900 bg-gray-50/30' : 'border-gray-50 opacity-40 grayscale pointer-events-none'}`}>
+                                     <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
+                                           <svg className="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                                        </div>
+                                        <span className="text-[11px] font-black uppercase tracking-widest text-gray-900">Fixed Fee</span>
+                                     </div>
+                                     <div className="relative">
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-xl font-black text-gray-300">₹</span>
+                                        <input
+                                           type="text"
+                                           name="shipping_fee"
+                                           value={formData.shipping_fee}
+                                           onChange={(e) => {
+                                              const val = e.target.value.replace(/[^0-9]/g, '');
+                                              setFormData(prev => ({ ...prev, shipping_fee: val }));
+                                           }}
+                                           placeholder="Fee amount"
+                                           className="w-full pl-6 py-2 bg-transparent border-b-2 border-gray-200 focus:border-gray-900 outline-none font-black text-xl text-gray-950 transition-all"
+                                        />
+                                     </div>
+                                  </div>
+
+                                  {/* Toggles */}
+                                  <div className="flex flex-col gap-3">
+                                     <button 
+                                        onClick={() => handleShippingToggle('free')}
+                                        className={`p-5 rounded-2xl border-2 text-left transition-all flex items-center justify-between group ${formData.shipping_type === 'free' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-50 hover:border-gray-200'}`}
+                                     >
+                                        <div>
+                                           <p className={`text-[12px] font-black uppercase tracking-widest ${formData.shipping_type === 'free' ? 'text-emerald-700' : 'text-gray-900'}`}>Free Shipping</p>
+                                           <p className="text-[9px] font-bold text-gray-400 uppercase mt-0.5">Seller covers all costs</p>
+                                        </div>
+                                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${formData.shipping_type === 'free' ? 'bg-emerald-500 border-emerald-500' : 'border-gray-200 group-hover:border-gray-400'}`}>
+                                           {formData.shipping_type === 'free' && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>}
+                                        </div>
+                                     </button>
+
+                                     <button 
+                                        onClick={() => handleShippingToggle('contact')}
+                                        className={`p-5 rounded-2xl border-2 text-left transition-all flex items-center justify-between group ${formData.shipping_type === 'contact' ? 'border-blue-500 bg-blue-50' : 'border-gray-50 hover:border-gray-200'}`}
+                                     >
+                                        <div>
+                                           <p className={`text-[12px] font-black uppercase tracking-widest ${formData.shipping_type === 'contact' ? 'text-blue-700' : 'text-gray-900'}`}>Contact for Quote</p>
+                                           <p className="text-[9px] font-bold text-gray-400 uppercase mt-0.5">Calculated by dimensions</p>
+                                        </div>
+                                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${formData.shipping_type === 'contact' ? 'bg-blue-500 border-blue-500' : 'border-gray-200 group-hover:border-gray-400'}`}>
+                                           {formData.shipping_type === 'contact' && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>}
+                                        </div>
+                                     </button>
+                                  </div>
+                               </div>
+
+                               <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                  <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                  </svg>
+                                  <p className="text-[9px] text-gray-500 font-bold uppercase tracking-tight leading-relaxed">
+                                     Pricing transparency is key. Make sure to specify if shipping is included or separate for clarity.
+                                  </p>
+                               </div>
                             </div>
                          </div>
 
-                         <div className="pt-12 flex justify-between items-center max-w-xl mx-auto w-full">
+                         <div className="pt-12 flex justify-between items-center max-w-2xl mx-auto w-full">
                             <button onClick={prevStep} className="group flex items-center gap-2 text-[11px] font-black text-gray-400 hover:text-gray-900 transition-all uppercase tracking-widest">
                                <svg className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
                                Basics
                             </button>
                             <button
                                onClick={nextStep}
-                               disabled={!formData.price}
+                               disabled={!formData.price || (formData.shipping_type === 'fixed' && !formData.shipping_fee)}
                                className="bg-blue-600 text-white px-12 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all disabled:opacity-20 shadow-xl shadow-blue-100 hover:scale-105 active:scale-95"
                             >
                                Review Listing
