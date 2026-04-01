@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getTerms, updatePlatformSetting } from "../../services/api";
+import { getTerms, updatePlatformSetting } from "@/services/api";
 import Link from "next/link";
 
 export default function AdminTermsPage() {
