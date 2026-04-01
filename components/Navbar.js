@@ -7,9 +7,9 @@ import { API_URL, getTotalUnreadCount, getNotifications, markNotificationAsRead,
 import socket from "../services/socket";
 
 // Inline SVG Logo Component
-function WCHLogo({ className = "" }) {
+function WCHLogo({ className = "", onClick }) {
   return (
-    <Link href="/" className={`flex items-center gap-2 flex-shrink-0 ${className}`}>
+    <Link href="/" onClick={onClick} className={`flex items-center gap-2 flex-shrink-0 ${className}`}>
       {/* Crown + Watch Icon */}
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="16" cy="18" r="12" stroke="#1e3a5f" strokeWidth="2"/>
@@ -158,6 +158,7 @@ export default function Navbar() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
+    setMobileOpen(false);
     router.push("/login");
   };
 
@@ -404,7 +405,7 @@ export default function Navbar() {
           <div className="absolute right-0 top-0 bottom-0 w-4/5 max-w-xs bg-white shadow-2xl flex flex-col slide-in-right">
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <WCHLogo />
+              <WCHLogo onClick={() => setMobileOpen(false)} />
               <button onClick={() => setMobileOpen(false)} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -441,6 +442,7 @@ export default function Navbar() {
                 <Link
                   key={cat.href}
                   href={cat.href}
+                  onClick={() => setMobileOpen(false)}
                   className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all"
                 >
                   {cat.label}
@@ -448,23 +450,23 @@ export default function Navbar() {
               ))}
 
               <div className="border-t border-gray-100 my-3 pt-3 space-y-1">
-                <Link href="/sell" onClick={(e) => requireAuth(e, '/sell')} className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
+                <Link href="/sell" onClick={(e) => { setMobileOpen(false); requireAuth(e, '/sell'); }} className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
                   🏷️ Sell a Watch
                 </Link>
-                <Link href="/messages" className="flex items-center justify-between px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
+                <Link href="/messages" onClick={() => setMobileOpen(false)} className="flex items-center justify-between px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
                   <span>💬 Messages</span>
                   {unreadMessagesCount > 0 && (
                     <span className="bg-[#1e3a5f] text-white text-[10px] font-black px-2 py-0.5 rounded-full">{unreadMessagesCount}</span>
                   )}
                 </Link>
-                <Link href="/watchlist" onClick={(e) => requireAuth(e, '/watchlist')} className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
+                <Link href="/watchlist" onClick={(e) => { setMobileOpen(false); requireAuth(e, '/watchlist'); }} className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
                   ❤️ Watchlist
                 </Link>
-                <Link href="/profile" className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
+                <Link href="/profile" onClick={() => setMobileOpen(false)} className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
                   👤 My Profile
                 </Link>
                 {user?.role === "admin" && (
-                  <Link href="/admin" className="flex items-center px-4 py-3 text-[13px] font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
+                  <Link href="/admin" onClick={() => setMobileOpen(false)} className="flex items-center px-4 py-3 text-[13px] font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
                     🔧 Admin Panel
                   </Link>
                 )}
@@ -493,10 +495,10 @@ export default function Navbar() {
                 </div>
               ) : (
                 <div className="flex gap-3">
-                  <Link href="/login" className="flex-1 py-3 text-center text-sm font-bold text-[#1e3a5f] border border-[#1e3a5f] rounded-xl hover:bg-blue-50">
+                  <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1 py-3 text-center text-sm font-bold text-[#1e3a5f] border border-[#1e3a5f] rounded-xl hover:bg-blue-50">
                     Sign In
                   </Link>
-                  <Link href="/register" className="flex-1 py-3 text-center text-sm font-bold text-white bg-[#1e3a5f] rounded-xl hover:bg-[#2e538a]">
+                  <Link href="/register" onClick={() => setMobileOpen(false)} className="flex-1 py-3 text-center text-sm font-bold text-white bg-[#1e3a5f] rounded-xl hover:bg-[#2e538a]">
                     Register
                   </Link>
                 </div>
