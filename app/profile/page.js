@@ -69,7 +69,8 @@ function ProfileContent() {
           city: profData.city || "",
           state: profData.state || "",
           pincode: profData.pincode || "",
-          bio: profData.bio || ""
+          bio: profData.bio || "",
+          payment_methods: profData.payment_methods || { upi: "", bank_name: "", account_number: "", ifsc: "" }
         });
       } catch (err) {
         console.error("Failed to fetch profile data:", err);
@@ -101,7 +102,8 @@ function ProfileContent() {
     city: "",
     state: "",
     pincode: "",
-    bio: ""
+    bio: "",
+    payment_methods: { upi: "", bank_name: "", account_number: "", ifsc: "" }
   });
 
   const showToast = (message, type = 'success') => {
@@ -122,7 +124,8 @@ function ProfileContent() {
         city: res.user.city || "",
         state: res.user.state || "",
         pincode: res.user.pincode || "",
-        bio: res.user.bio || ""
+        bio: res.user.bio || "",
+        payment_methods: res.user.payment_methods || { upi: "", bank_name: "", account_number: "", ifsc: "" }
       });
       showToast(updatedData ? "Configuration synchronized." : "Identity updated.");
       return true;
@@ -231,6 +234,24 @@ function ProfileContent() {
       }
     } catch (err) {
       showToast("Error confirming receipt.", "error");
+    }
+  };
+
+  const handleMarkAsPaid = async (dealId) => {
+    const method = window.prompt("How did you pay? (e.g. UPI, Bank Transfer)");
+    if (!method) return;
+    
+    try {
+      const { markOrderPaid } = await import("../../services/api");
+      const res = await markOrderPaid(dealId, user.id, method);
+      if (res.message) {
+        showToast("Payment marked as SENT. Seller has been notified.");
+        loadActivity();
+      } else {
+        showToast(res.message || "Action failed", "error");
+      }
+    } catch (err) {
+      showToast("Error updating payment status.", "error");
     }
   };
 
@@ -499,6 +520,51 @@ function ProfileContent() {
                              placeholder="Briefly describe your watch collection interest..."
                           />
                       </div>
+
+                      <div className="md:col-span-2 mt-12 mb-6 pt-12 border-t border-gray-100">
+                          <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Payment Information</h2>
+                          <p className="text-xs text-gray-400 mt-2 font-medium">Add payment methods to receive funds from buyers after a successful deal.</p>
+                      </div>
+
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">UPI ID (e.g. name@bank)</label>
+                          <input 
+                             type="text" value={profileForm.payment_methods?.upi || ""}
+                             onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, upi: e.target.value }})}
+                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
+                             placeholder="Enter UPI ID"
+                          />
+                      </div>
+
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Bank Name</label>
+                          <input 
+                             type="text" value={profileForm.payment_methods?.bank_name || ""}
+                             onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, bank_name: e.target.value }})}
+                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             placeholder="e.g. HDFC Bank"
+                          />
+                      </div>
+
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Account Number</label>
+                          <input 
+                             type="text" value={profileForm.payment_methods?.account_number || ""}
+                             onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, account_number: e.target.value }})}
+                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
+                             placeholder="Enter Bank Account Number"
+                          />
+                      </div>
+
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">IFSC Code</label>
+                          <input 
+                             type="text" value={profileForm.payment_methods?.ifsc || ""}
+                             onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, ifsc: e.target.value }})}
+                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             placeholder="Enter Bank IFSC Code"
+                          />
+                      </div>
                       <div className="md:col-span-2 pt-8">
                           <button 
                              type="submit"
@@ -617,15 +683,50 @@ function ProfileContent() {
                                        deal.status === 'DELIVERED' ? 'bg-emerald-500 text-white' : 
                                        'bg-blue-500 text-white'
                                      }`}>
-                                        {deal.status === 'ACCEPTED' ? 'Awaiting Shipment' : deal.status}
+                                        {deal.status === 'ACCEPTED' ? (deal.payment_status === 'PAID' ? 'Payment Sent' : 'Payment Required') : deal.status}
                                      </span>
                                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Deal #D-{deal.id}</span>
+                                     {deal.payment_status === 'PAID' && (
+                                       <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest ml-auto">PAID via {deal.payment_method}</span>
+                                     )}
                                   </div>
                                   <h4 className="text-sm font-bold uppercase tracking-tight mb-2">{deal.title}</h4>
                                   <div className="flex items-center gap-4">
                                      <span className="text-lg font-black text-gray-950">₹{parseFloat(deal.amount).toLocaleString()}</span>
                                      <p className="text-[10px] font-medium text-gray-400 uppercase">Seller: {deal.seller_name}</p>
                                   </div>
+
+                                  {deal.payment_status === 'PENDING' && deal.status === 'ACCEPTED' && deal.seller_payment_info && (
+                                     <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                        <p className="text-[9px] font-bold text-gray-950 uppercase tracking-widest mb-3">Seller Payment Details:</p>
+                                        <div className="grid grid-cols-2 gap-4">
+                                           {deal.seller_payment_info.upi && (
+                                              <div>
+                                                 <p className="text-[8px] font-black text-gray-400 uppercase">UPI ID</p>
+                                                 <p className="text-[10px] font-bold">{deal.seller_payment_info.upi}</p>
+                                              </div>
+                                           )}
+                                           {deal.seller_payment_info.bank_name && (
+                                              <div>
+                                                 <p className="text-[8px] font-black text-gray-400 uppercase">Bank</p>
+                                                 <p className="text-[10px] font-bold">{deal.seller_payment_info.bank_name}</p>
+                                              </div>
+                                           )}
+                                           {deal.seller_payment_info.account_number && (
+                                              <div>
+                                                 <p className="text-[8px] font-black text-gray-400 uppercase">A/C No</p>
+                                                 <p className="text-[10px] font-bold">{deal.seller_payment_info.account_number}</p>
+                                              </div>
+                                           )}
+                                           {deal.seller_payment_info.ifsc && (
+                                              <div>
+                                                 <p className="text-[8px] font-black text-gray-400 uppercase">IFSC</p>
+                                                 <p className="text-[10px] font-bold uppercase">{deal.seller_payment_info.ifsc}</p>
+                                              </div>
+                                           )}
+                                        </div>
+                                     </div>
+                                  )}
                                </div>
 
                                <div className="flex flex-col gap-3 min-w-[180px]">
@@ -656,12 +757,22 @@ function ProfileContent() {
                                    )}
                                   
                                   {deal.status === 'ACCEPTED' && !deal.shipped_at && (
-                                     <button 
-                                        onClick={() => handleCancelDeal(deal.id)}
-                                        className="w-full py-2 border border-gray-100 text-gray-400 rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-gray-50 transition"
-                                     >
-                                        Cancel Order
-                                     </button>
+                                     <div className="flex flex-col gap-2">
+                                        {deal.payment_status === 'PENDING' && (
+                                           <button 
+                                              onClick={() => handleMarkAsPaid(deal.id)}
+                                              className="w-full py-3 bg-black text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 shadow-lg shadow-gray-100 transition"
+                                           >
+                                              I Have Paid
+                                           </button>
+                                        )}
+                                        <button 
+                                           onClick={() => handleCancelDeal(deal.id)}
+                                           className="w-full py-2 border border-gray-100 text-gray-400 rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-gray-50 transition"
+                                        >
+                                           Cancel Order
+                                        </button>
+                                     </div>
                                   )}
 
                                   {['ACCEPTED', 'SHIPPED', 'DELIVERED'].includes(deal.status) && (
@@ -756,11 +867,17 @@ function ProfileContent() {
                                              deal.status === 'RETURNED' ? 'bg-gray-500 text-white' :
                                              'bg-blue-50 text-blue-600'
                                            }`}>
-                                              {deal.status === 'ACCEPTED' ? 'Action Required: Ship' : deal.status}
+                                              {deal.status === 'ACCEPTED' ? (deal.payment_status === 'PAID' ? 'Payment Received' : 'Awaiting Payment') : deal.status}
                                            </span>
+                                           {deal.payment_status === 'PAID' && (
+                                              <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest">PAID via {deal.payment_method}</span>
+                                           )}
                                         </div>
                                         <h4 className="text-sm font-bold uppercase tracking-tight mb-2">{deal.title}</h4>
-                                        <p className="text-[11px] font-bold text-gray-950">Sold for: ₹{parseFloat(deal.amount).toLocaleString()}</p>
+                                        <div className="flex items-center justify-between pr-8">
+                                           <p className="text-[11px] font-bold text-gray-950">Sold for: ₹{parseFloat(deal.amount).toLocaleString()}</p>
+                                           <p className="text-[9px] font-medium text-gray-400 uppercase">Buyer: {deal.buyer_name}</p>
+                                        </div>
                                      </div>
 
                                      <div className="flex flex-col gap-3 min-w-[200px]">

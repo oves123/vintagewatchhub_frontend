@@ -231,6 +231,19 @@ export const createReview = async (reviewData) => {
 };
 
 // Orders - Sale Confirmation Flow (7-Stage State Machine)
+export const markOrderPaid = async (dealId, buyerId, paymentMethod) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/orders/${dealId}/mark-paid`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify({ buyer_id: buyerId, payment_method: paymentMethod })
+  });
+  return res.json();
+};
+
 export const markOrderShipped = async (dealId, sellerId, trackingData) => {
   const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/orders/${dealId}/shipped`, {

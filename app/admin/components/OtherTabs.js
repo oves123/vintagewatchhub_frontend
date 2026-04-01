@@ -33,7 +33,7 @@ export function OrdersTab({ orders, tabLoading, onResolve }) {
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead><tr className="border-b border-gray-100 bg-gray-50">
-                  {["Deal ID","Product","Buyer","Seller","Amount","Status","Audit","Actions"].map(h=>(
+                  {["Deal ID","Product","Buyer","Seller","Amount","Payment","Status","Audit","Actions"].map(h=>(
                     <th key={h} className="text-left px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">{h}</th>
                   ))}
                 </tr></thead>
@@ -46,6 +46,14 @@ export function OrdersTab({ orders, tabLoading, onResolve }) {
                       <td className="px-4 py-3 text-[11px] font-medium text-gray-600">{o.buyer_name||"—"}</td>
                       <td className="px-4 py-3 text-[11px] font-medium text-gray-600">{o.seller_name||"—"}</td>
                       <td className="px-4 py-3 text-[12px] font-black text-gray-900">₹{parseFloat(o.total_amount||o.amount||0).toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                         <div className="flex flex-col gap-1">
+                            <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-tighter ${o.payment_status==='PAID'?'bg-emerald-50 text-emerald-600 border border-emerald-100':'bg-amber-50 text-amber-600 border border-amber-100'}`}>
+                               {o.payment_status||'PENDING'}
+                            </span>
+                            {o.payment_method && <span className="text-[7px] font-bold text-gray-400 uppercase truncate">via {o.payment_method}</span>}
+                         </div>
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${
                           o.status==="CONFIRMED"?"bg-black text-white":
