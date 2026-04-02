@@ -6,17 +6,31 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState(null);
   const [notifyMsg, setNotifyMsg] = useState("");
-  const [sending, setSending] = useState(false);
 
   const getImg = (p) => {
     if (!p) return "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=400&auto=format&fit=crop";
     if (p.image) return `${API_BASE_URL}/uploads/${p.image}`;
     try {
       const imgs = Array.isArray(p.images) ? p.images : JSON.parse(p.images || "[]");
-      if (imgs[0]) return `${API_BASE_URL}/uploads/${imgs[0]}`;
+      const firstImg = imgs.find(f => !isVideo(f)) || imgs[0];
+      if (firstImg) return `${API_BASE_URL}/uploads/${firstImg}`;
     } catch {}
     return "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=400&auto=format&fit=crop";
+  };
+
+  const isVideo = (filename) => {
+    if (typeof filename !== 'string') return false;
+    const ext = filename.split('.').pop().toLowerCase();
+    return ['mp4', 'mov', 'avi', 'webm', 'mkv'].includes(ext);
+  };
+
+  const getMediaList = (p) => {
+    if (!p) return [];
+    try {
+      return Array.isArray(p.images) ? p.images : JSON.parse(p.images || "[]");
+    } catch { return []; }
   };
 
   const filtered = products.filter(p => {
@@ -99,8 +113,15 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                     <tr key={p.id} className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${p.status === "pending" ? "border-l-4 border-l-amber-400" : ""}`}>
                       <td className="px-4 py-4">
                         <button onClick={() => setSelectedProduct(p)} className="flex items-center gap-3 text-left group">
-                          <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0">
+                          <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0 relative">
                             <img src={getImg(p)} className="w-full h-full object-contain group-hover:scale-105 transition-transform" alt={p.title}/>
+                            {getMediaList(p).some(m => isVideo(m)) && (
+                              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                <div className="w-5 h-5 rounded-full bg-white/90 flex items-center justify-center shadow-sm">
+                                  <div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[6px] border-l-[#1e3a5f] border-b-[4px] border-b-transparent ml-0.5" />
+                                </div>
+                              </div>
+                            )}
                           </div>
                           <div>
                             <p className="text-[12px] font-black text-gray-900 group-hover:text-[#1e3a5f] transition-colors max-w-[160px] truncate">{p.title}</p>
@@ -199,13 +220,58 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
       {/* Product Detail Modal */}
       {selectedProduct && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-8">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedProduct(null)}/>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setSelectedProduct(null); setSelectedMedia(null); }}/>
           <div className="bg-white w-full max-w-5xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden relative z-10 flex flex-col md:flex-row">
-            {/* Image side */}
-            <div className="w-full md:w-80 bg-gray-50 p-8 flex flex-col items-center border-r border-gray-100 flex-shrink-0">
-              <div className="w-full aspect-square rounded-2xl bg-white border border-gray-100 overflow-hidden p-4 shadow-sm mb-5">
-                <img src={getImg(selectedProduct)} className="w-full h-full object-contain" alt={selectedProduct.title}/>
+            {/* Image/Media side */}
+            <div className="w-full md:w-[380px] bg-gray-50 p-6 flex flex-col items-center border-r border-gray-100 flex-shrink-0 overflow-y-auto">
+              <div className="w-full aspect-[4/5] rounded-2xl bg-white border border-gray-100 overflow-hidden shadow-sm mb-4 relative group">
+                {isVideo(selectedMedia || getMediaList(selectedProduct)[0]) ? (
+                  <video 
+                    key={selectedMedia || getMediaList(selectedProduct)[0]}
+                    controls 
+                    className="w-full h-full object-contain bg-black"
+                  >
+                    <source src={`${API_BASE_URL}/uploads/${selectedMedia || getMediaList(selectedProduct)[0]}`} />
+                  </video>
+                ) : (
+                  <img 
+                    src={selectedMedia ? `${API_BASE_URL}/uploads/${selectedMedia}` : getImg(selectedProduct)} 
+                    className="w-full h-full object-contain" 
+                    alt={selectedProduct.title}
+                  />
+                )}
+                
+                {/* Media Label Overlay */}
+                <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[8px] font-black text-white uppercase tracking-widest">
+                  {isVideo(selectedMedia || getMediaList(selectedProduct)[0]) ? 'VIDEO' : 'IMAGE'}
+                </div>
               </div>
+
+              {/* Media Gallery Thumbnails */}
+              <div className="grid grid-cols-4 gap-2 w-full mb-6">
+                {getMediaList(selectedProduct).map((m, idx) => (
+                  <button 
+                    key={idx} 
+                    onClick={() => setSelectedMedia(m)}
+                    className={`aspect-square rounded-lg border-2 overflow-hidden bg-white transition-all relative ${
+                      (selectedMedia === m || (!selectedMedia && idx === 0)) 
+                      ? "border-[#1e3a5f] scale-95 shadow-inner" 
+                      : "border-transparent hover:border-gray-200 grayscale-[0.5] hover:grayscale-0"
+                    }`}
+                  >
+                    {isVideo(m) ? (
+                      <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                        <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                           <div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[6px] border-l-white border-b-[4px] border-b-transparent ml-0.5" />
+                        </div>
+                      </div>
+                    ) : (
+                      <img src={`${API_BASE_URL}/uploads/${m}`} className="w-full h-full object-cover" />
+                    )}
+                  </button>
+                ))}
+              </div>
+
               <span className={`w-full text-center py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${statusColor(selectedProduct.status)}`}>{selectedProduct.status}</span>
               <p className="text-2xl font-black text-gray-900 mt-3">₹{parseFloat(selectedProduct.price||0).toLocaleString()}</p>
               <div className="mt-4 w-full space-y-2">

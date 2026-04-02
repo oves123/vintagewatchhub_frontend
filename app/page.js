@@ -27,8 +27,9 @@ function HomeContent() {
   const conditionParam = searchParams.get("condition");
   const formatParam = searchParams.get("format");
   const sortParam = searchParams.get("sort") || "";
+  const strapParam = searchParams.get("strap_type");
 
-  const isCatalogView = Boolean(search || category || brand || minPrice || maxPrice || conditionParam || formatParam || searchParams.get("catalog"));
+  const isCatalogView = Boolean(search || category || brand || minPrice || maxPrice || conditionParam || formatParam || strapParam || searchParams.get("catalog"));
 
   const [localMin, setLocalMin] = useState(minPrice || "");
   const [localMax, setLocalMax] = useState(maxPrice || "");
@@ -61,6 +62,7 @@ function HomeContent() {
     if (conditionParam) params.append("condition", conditionParam);
     if (formatParam) params.append("format", formatParam);
     if (sortParam) params.append("sort", sortParam);
+    if (strapParam) params.append("strap_type", strapParam);
 
     if (params.toString()) {
       url += `?${params.toString()}`;
@@ -146,7 +148,7 @@ function HomeContent() {
         console.error("Brands fetch error:", err);
         setBrands([]);
       });
-  }, [search, category, brand, minPrice, maxPrice, conditionParam, formatParam, sortParam]);
+  }, [search, category, brand, minPrice, maxPrice, conditionParam, formatParam, sortParam, strapParam]);
 
   return (
     <div className="bg-[#fafafa] min-h-screen flex flex-col">
@@ -335,6 +337,31 @@ function HomeContent() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                   </button>
                 </form>
+              </div>
+
+              {/* Strap Type Filter */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-widest text-[10px] text-gray-400">Strap Type</h3>
+                <ul className="space-y-3 text-[13px]">
+                  <li>
+                    <button
+                      onClick={() => updateFilters('strap_type', '')}
+                      className={`hover:text-blue-600 transition-colors text-left ${!strapParam ? "font-bold text-gray-900" : "text-gray-600"}`}
+                    >
+                      All Straps
+                    </button>
+                  </li>
+                  {['Metal', 'Leather', 'No Strap'].map(s => (
+                    <li key={s}>
+                      <button
+                        onClick={() => updateFilters('strap_type', s)}
+                        className={`hover:text-blue-600 transition-colors text-left ${strapParam === s ? "font-bold text-gray-900" : "text-gray-600"}`}
+                      >
+                        {s}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               </div>
