@@ -2,9 +2,10 @@
 
 import { useEffect, useState, Suspense } from "react";
 import Navbar from "../../components/Navbar";
-import { getUserProfile, updateUserProfile, getUserActivity, API_BASE_URL, API_URL, getSellerReviews, createReview, markOrderShipped, markOrderDelivered, confirmOrderReceived, confirmOrderSale, cancelDeal, disputeDeal, getUserDeals } from "../../services/api";
+import { getUserProfile, updateUserProfile, getUserActivity, API_BASE_URL, API_URL, getSellerReviews, createReview, markOrderShipped, markOrderDelivered, confirmOrderReceived, confirmOrderSale, cancelDeal, disputeDeal, getUserDeals, markOrderPaid } from "../../services/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { X, Camera, CheckCircle, FileText, ExternalLink, Send } from "lucide-react";
 
 function ProfileContent() {
   const [user, setUser] = useState(null);
@@ -16,14 +17,18 @@ function ProfileContent() {
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [buyingSubTab, setBuyingSubTab] = useState("active"); // active, shipped, delivered, completed
-  const [sellingSubTab, setSellingSubTab] = useState("offers"); // offers, ongoing, sold
+  const [sellingSubTab, setSellingSubTab] = useState("ongoing"); // ongoing, sold, inventory
   const [receivedReviews, setReceivedReviews] = useState({ reviews: [], stats: { average_rating: 0, review_count: 0 } });
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState({ order_id: null, seller_id: null, rating: 5, comment: "", product_title: "", product_id: null });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [trackingForm, setTrackingForm] = useState({ order_id: null, tracking_number: "", courier_name: "" });
   const [isSubmittingTracking, setIsSubmittingTracking] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({ dealId: null, method: "UPI", receipt: null });
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [toast, setToast] = useState(null); 
+  const [counterForm, setCounterForm] = useState({ offerId: null, amount: "" });
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -150,7 +155,7 @@ function ProfileContent() {
         courier_name: trackingForm.courier_name
       });
       if (res.message) {
-        showToast("Order marked as shipped!");
+        showToast("Shipping updated successfully!");
         setTrackingForm({ order_id: null, tracking_number: "", courier_name: "" });
         loadActivity();
       } else {
@@ -237,21 +242,26 @@ function ProfileContent() {
     }
   };
 
-  const handleMarkAsPaid = async (dealId) => {
-    const method = window.prompt("How did you pay? (e.g. UPI, Bank Transfer)");
-    if (!method) return;
+  const handleMarkAsPaid = async () => {
+    if (!paymentForm.method) {
+      showToast("Please specify payment method.", "error");
+      return;
+    }
     
+    setIsSubmittingPayment(true);
     try {
-      const { markOrderPaid } = await import("../../services/api");
-      const res = await markOrderPaid(dealId, user.id, method);
+      const res = await markOrderPaid(paymentForm.dealId, user.id, paymentForm.method, paymentForm.receipt);
       if (res.message) {
-        showToast("Payment marked as SENT. Seller has been notified.");
+        showToast("Payment marks as SENT. Seller has been notified.");
+        setIsPaymentModalOpen(false);
         loadActivity();
       } else {
-        showToast(res.message || "Action failed", "error");
+        showToast(res.message || "Failed to mark as paid.", "error");
       }
     } catch (err) {
       showToast("Error updating payment status.", "error");
+    } finally {
+      setIsSubmittingPayment(false);
     }
   };
 
@@ -599,12 +609,12 @@ function ProfileContent() {
                                 (Array.isArray(offers) && offers.filter(o => o.buyer_id === user.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length > 0) && 
                                 `(${offers.filter(o => o.buyer_id === user.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length})`
                              ) :
-                             (Array.isArray(deals) && deals.filter(d => d.buyer_id === user.id && (
+                             (Array.isArray(deals) && deals.filter(d => d.buyer_id == user.id && (
                                sub === 'active' ? d.status === 'ACCEPTED' : 
                                sub === 'shipped' ? d.status === 'SHIPPED' : 
                                sub === 'delivered' ? d.status === 'DELIVERED' : 
                                d.status === 'CONFIRMED'
-                             )).length > 0 && `(${deals.filter(d => d.buyer_id === user.id && (
+                             )).length > 0 && `(${deals.filter(d => d.buyer_id == user.id && (
                                sub === 'active' ? d.status === 'ACCEPTED' : 
                                sub === 'shipped' ? d.status === 'SHIPPED' : 
                                sub === 'delivered' ? d.status === 'DELIVERED' : 
@@ -637,19 +647,27 @@ function ProfileContent() {
                                         </div>
                                      </div>
                                   </div>
-                                  <div className="flex justify-between items-end">
+                                   <div className="flex justify-between items-end">
                                      <div>
-                                        <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Your bid</p>
-                                        <p className="text-md font-black">₹{parseFloat(offer.amount).toLocaleString()}</p>
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">{offer.status === 'countered' ? 'Seller Counter Price' : 'Your bid'}</p>
+                                        <p className={`text-md font-black ${offer.status === 'countered' ? 'text-blue-600' : 'text-gray-950'}`}>
+                                           ₹{parseFloat(offer.status === 'countered' ? offer.counter_amount : offer.amount).toLocaleString()}
+                                        </p>
                                      </div>
-                                     <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
-                                       offer.status === 'pending' ? 'bg-amber-50 text-amber-600' : 
-                                       offer.status === 'countered' ? 'bg-blue-50 text-blue-600' : 
-                                       offer.status === 'declined' ? 'bg-rose-50 text-rose-600' : 'bg-gray-100 text-gray-400'
-                                     }`}>
-                                        {offer.status}
-                                     </span>
+                                     <div className="flex flex-col items-end gap-2">
+                                        {offer.chat_id ? (
+                                           <button 
+                                              onClick={() => router.push(`/messages?chat=${offer.chat_id}`)}
+                                              className="mt-2 px-6 py-2 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full hover:bg-blue-600 transition shadow-lg shadow-gray-100 flex items-center gap-2"
+                                           >
+                                              <Send className="w-3 h-3" /> Chat & Negotiate
+                                           </button>
+                                        ) : (
+                                           <p className="mt-2 text-[8px] font-bold text-gray-400 uppercase italic">Navigate to chat to respond</p>
+                                        )}
+                                     </div>
                                   </div>
+
                                </div>
                              ))
                            ) : (
@@ -659,13 +677,13 @@ function ProfileContent() {
                            )}
                         </div>
                       ) : (
-                        deals.filter(d => d.buyer_id === user.id && (
+                        deals.filter(d => d.buyer_id == user.id && (
                           buyingSubTab === 'active' ? d.status === 'ACCEPTED' : 
                           buyingSubTab === 'shipped' ? d.status === 'SHIPPED' : 
                           buyingSubTab === 'delivered' ? d.status === 'DELIVERED' : 
                           d.status === 'CONFIRMED'
                         )).length > 0 ? (
-                          deals.filter(d => d.buyer_id === user.id && (
+                          deals.filter(d => d.buyer_id == user.id && (
                             buyingSubTab === 'active' ? d.status === 'ACCEPTED' : 
                             buyingSubTab === 'shipped' ? d.status === 'SHIPPED' : 
                             buyingSubTab === 'delivered' ? d.status === 'DELIVERED' : 
@@ -760,7 +778,7 @@ function ProfileContent() {
                                      <div className="flex flex-col gap-2">
                                         {deal.payment_status === 'PENDING' && (
                                            <button 
-                                              onClick={() => handleMarkAsPaid(deal.id)}
+                                              onClick={() =>  { setPaymentForm({ ...paymentForm, dealId: deal.id }); setIsPaymentModalOpen(true); }}
                                               className="w-full py-3 bg-black text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 shadow-lg shadow-gray-100 transition"
                                            >
                                               I Have Paid
@@ -831,16 +849,15 @@ function ProfileContent() {
 
                      {/* Sub Tabs */}
                      <div className="flex gap-8 border-b border-gray-100 mb-10 overflow-x-auto no-scrollbar">
-                        {['offers', 'ongoing', 'sold', 'inventory'].map(sub => (
+                        {['ongoing', 'sold', 'inventory'].map(sub => (
                           <button 
                              key={sub}
                              onClick={() => setSellingSubTab(sub)}
                              className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${sellingSubTab === sub ? 'text-blue-600 border-blue-600' : 'text-gray-300 border-transparent hover:text-gray-900'}`}
                           >
                              {sub} {
-                               sub === 'offers' ? (offers.filter(o => o.seller_id === user.id && ['pending', 'countered'].includes(o.status)).length > 0 && `(${offers.filter(o => o.seller_id === user.id && ['pending', 'countered'].includes(o.status)).length})`) : 
-                               sub === 'ongoing' ? (deals.filter(d => d.seller_id === user.id && ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status)).length > 0 && `(${deals.filter(d => d.seller_id === user.id && ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status)).length})`) : 
-                               sub === 'sold' ? (deals.filter(d => d.seller_id === user.id && d.status === 'CONFIRMED').length > 0 && `(${deals.filter(d => d.seller_id === user.id && d.status === 'CONFIRMED').length})`) :
+                               sub === 'ongoing' ? (deals.filter(d => d.seller_id == user.id && ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status)).length > 0 && `(${deals.filter(d => d.seller_id == user.id && ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status)).length})`) : 
+                               sub === 'sold' ? (deals.filter(d => d.seller_id == user.id && d.status === 'CONFIRMED').length > 0 && `(${deals.filter(d => d.seller_id == user.id && d.status === 'CONFIRMED').length})`) :
                                (activity.listings?.length > 0 && `(${activity.listings.length})`)
                              }
                           </button>
@@ -851,8 +868,8 @@ function ProfileContent() {
                         {/* Deals Dashboard */}
                         {(sellingSubTab === 'ongoing' || sellingSubTab === 'sold') && (
                            <div className="space-y-4">
-                              {deals.filter(d => d.seller_id === user.id && (sellingSubTab === 'ongoing' ? ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status) : d.status === 'CONFIRMED')).length > 0 ? (
-                                deals.filter(d => d.seller_id === user.id && (sellingSubTab === 'ongoing' ? ['ACCEPTED', 'SHIPPED', 'DELIVERED'].includes(d.status) : d.status === 'CONFIRMED')).map(deal => (
+                              {deals.filter(d => d.seller_id == user.id && (sellingSubTab === 'ongoing' ? ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status) : d.status === 'CONFIRMED')).length > 0 ? (
+                                deals.filter(d => d.seller_id == user.id && (sellingSubTab === 'ongoing' ? ['ACCEPTED', 'SHIPPED', 'DELIVERED'].includes(d.status) : d.status === 'CONFIRMED')).map(deal => (
                                   <div key={deal.id} className="border border-gray-100 rounded-2xl p-6 bg-white hover:shadow-xl transition-all flex flex-col md:flex-row gap-8 items-center">
                                      <div className="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
                                         {deal.images?.[0] ? <img src={`${API_BASE_URL}/uploads/${deal.images[0]}`} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
@@ -867,10 +884,22 @@ function ProfileContent() {
                                              deal.status === 'RETURNED' ? 'bg-gray-500 text-white' :
                                              'bg-blue-50 text-blue-600'
                                            }`}>
-                                              {deal.status === 'ACCEPTED' ? (deal.payment_status === 'PAID' ? 'Payment Received' : 'Awaiting Payment') : deal.status}
+                                              {deal.status === 'ACCEPTED' ? (deal.payment_status === 'PAID' ? 'Awaiting Shipment' : 'Awaiting Payment') : deal.status}
                                            </span>
                                            {deal.payment_status === 'PAID' && (
-                                              <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest">PAID via {deal.payment_method}</span>
+                                              <div className="flex flex-col gap-1">
+                                                  <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest">PAID via {deal.payment_method}</span>
+                                                  {deal.payment_receipt && (
+                                                     <a 
+                                                        href={`${API_BASE_URL}/uploads/${deal.payment_receipt}`} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="text-[8px] font-bold text-blue-600 hover:underline flex items-center gap-1 uppercase tracking-tight"
+                                                     >
+                                                        <FileText className="w-2.5 h-2.5" /> View Receipt
+                                                     </a>
+                                                  )}
+                                               </div>
                                            )}
                                         </div>
                                         <h4 className="text-sm font-bold uppercase tracking-tight mb-2">{deal.title}</h4>
@@ -881,36 +910,39 @@ function ProfileContent() {
                                      </div>
 
                                      <div className="flex flex-col gap-3 min-w-[200px]">
-                                        {deal.status === 'ACCEPTED' && (
+                                        {(deal.status === 'ACCEPTED' || deal.status === 'SHIPPED') && (
                                           <div className="space-y-2">
                                             <input 
                                               type="text" 
                                               placeholder="Courier (e.g. DHL)"
-                                              value={trackingForm.order_id === deal.id ? trackingForm.courier_name : ""}
-                                              onChange={(e) => setTrackingForm({...trackingForm, order_id: deal.id, courier_name: e.target.value})}
+                                              value={trackingForm.order_id == deal.id ? trackingForm.courier_name : (deal.courier_name || "")}
+                                              onChange={(e) => setTrackingForm({...trackingForm, order_id: deal.id, courier_name: e.target.value, tracking_number: trackingForm.order_id == deal.id ? trackingForm.tracking_number : (deal.tracking_number || "")})}
                                               className="text-[10px] font-bold border border-gray-100 rounded-lg px-3 py-2 w-full outline-none focus:border-blue-500"
                                             />
                                             <div className="flex gap-2">
                                               <input 
                                                 type="text" 
                                                 placeholder="Tracking #"
-                                                value={trackingForm.order_id === deal.id ? trackingForm.tracking_number : ""}
-                                                onChange={(e) => setTrackingForm({...trackingForm, order_id: deal.id, tracking_number: e.target.value})}
+                                                value={trackingForm.order_id == deal.id ? trackingForm.tracking_number : (deal.tracking_number || "")}
+                                                onChange={(e) => setTrackingForm({...trackingForm, order_id: deal.id, tracking_number: e.target.value, courier_name: trackingForm.order_id == deal.id ? trackingForm.courier_name : (deal.courier_name || "")})}
                                                 className="text-[10px] font-bold border border-gray-100 rounded-lg px-3 py-2 w-full outline-none focus:border-blue-500"
                                               />
                                               <button 
                                                 onClick={() => handleSaveTracking(deal.id)}
-                                                className="bg-black text-white px-3 py-2 rounded-lg hover:bg-gray-800 text-[9px] font-black uppercase tracking-widest"
+                                                disabled={deal.payment_status === 'PENDING'}
+                                                className="bg-black text-white px-3 py-2 rounded-lg hover:bg-gray-800 text-[9px] font-black uppercase tracking-widest disabled:bg-gray-100 disabled:text-gray-300 transition-colors"
                                               >
-                                                Ship
+                                                {deal.payment_status === 'PENDING' ? 'Pay First' : (deal.status === 'SHIPPED' ? 'Update' : 'Ship')}
                                               </button>
                                             </div>
-                                            <button 
-                                               onClick={() => handleCancelDeal(deal.id)}
-                                               className="w-full py-1 text-[8px] font-bold text-gray-400 uppercase tracking-widest hover:underline"
-                                            >
-                                               Cancel Deal
-                                            </button>
+                                            {deal.status === 'ACCEPTED' && (
+                                              <button 
+                                                 onClick={() => handleCancelDeal(deal.id)}
+                                                 className="w-full py-1 text-[8px] font-bold text-gray-400 uppercase tracking-widest hover:underline"
+                                              >
+                                                 Cancel Deal
+                                              </button>
+                                            )}
                                           </div>
                                         )}
 
@@ -955,61 +987,7 @@ function ProfileContent() {
                            </div>
                         )}
 
-                        {/* Offers Tab */}
-                        {sellingSubTab === 'offers' && (
-                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                              {offers.filter(o => o.seller_id === user.id && ['pending', 'countered'].includes(o.status)).length > 0 ? (
-                                offers.filter(o => o.seller_id === user.id && ['pending', 'countered'].includes(o.status)).map(offer => (
-                                  <div key={offer.id} className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-xl transition-all">
-                                     <div className="flex items-center gap-4 mb-4">
-                                        <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0">
-                                           {offer.images?.[0] ? <img src={`${API_BASE_URL}/uploads/${offer.images[0]}`} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="text-[13px] font-bold uppercase tracking-tight truncate">{offer.title}</h4>
-                                            <div className="flex items-center gap-2">
-                                              <p className="text-[9px] font-bold text-gray-400 uppercase truncate">From: {offer.buyer_name}</p>
-                                              {offer.expires_at && (
-                                                <span className="text-[7px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded uppercase">
-                                                  Expires: {getRemainingTime(offer.expires_at)}
-                                                </span>
-                                              )}
-                                            </div>
-                                         </div>
-                                     </div>
-                                     <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl mb-4">
-                                        <div>
-                                           <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Offer Price</p>
-                                           <p className="text-lg font-black text-gray-950">₹{parseFloat(offer.amount).toLocaleString()}</p>
-                                        </div>
-                                        <div className="text-right">
-                                           <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Listed at</p>
-                                           <p className="text-xs font-bold text-gray-400">₹{parseFloat(offer.listed_price).toLocaleString()}</p>
-                                        </div>
-                                     </div>
-                                     <div className="grid grid-cols-2 gap-3">
-                                        <button 
-                                           onClick={() => handleOfferResponse(offer.id, 'accepted')}
-                                           className="py-3 bg-blue-600 text-white rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 transition"
-                                        >
-                                           Accept Offer
-                                        </button>
-                                        <button 
-                                           onClick={() => handleOfferResponse(offer.id, 'declined')}
-                                           className="py-3 border border-gray-100 text-gray-400 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-gray-50 transition"
-                                        >
-                                           Decline
-                                        </button>
-                                     </div>
-                                  </div>
-                                ))
-                              ) : (
-                                <div className="col-span-full py-20 text-center border border-dashed border-gray-100 rounded-3xl">
-                                   <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No pending offers received</p>
-                                </div>
-                              )}
-                           </div>
-                        )}
+
 
                         {/* Inventory Tab */}
                         {sellingSubTab === 'inventory' && (
@@ -1176,6 +1154,87 @@ function ProfileContent() {
                     >
                        {isSubmittingReview ? 'Logging...' : 'Submit Records'}
                     </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+      {/* Payment Confirmation Modal */}
+      {isPaymentModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-6">
+           <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="p-10">
+                 <div className="flex justify-between items-center mb-8">
+                    <div>
+                      <h3 className="text-xl font-bold uppercase tracking-tight">Confirm Payment Submission</h3>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Uploading receipt helps verify your acquisition records faster.</p>
+                    </div>
+                    <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 hover:bg-gray-50 rounded-full transition-colors"><X className="w-5 h-5 text-gray-400" /></button>
+                 </div>
+
+                 <div className="space-y-8">
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Payment Channel</label>
+                       <select 
+                          value={paymentForm.method}
+                          onChange={(e) => setPaymentForm({...paymentForm, method: e.target.value})}
+                          className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl outline-none focus:border-blue-600 focus:bg-white transition-all text-sm font-bold"
+                       >
+                          <option value="UPI">UPI Transfer</option>
+                          <option value="Bank Transfer">Direct Bank Transfer</option>
+                          <option value="Cash" hidden>Cash / Other</option>
+                       </select>
+                    </div>
+
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Transaction Artifact (Screenshot/Receipt)</label>
+                       <div className="relative group">
+                          <input 
+                              type="file" 
+                              accept="image/*"
+                              onChange={(e) => setPaymentForm({...paymentForm, receipt: e.target.files[0]})}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          />
+                          <div className="border-2 border-dashed border-gray-100 rounded-2xl p-8 text-center group-hover:border-blue-200 transition-colors">
+                             {paymentForm.receipt ? (
+                               <div className="flex items-center justify-center gap-3">
+                                  <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
+                                     <CheckCircle className="w-5 h-5 text-emerald-500" />
+                                  </div>
+                                  <span className="text-xs font-bold text-gray-900 truncate max-w-[200px]">{paymentForm.receipt.name}</span>
+                               </div>
+                             ) : (
+                               <>
+                                 <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                                    <Camera className="w-6 h-6 text-gray-300" />
+                                 </div>
+                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Click to upload transfer confirmation</p>
+                               </>
+                             )}
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-4">
+                       <button 
+                          onClick={() => setIsPaymentModalOpen(false)}
+                          className="py-4 border border-gray-100 rounded-xl text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-all"
+                       >
+                          Abort
+                       </button>
+                       <button 
+                          onClick={handleMarkAsPaid}
+                          disabled={isSubmittingPayment}
+                          className="py-4 bg-black text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                       >
+                          {isSubmittingPayment ? (
+                            <>
+                              <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></div>
+                              <span>Authenticating...</span>
+                            </>
+                          ) : 'Authorize Payment Mark'}
+                       </button>
+                    </div>
                  </div>
               </div>
            </div>

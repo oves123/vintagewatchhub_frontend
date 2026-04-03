@@ -19,6 +19,9 @@ import {
   confirmOrderReceived,
   confirmOrderSale,
   getUserDeals,
+  createOffer,
+  respondToOffer,
+  updateMessageStatus,
   API_BASE_URL 
 } from "../../services/api";
 import { CheckCircle, Truck, Info, AlertCircle, Package, Clock } from "lucide-react";
@@ -48,6 +51,7 @@ function MessagesContent() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [showDealModal, setShowDealModal] = useState(false);
   const [finalPrice, setFinalPrice] = useState("");
+  const [offerCounterForm, setOfferCounterForm] = useState({ offerId: null, amount: "" });
   const [currentDeal, setCurrentDeal] = useState(null);
   const [trackingInfo, setTrackingInfo] = useState({ courier: "", number: "" });
   const fileInputRef = useRef(null);
@@ -235,10 +239,60 @@ function MessagesContent() {
     }
   };
 
-  const handleMakeOffer = () => {
-    const amount = prompt("Enter your offer amount ($):");
+  const handleMakeOffer = async () => {
+    const amount = prompt("Enter your offer amount (₹):");
     if (amount && !isNaN(amount)) {
-      sendQuickMessage(`OFFER: $${amount}`, 'offer', { amount: parseFloat(amount), status: 'pending' });
+      try {
+        const res = await createOffer({
+          product_id: activeChat.product_id,
+          buyer_id: user.id,
+          seller_id: activeChat.buyer_id === user.id ? activeChat.seller_id : activeChat.buyer_id,
+          amount: parseFloat(amount),
+          message: `I'd like to offer ₹${amount}`
+        });
+
+        if (res.offer) {
+          sendQuickMessage(`OFFER: ₹${amount}`, 'offer', { amount: parseFloat(amount), status: 'pending', offer_id: res.offer.id });
+          showToast("Offer sent successfully!");
+        } else {
+          showToast(res.message || "Failed to make offer", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Error sending offer", "error");
+      }
+    }
+  };
+
+  const handleOfferResponseInChat = async (offerId, status, messageId, counterAmount = null) => {
+    try {
+      const res = await respondToOffer(offerId, status, counterAmount);
+      if (res.offer || res.message) {
+        if (messageId) {
+          await updateMessageStatus(messageId, status);
+          setMessages(prev => prev.map(m => 
+            m.id === messageId 
+              ? { ...m, metadata: { ...m.metadata, status, counter_amount: counterAmount } }
+              : m
+          ));
+        }
+
+        // If it's a counter, send a text message to notify the buyer/seller
+        if (status === 'countered') {
+           await sendQuickMessage(`COUNTER OFFER: ₹${parseFloat(counterAmount).toLocaleString()}`, 'text');
+        } else {
+           await sendQuickMessage(`Offer ${status.toUpperCase()}!`, 'text');
+        }
+
+        showToast(`Offer ${status} successfully.`);
+        if (status === 'accepted') loadActiveDeal();
+        loadMessages(activeChat.id); // Refresh messages to show latest status
+      } else {
+        showToast(res.message || "Failed to respond", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error responding to offer", "error");
     }
   };
 
@@ -418,7 +472,7 @@ function MessagesContent() {
                          <div className="flex items-center gap-1 mt-0.5 overflow-hidden">
                             <span className="hidden sm:inline text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-tight">{labels.chat_discussing_prefix || "Discussing:"}</span>
                             <Link href={`/products/${activeChat.product_id}`} className="text-[10px] md:text-[11px] font-black text-blue-600 uppercase tracking-tight hover:underline cursor-pointer truncate max-w-[100px] sm:max-w-none">
-                               {activeChat.product_title}
+                               {activeChat.product_title} - ₹{parseFloat(activeChat.product_price || 0).toLocaleString()}
                             </Link>
                          </div>
                       </div>
@@ -437,13 +491,15 @@ function MessagesContent() {
                                    <span className="sm:hidden">Confirm</span>
                                 </button>
                               )}
-                              <button 
-                                onClick={handleMakeOffer}
-                                className="bg-black text-white px-2.5 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-gray-200"
-                              >
-                                 <span className="hidden sm:inline">{labels.chat_make_offer_btn || "Make Offer"}</span>
-                                 <span className="sm:hidden">Offer</span>
-                              </button>
+                              {activeChat.buyer_id === user.id && (
+                                <button 
+                                  onClick={handleMakeOffer}
+                                  className="bg-black text-white px-2.5 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-gray-200"
+                                >
+                                   <span className="hidden sm:inline">{labels.chat_make_offer_btn || "Make Offer"}</span>
+                                   <span className="sm:hidden">Offer</span>
+                                </button>
+                              )}
                             </div>
                           )}
                           <button className="p-1 text-gray-400 hover:text-gray-900 transition-colors">
@@ -452,61 +508,6 @@ function MessagesContent() {
                        </div>
                 </header>
 
-                {/* DEAL STATUS BAR */}
-                {currentDeal && (
-                  <div className={`px-6 py-4 border-b flex items-center justify-between gap-4 animate-in slide-in-from-top duration-500 ${
-                    currentDeal.status === 'ACCEPTED' ? 'bg-blue-50/50 border-blue-100' : 
-                    currentDeal.status === 'SHIPPED' ? 'bg-amber-50/50 border-amber-100' :
-                    'bg-emerald-50/50 border-emerald-100'
-                  }`}>
-                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          currentDeal.status === 'ACCEPTED' ? 'bg-blue-100 text-blue-600' : 
-                          currentDeal.status === 'SHIPPED' ? 'bg-amber-100 text-amber-600' :
-                          'bg-emerald-100 text-emerald-600'
-                        }`}>
-                           {currentDeal.status === 'ACCEPTED' ? <Clock className="w-5 h-5" /> : 
-                            currentDeal.status === 'SHIPPED' ? <Truck className="w-5 h-5" /> :
-                            <CheckCircle className="w-5 h-5" />}
-                        </div>
-                        <div>
-                           <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Order Status</p>
-                           <p className="text-[14px] font-bold text-gray-900">
-                              {currentDeal.status === 'ACCEPTED' ? "Awaiting Shipment" : 
-                               currentDeal.status === 'SHIPPED' ? "Item on its Way" :
-                               currentDeal.status}
-                           </p>
-                        </div>
-                     </div>
-
-                     {/* ACTIONS BASED ON STATUS */}
-                     <div className="flex items-center gap-3">
-                        {currentDeal.status === 'ACCEPTED' && activeChat.seller_id === user.id && (
-                           <div className="flex items-center gap-2">
-                              <input 
-                                type="text" 
-                                placeholder="Tracking #" 
-                                className="bg-white border border-blue-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 ring-blue-500/20"
-                                value={trackingInfo.number}
-                                onChange={(e) => setTrackingInfo({...trackingInfo, number: e.target.value})}
-                              />
-                              <button 
-                                onClick={handleShipItem}
-                                className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-blue-700 transition-all"
-                              >
-                                 Ship Now
-                              </button>
-                           </div>
-                        )}
-                        {currentDeal.status === 'SHIPPED' && (
-                           <div className="text-right">
-                              <p className="text-[10px] font-black text-amber-600 uppercase tracking-tighter">Ref: {currentDeal.tracking_number}</p>
-                              <p className="text-[9px] font-bold text-gray-400 uppercase italic">Handled by {currentDeal.courier_name || "Agent"}</p>
-                           </div>
-                        )}
-                     </div>
-                  </div>
-                )}
 
                 {/* MESSAGES FLOW */}
                 <div 
@@ -545,8 +546,84 @@ function MessagesContent() {
                                        </div>
                                        <div className="space-y-1">
                                           <p className={`text-2xl font-black ${isOwn ? "text-white" : "text-gray-900"}`}>₹{msg.metadata?.amount?.toLocaleString()}</p>
-                                          <p className={`text-xs ${isOwn ? "text-gray-400" : "text-gray-500"}`}>{msg.message}</p>
+                                          <p className={`text-xs ${isOwn ? "text-gray-400" : "text-gray-500"}`}>{msg.message || `OFFER: ₹${msg.metadata?.amount}`}</p>
                                        </div>
+                                       {(!isOwn && msg.metadata?.offer_id && (msg.metadata?.status === 'pending' || msg.metadata?.status === 'countered')) && (
+                                          <div className="space-y-3 mt-4">
+                                             {offerCounterForm.offerId === msg.metadata.offer_id ? (
+                                                <div className="flex flex-col gap-2 p-1 animate-in zoom-in-95 duration-200">
+                                                   <input 
+                                                      type="number"
+                                                      placeholder="Counter amount..."
+                                                      value={offerCounterForm.amount}
+                                                      onChange={(e) => setOfferCounterForm({...offerCounterForm, amount: e.target.value})}
+                                                      className={`w-full border rounded-xl px-4 py-2 text-xs font-bold outline-none transition-all ${
+                                                        isOwn ? 'bg-white/10 border-white/20 text-white focus:border-white' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-500'
+                                                      }`}
+                                                      autoFocus
+                                                   />
+                                                   <div className="flex gap-2">
+                                                      <button 
+                                                         onClick={() => {
+                                                            if(!offerCounterForm.amount) return showToast("Enter amount", "error");
+                                                            handleOfferResponseInChat(msg.metadata.offer_id, 'countered', msg.id, offerCounterForm.amount);
+                                                            setOfferCounterForm({ offerId: null, amount: "" });
+                                                         }}
+                                                         className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition ${
+                                                           isOwn ? 'bg-white text-black hover:bg-gray-100' : 'bg-black text-white hover:bg-gray-800'
+                                                         }`}
+                                                      >
+                                                         Send
+                                                      </button>
+                                                      <button 
+                                                         onClick={() => setOfferCounterForm({ offerId: null, amount: "" })}
+                                                         className={`flex-1 border py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition ${
+                                                           isOwn ? 'border-white/20 text-white/60 hover:bg-white/5' : 'border-gray-200 text-gray-400 hover:bg-gray-50'
+                                                         }`}
+                                                      >
+                                                         Back
+                                                      </button>
+                                                   </div>
+                                                </div>
+                                             ) : (
+                                               <div className="flex flex-col gap-2 p-1">
+                                                  <div className="flex gap-2">
+                                                     <button 
+                                                       onClick={() => handleOfferResponseInChat(msg.metadata.offer_id, 'accepted', msg.id)} 
+                                                       className="flex-1 bg-emerald-600 text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition shadow-sm"
+                                                     >
+                                                       Accept
+                                                     </button>
+                                                     <button 
+                                                       onClick={() => setOfferCounterForm({ offerId: msg.metadata.offer_id, amount: "" })} 
+                                                       className={`flex-1 border py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition shadow-sm ${
+                                                          isOwn ? 'bg-white/10 text-white border-white/20 hover:bg-white/20' : 'bg-gray-50 text-gray-900 border-gray-200 hover:bg-gray-100'
+                                                       }`}
+                                                     >
+                                                       Counter
+                                                     </button>
+                                                  </div>
+                                                  <button 
+                                                     onClick={() => handleOfferResponseInChat(msg.metadata.offer_id, 'declined', msg.id)} 
+                                                     className={`w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition shadow-sm ${
+                                                        isOwn ? 'bg-rose-50/10 text-rose-200 border border-rose-100/20 hover:bg-rose-100/20' : 'bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100'
+                                                     }`}
+                                                  >
+                                                     Decline
+                                                  </button>
+                                               </div>
+                                             )}
+                                          </div>
+                                       )}
+                                       {(msg.metadata?.status && msg.metadata.status !== 'pending') && (
+                                          <div className={`mt-3 p-2.5 rounded-xl text-center text-[10px] font-black uppercase tracking-widest border ${
+                                             msg.metadata.status === 'accepted' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 
+                                             msg.metadata.status === 'countered' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
+                                             'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                                          }`}>
+                                            Offer {msg.metadata.status} {msg.metadata.status === 'countered' && `(₹${msg.metadata.counter_amount?.toLocaleString()})`}
+                                          </div>
+                                       )}
                                     </div>
                                  ) : msg.type === 'system_deal' ? (
                                     <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 flex items-center gap-4 min-w-[280px]">
@@ -691,6 +768,7 @@ function MessagesContent() {
         }
         .custom-scrollbar:hover::-webkit-scrollbar-thumb {
           background: rgba(0,0,0,0.1);
+          border-radius: 10px;
         }
         .no-scrollbar::-webkit-scrollbar {
           display: none;

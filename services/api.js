@@ -231,19 +231,6 @@ export const createReview = async (reviewData) => {
 };
 
 // Orders - Sale Confirmation Flow (7-Stage State Machine)
-export const markOrderPaid = async (dealId, buyerId, paymentMethod) => {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${API_URL}/orders/${dealId}/mark-paid`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { "Authorization": `Bearer ${token}` } : {})
-    },
-    body: JSON.stringify({ buyer_id: buyerId, payment_method: paymentMethod })
-  });
-  return res.json();
-};
-
 export const markOrderShipped = async (dealId, sellerId, trackingData) => {
   const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/orders/${dealId}/shipped`, {
@@ -292,6 +279,25 @@ export const confirmOrderSale = async (dealId, buyerId) => {
       ...(token ? { "Authorization": `Bearer ${token}` } : {})
     },
     body: JSON.stringify({ buyer_id: buyerId })
+  });
+  return res.json();
+};
+
+export const markOrderPaid = async (dealId, buyerId, method, receiptFile = null) => {
+  const token = localStorage.getItem("token");
+  const formData = new FormData();
+  formData.append("buyer_id", buyerId);
+  formData.append("payment_method", method);
+  if (receiptFile) {
+    formData.append("receipt", receiptFile);
+  }
+
+  const res = await fetch(`${API_URL}/orders/${dealId}/mark-paid`, {
+    method: "PATCH",
+    headers: {
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    },
+    body: formData
   });
   return res.json();
 };
@@ -449,6 +455,32 @@ export const updatePlatformSetting = async (key, value) => {
       ...(token ? { "Authorization": `Bearer ${token}` } : {})
     },
     body: JSON.stringify({ key, value })
+  });
+  return res.json();
+};
+
+export const createOffer = async (offerData) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/offers/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify(offerData)
+  });
+  return res.json();
+};
+
+export const respondToOffer = async (offerId, status, counter_amount = null) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/offers/${offerId}/respond`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify({ status, counter_amount })
   });
   return res.json();
 };
