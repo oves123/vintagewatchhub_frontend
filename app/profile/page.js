@@ -17,7 +17,8 @@ function ProfileContent() {
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [buyingSubTab, setBuyingSubTab] = useState("active"); // active, shipped, delivered, completed
-  const [sellingSubTab, setSellingSubTab] = useState("ongoing"); // ongoing, sold, inventory
+  const [sellingSubTab, setSellingSubTab] = useState("inventory"); // inventory, deals
+  const [paymentReceiptModal, setPaymentReceiptModal] = useState(null); // URL of receipt to preview
   const [receivedReviews, setReceivedReviews] = useState({ reviews: [], stats: { average_rating: 0, review_count: 0 } });
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState({ order_id: null, seller_id: null, rating: 5, comment: "", product_title: "", product_id: null });
@@ -26,6 +27,7 @@ function ProfileContent() {
   const [isSubmittingTracking, setIsSubmittingTracking] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ dealId: null, method: "UPI", receipt: null });
+  const [editingTrackingId, setEditingTrackingId] = useState(null);
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [toast, setToast] = useState(null); 
   const [counterForm, setCounterForm] = useState({ offerId: null, amount: "" });
@@ -87,17 +89,27 @@ function ProfileContent() {
     loadData();
   }, [router, searchParams]);
 
-  const loadActivity = () => {
+  const loadActivity = async () => {
     if (user) {
-      fetch(`${API_URL}/offers/user/${user.id}`, {
-         headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-      }).then(r => r.ok ? r.json() : []).then(setOffers).catch(() => []);
-      
-      fetch(`${API_URL}/orders/user-deals/${user.id}`, {
-        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-      }).then(r => r.json()).then(setDeals).catch(() => []);
+      try {
+        const [offersRes, dealsRes, activityRes] = await Promise.all([
+          fetch(`${API_URL}/offers/user/${user.id}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } }),
+          fetch(`${API_URL}/orders/user-deals/${user.id}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } }),
+          getUserActivity(user.id)
+        ]);
 
-      getUserActivity(user.id).then(setActivity).catch(() => []);
+        const [offersData, dealsData, activityData] = await Promise.all([
+          offersRes.ok ? offersRes.json() : [],
+          dealsRes.json(),
+          activityRes
+        ]);
+
+        setOffers(offersData);
+        setDeals(dealsData);
+        setActivity(activityData);
+      } catch (err) {
+        console.error("Failed to reload activity data:", err);
+      }
     }
   };
 
@@ -157,7 +169,8 @@ function ProfileContent() {
       if (res.message) {
         showToast("Shipping updated successfully!");
         setTrackingForm({ order_id: null, tracking_number: "", courier_name: "" });
-        loadActivity();
+        setEditingTrackingId(null);
+        await loadActivity();
       } else {
         showToast(res.message || "Failed to mark as shipped.", "error");
       }
@@ -251,10 +264,11 @@ function ProfileContent() {
     setIsSubmittingPayment(true);
     try {
       const res = await markOrderPaid(paymentForm.dealId, user.id, paymentForm.method, paymentForm.receipt);
-      if (res.message) {
+      if (res.deal) {
         showToast("Payment marks as SENT. Seller has been notified.");
         setIsPaymentModalOpen(false);
-        loadActivity();
+        setEditingTrackingId(null);
+        await loadActivity();
       } else {
         showToast(res.message || "Failed to mark as paid.", "error");
       }
@@ -610,12 +624,12 @@ function ProfileContent() {
                                 `(${offers.filter(o => o.buyer_id === user.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length})`
                              ) :
                              (Array.isArray(deals) && deals.filter(d => d.buyer_id == user.id && (
-                               sub === 'active' ? d.status === 'ACCEPTED' : 
+                               sub === 'active' ? ['ACCEPTED', 'PAID'].includes(d.status) : 
                                sub === 'shipped' ? d.status === 'SHIPPED' : 
                                sub === 'delivered' ? d.status === 'DELIVERED' : 
                                d.status === 'CONFIRMED'
                              )).length > 0 && `(${deals.filter(d => d.buyer_id == user.id && (
-                               sub === 'active' ? d.status === 'ACCEPTED' : 
+                               sub === 'active' ? ['ACCEPTED', 'PAID'].includes(d.status) : 
                                sub === 'shipped' ? d.status === 'SHIPPED' : 
                                sub === 'delivered' ? d.status === 'DELIVERED' : 
                                d.status === 'CONFIRMED'
@@ -678,13 +692,13 @@ function ProfileContent() {
                         </div>
                       ) : (
                         deals.filter(d => d.buyer_id == user.id && (
-                          buyingSubTab === 'active' ? d.status === 'ACCEPTED' : 
+                          buyingSubTab === 'active' ? ['ACCEPTED', 'PAID', 'SHIPPED'].includes(d.status) : 
                           buyingSubTab === 'shipped' ? d.status === 'SHIPPED' : 
                           buyingSubTab === 'delivered' ? d.status === 'DELIVERED' : 
                           d.status === 'CONFIRMED'
                         )).length > 0 ? (
                           deals.filter(d => d.buyer_id == user.id && (
-                            buyingSubTab === 'active' ? d.status === 'ACCEPTED' : 
+                            buyingSubTab === 'active' ? ['ACCEPTED', 'PAID', 'SHIPPED'].includes(d.status) : 
                             buyingSubTab === 'shipped' ? d.status === 'SHIPPED' : 
                             buyingSubTab === 'delivered' ? d.status === 'DELIVERED' : 
                             d.status === 'CONFIRMED'
@@ -701,7 +715,7 @@ function ProfileContent() {
                                        deal.status === 'DELIVERED' ? 'bg-emerald-500 text-white' : 
                                        'bg-blue-500 text-white'
                                      }`}>
-                                        {deal.status === 'ACCEPTED' ? (deal.payment_status === 'PAID' ? 'Payment Sent' : 'Payment Required') : deal.status}
+                                        {['ACCEPTED', 'PAID'].includes(deal.status) ? (deal.status === 'PAID' ? '✓ Payment Verified' : 'Action Required: Pay Now') : deal.status}
                                      </span>
                                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Deal #D-{deal.id}</span>
                                      {deal.payment_status === 'PAID' && (
@@ -709,9 +723,26 @@ function ProfileContent() {
                                      )}
                                   </div>
                                   <h4 className="text-sm font-bold uppercase tracking-tight mb-2">{deal.title}</h4>
-                                  <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-4 mb-4">
                                      <span className="text-lg font-black text-gray-950">₹{parseFloat(deal.amount).toLocaleString()}</span>
                                      <p className="text-[10px] font-medium text-gray-400 uppercase">Seller: {deal.seller_name}</p>
+                                  </div>
+
+                                  {/* Buyer Status Timeline */}
+                                  <div className="flex items-center gap-1 mb-6">
+                                     {['ACCEPTED', 'PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'].map((s, idx) => {
+                                        const statuses = ['ACCEPTED', 'PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'];
+                                        const currentIdx = statuses.indexOf(deal.status);
+                                        const isPast = idx < currentIdx;
+                                        const isCurrent = idx === currentIdx;
+                                        
+                                        return (
+                                           <div key={s} className="flex-1 flex flex-col gap-1.5">
+                                              <div className={`h-1 rounded-full ${isPast ? 'bg-emerald-500' : isCurrent ? 'bg-blue-600 animate-pulse' : 'bg-gray-100'}`}></div>
+                                              <p className={`text-[6px] font-black uppercase tracking-tighter ${isPast ? 'text-emerald-600' : isCurrent ? 'text-blue-600' : 'text-gray-300'}`}>{s}</p>
+                                           </div>
+                                        );
+                                     })}
                                   </div>
 
                                   {deal.payment_status === 'PENDING' && deal.status === 'ACCEPTED' && deal.seller_payment_info && (
@@ -849,150 +880,27 @@ function ProfileContent() {
 
                      {/* Sub Tabs */}
                      <div className="flex gap-8 border-b border-gray-100 mb-10 overflow-x-auto no-scrollbar">
-                        {['ongoing', 'sold', 'inventory'].map(sub => (
+                        {['inventory', 'deals'].map(sub => (
                           <button 
                              key={sub}
                              onClick={() => setSellingSubTab(sub)}
                              className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${sellingSubTab === sub ? 'text-blue-600 border-blue-600' : 'text-gray-300 border-transparent hover:text-gray-900'}`}
                           >
-                             {sub} {
-                               sub === 'ongoing' ? (deals.filter(d => d.seller_id == user.id && ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status)).length > 0 && `(${deals.filter(d => d.seller_id == user.id && ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status)).length})`) : 
-                               sub === 'sold' ? (deals.filter(d => d.seller_id == user.id && d.status === 'CONFIRMED').length > 0 && `(${deals.filter(d => d.seller_id == user.id && d.status === 'CONFIRMED').length})`) :
-                               (activity.listings?.length > 0 && `(${activity.listings.length})`)
-                             }
+                             {sub === 'inventory' ? `Inventory (${activity.listings?.length || 0})` : `Active Deals${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length > 0 ? ` (${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length})` : ''}`}
                           </button>
                         ))}
                      </div>
 
                      <div className="space-y-12">
-                        {/* Deals Dashboard */}
-                        {(sellingSubTab === 'ongoing' || sellingSubTab === 'sold') && (
-                           <div className="space-y-4">
-                              {deals.filter(d => d.seller_id == user.id && (sellingSubTab === 'ongoing' ? ['ACCEPTED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'RETURNED'].includes(d.status) : d.status === 'CONFIRMED')).length > 0 ? (
-                                deals.filter(d => d.seller_id == user.id && (sellingSubTab === 'ongoing' ? ['ACCEPTED', 'SHIPPED', 'DELIVERED'].includes(d.status) : d.status === 'CONFIRMED')).map(deal => (
-                                  <div key={deal.id} className="border border-gray-100 rounded-2xl p-6 bg-white hover:shadow-xl transition-all flex flex-col md:flex-row gap-8 items-center">
-                                     <div className="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
-                                        {deal.images?.[0] ? <img src={`${API_BASE_URL}/uploads/${deal.images[0]}`} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
-                                     </div>
-                                     <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-1">
-                                           <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
-                                             deal.status === 'SHIPPED' ? 'bg-amber-500 text-white' : 
-                                             deal.status === 'DELIVERED' ? 'bg-emerald-500 text-white' : 
-                                             deal.status === 'CONFIRMED' ? 'bg-black text-white' : 
-                                             deal.status === 'DISPUTED' ? 'bg-rose-500 text-white' :
-                                             deal.status === 'RETURNED' ? 'bg-gray-500 text-white' :
-                                             'bg-blue-50 text-blue-600'
-                                           }`}>
-                                              {deal.status === 'ACCEPTED' ? (deal.payment_status === 'PAID' ? 'Awaiting Shipment' : 'Awaiting Payment') : deal.status}
-                                           </span>
-                                           {deal.payment_status === 'PAID' && (
-                                              <div className="flex flex-col gap-1">
-                                                  <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest">PAID via {deal.payment_method}</span>
-                                                  {deal.payment_receipt && (
-                                                     <a 
-                                                        href={`${API_BASE_URL}/uploads/${deal.payment_receipt}`} 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer"
-                                                        className="text-[8px] font-bold text-blue-600 hover:underline flex items-center gap-1 uppercase tracking-tight"
-                                                     >
-                                                        <FileText className="w-2.5 h-2.5" /> View Receipt
-                                                     </a>
-                                                  )}
-                                               </div>
-                                           )}
-                                        </div>
-                                        <h4 className="text-sm font-bold uppercase tracking-tight mb-2">{deal.title}</h4>
-                                        <div className="flex items-center justify-between pr-8">
-                                           <p className="text-[11px] font-bold text-gray-950">Sold for: ₹{parseFloat(deal.amount).toLocaleString()}</p>
-                                           <p className="text-[9px] font-medium text-gray-400 uppercase">Buyer: {deal.buyer_name}</p>
-                                        </div>
-                                     </div>
-
-                                     <div className="flex flex-col gap-3 min-w-[200px]">
-                                        {(deal.status === 'ACCEPTED' || deal.status === 'SHIPPED') && (
-                                          <div className="space-y-2">
-                                            <input 
-                                              type="text" 
-                                              placeholder="Courier (e.g. DHL)"
-                                              value={trackingForm.order_id == deal.id ? trackingForm.courier_name : (deal.courier_name || "")}
-                                              onChange={(e) => setTrackingForm({...trackingForm, order_id: deal.id, courier_name: e.target.value, tracking_number: trackingForm.order_id == deal.id ? trackingForm.tracking_number : (deal.tracking_number || "")})}
-                                              className="text-[10px] font-bold border border-gray-100 rounded-lg px-3 py-2 w-full outline-none focus:border-blue-500"
-                                            />
-                                            <div className="flex gap-2">
-                                              <input 
-                                                type="text" 
-                                                placeholder="Tracking #"
-                                                value={trackingForm.order_id == deal.id ? trackingForm.tracking_number : (deal.tracking_number || "")}
-                                                onChange={(e) => setTrackingForm({...trackingForm, order_id: deal.id, tracking_number: e.target.value, courier_name: trackingForm.order_id == deal.id ? trackingForm.courier_name : (deal.courier_name || "")})}
-                                                className="text-[10px] font-bold border border-gray-100 rounded-lg px-3 py-2 w-full outline-none focus:border-blue-500"
-                                              />
-                                              <button 
-                                                onClick={() => handleSaveTracking(deal.id)}
-                                                disabled={deal.payment_status === 'PENDING'}
-                                                className="bg-black text-white px-3 py-2 rounded-lg hover:bg-gray-800 text-[9px] font-black uppercase tracking-widest disabled:bg-gray-100 disabled:text-gray-300 transition-colors"
-                                              >
-                                                {deal.payment_status === 'PENDING' ? 'Pay First' : (deal.status === 'SHIPPED' ? 'Update' : 'Ship')}
-                                              </button>
-                                            </div>
-                                            {deal.status === 'ACCEPTED' && (
-                                              <button 
-                                                 onClick={() => handleCancelDeal(deal.id)}
-                                                 className="w-full py-1 text-[8px] font-bold text-gray-400 uppercase tracking-widest hover:underline"
-                                              >
-                                                 Cancel Deal
-                                              </button>
-                                            )}
-                                          </div>
-                                        )}
-
-                                        {['SHIPPED', 'DELIVERED'].includes(deal.status) && (
-                                          <button 
-                                            onClick={() => handleMarkReturned(deal.id)}
-                                            className="w-full py-2 border border-rose-100 text-rose-500 rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-rose-50 transition"
-                                          >
-                                            Failed Delivery / Return
-                                          </button>
-                                        )}
-
-                                        {deal.status === 'DISPUTED' && (
-                                           <div className="text-center py-3 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 text-[10px] font-bold uppercase italic">
-                                              Locked: Admin Investigation
-                                           </div>
-                                        )}
-
-                                        {deal.status === 'SHIPPED' && (
-                                           <button 
-                                              onClick={() => handleMarkAsDelivered(deal.id)}
-                                              className="w-full py-3 bg-emerald-600 text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-700 transition"
-                                           >
-                                              Confirm Delivered
-                                           </button>
-                                        )}
-
-                                        {deal.tracking_number && (
-                                           <div className="text-center bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
-                                              <p className="text-[10px] font-bold text-gray-900">{deal.tracking_number}</p>
-                                           </div>
-                                        )}
-                                     </div>
-                                  </div>
-                                ))
-                              ) : (
-                                <div className="py-20 text-center border border-dashed border-gray-100 rounded-3xl bg-gray-50/20">
-                                   <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No deals in {sellingSubTab} state</p>
-                                </div>
-                              )}
-                           </div>
-                        )}
-
-
-
                         {/* Inventory Tab */}
                         {sellingSubTab === 'inventory' && (
-                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                              {activity.listings?.length > 0 ? (
+                           <div className="space-y-6">
+                              <div className="bg-blue-50 border border-blue-100 text-blue-700 px-6 py-4 rounded-xl text-[11px] font-bold uppercase tracking-tight flex items-start gap-4">
+                                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                 <p>Newly created listings will appear as <span className="px-1 py-0.5 bg-amber-500 text-white rounded font-black mx-1">PENDING</span> and must be approved by an administrator before they become visible on the marketplace.</p>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                 {activity.listings?.length > 0 ? (
                                 activity.listings.map(item => (
                                   <div key={item.id} className="group border border-gray-100 rounded-2xl p-5 hover:bg-white hover:shadow-xl transition-all relative">
                                      <div className="w-full aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden relative">
@@ -1020,7 +928,191 @@ function ProfileContent() {
                                  </div>
                               )}
                            </div>
+                           </div>
                         )}
+
+                         {/* Seller Active Deals Tab */}
+                         {sellingSubTab === 'deals' && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                               {deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','PAID','SHIPPED','DELIVERED','CONFIRMED','DISPUTED'].includes(d.status)).length > 0 ? (
+                                 deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','PAID','SHIPPED','DELIVERED','CONFIRMED','DISPUTED'].includes(d.status)).map(deal => (
+                                   <div key={deal.id} className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 hover:shadow-xl transition-all group">
+                                      {/* Product Visual */}
+                                      <div className="w-full md:w-48 aspect-square rounded-2xl bg-gray-50 flex-shrink-0 relative overflow-hidden">
+                                         <img src={deal.images?.[0] ? `${API_BASE_URL}/uploads/${deal.images[0]}` : '/placeholder.png'} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt="product" />
+                                         <div className="absolute top-4 left-4">
+                                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${
+                                               deal.status === 'ACCEPTED' ? 'bg-blue-600 text-white' : 
+                                               deal.status === 'PAID' ? 'bg-amber-500 text-white' : 
+                                               deal.status === 'SHIPPED' ? 'bg-black text-white' : 'bg-emerald-500 text-white'
+                                            }`}>
+                                               {deal.status}
+                                            </span>
+                                         </div>
+                                      </div>
+
+                                      {/* Deal Content */}
+                                      <div className="flex-grow flex flex-col justify-between py-1">
+                                         <div className="space-y-4">
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                               <div>
+                                                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Deal #D-{deal.id}</p>
+                                                  <h3 className="text-xl font-bold text-gray-950 uppercase tracking-tight leading-none">{deal.product_title}</h3>
+                                               </div>
+                                               <div className="text-right">
+                                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Settlement</p>
+                                                  <p className="text-2xl font-black text-gray-950 leading-none">₹{parseFloat(deal.amount).toLocaleString()}</p>
+                                               </div>
+                                            </div>
+
+                                            {/* Status Timeline */}
+                                            <div className="flex items-center gap-1 mt-6">
+                                               {['ACCEPTED', 'PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'].map((s, idx) => {
+                                                  const statuses = ['ACCEPTED', 'PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'];
+                                                  const currentIdx = statuses.indexOf(deal.status);
+                                                  const stepIdx = idx;
+                                                  const isPast = stepIdx < currentIdx;
+                                                  const isCurrent = stepIdx === currentIdx;
+                                                  
+                                                  return (
+                                                     <div key={s} className="flex-1 flex flex-col gap-2">
+                                                        <div className={`h-1 rounded-full ${isPast ? 'bg-emerald-500' : isCurrent ? 'bg-blue-600 animate-pulse' : 'bg-gray-100'}`}></div>
+                                                        <p className={`text-[7px] font-black uppercase tracking-tighter ${isPast ? 'text-emerald-600' : isCurrent ? 'text-blue-600' : 'text-gray-300'}`}>{s}</p>
+                                                     </div>
+                                                  );
+                                               })}
+                                            </div>
+                                         </div>
+
+                                         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {/* Left - Status Detail */}
+                                            <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100/50">
+                                               {deal.status === 'ACCEPTED' && (
+                                                  <div className="flex items-start gap-3">
+                                                     <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center animate-pulse"><FileText className="w-4 h-4 text-blue-600" /></div>
+                                                     <div>
+                                                        <p className="text-[10px] font-black text-gray-900 uppercase">Awaiting Payment</p>
+                                                        <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">Buyer has been notified to send funds.</p>
+                                                     </div>
+                                                  </div>
+                                               )}
+
+                                               {deal.status === 'PAID' && (
+                                                  <div className="flex flex-col gap-3">
+                                                     <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center"><CheckCircle className="w-4 h-4 text-emerald-600" /></div>
+                                                        <div>
+                                                           <p className="text-[10px] font-black text-gray-900 uppercase">Funds Verified</p>
+                                                           <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">Please prepare the shipment.</p>
+                                                        </div>
+                                                     </div>
+                                                     {deal.payment_receipt && (
+                                                        <button 
+                                                           onClick={() => setPaymentReceiptModal(`${API_BASE_URL}/uploads/${deal.payment_receipt}`)}
+                                                           className="w-full py-2 bg-white border border-gray-200 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                                                        >
+                                                           <Camera className="w-4 h-4" /> View Receipt
+                                                        </button>
+                                                     )}
+                                                  </div>
+                                               )}
+
+                                               {deal.status === 'SHIPPED' && (
+                                                  <div className="flex items-start gap-3">
+                                                     <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center"><Send className="w-4 h-4 text-white" /></div>
+                                                     <div>
+                                                        <p className="text-[11px] font-black text-gray-900 uppercase">In Transit</p>
+                                                        <p className="text-[10px] text-blue-600 font-bold uppercase mt-1 tracking-widest">{deal.courier_name} · {deal.tracking_number}</p>
+                                                     </div>
+                                                  </div>
+                                               )}
+                                            </div>
+
+                                            {/* Right - Immediate Action */}
+                                            <div className="flex flex-col justify-center">
+                                                {(deal.status === 'PAID' || editingTrackingId === deal.id) && (
+                                                   <div className="space-y-3">
+                                                      <div className="flex gap-2">
+                                                         <input 
+                                                            placeholder="COURIER NAME" 
+                                                            className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-gray-200"
+                                                            value={trackingForm.order_id === deal.id ? trackingForm.courier_name : (deal.courier_name || '')}
+                                                            onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, courier_name: e.target.value.toUpperCase() })}
+                                                         />
+                                                         <input 
+                                                            placeholder="TRACKING #" 
+                                                            className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-gray-200"
+                                                            value={trackingForm.order_id === deal.id ? trackingForm.tracking_number : (deal.tracking_number || '')}
+                                                            onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, tracking_number: e.target.value.toUpperCase() })}
+                                                         />
+                                                      </div>
+                                                      <div className="flex gap-2">
+                                                         <button 
+                                                            disabled={isSubmittingTracking}
+                                                            onClick={() => handleSaveTracking(deal.id)}
+                                                            className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-100/50 hover:bg-black transition-all"
+                                                         >
+                                                            {isSubmittingTracking ? 'Syncing...' : (deal.status === 'SHIPPED' ? 'Save Changes' : 'Confirm Shipment')}
+                                                         </button>
+                                                         {editingTrackingId === deal.id && (
+                                                            <button 
+                                                               onClick={() => setEditingTrackingId(null)}
+                                                               className="px-6 py-4 bg-gray-100 text-gray-500 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                                                            >
+                                                               Cancel
+                                                            </button>
+                                                         )}
+                                                      </div>
+                                                   </div>
+                                                )}
+
+                                                {deal.status === 'SHIPPED' && editingTrackingId !== deal.id && (
+                                                   <div className="flex flex-col gap-3">
+                                                      <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
+                                                         <p className="text-sm font-bold text-gray-900">{deal.tracking_number}</p>
+                                                      </div>
+                                                      <button 
+                                                         onClick={() => {
+                                                            setEditingTrackingId(deal.id);
+                                                            setTrackingForm({
+                                                               order_id: deal.id,
+                                                               courier_name: deal.courier_name || '',
+                                                               tracking_number: deal.tracking_number || ''
+                                                            });
+                                                         }}
+                                                         className="w-full py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                                                      >
+                                                         <Edit2 className="w-3 h-3" /> Edit Tracking Details
+                                                      </button>
+                                                   </div>
+                                                )}
+
+                                               {deal.status === 'ACCEPTED' && (
+                                                  <button 
+                                                     onClick={() => handleCancelDeal(deal.id)}
+                                                     className="w-full py-3 border-2 border-dashed border-gray-100 text-gray-300 rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:border-rose-100 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                                                  >
+                                                     Cancel Deal
+                                                  </button>
+                                               )}
+                                            </div>
+                                         </div>
+                                      </div>
+                                   </div>
+                                 ))
+                               ) : (
+                                  <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-sm border-dashed">
+                                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <FileText className="w-8 h-8 text-gray-200" />
+                                     </div>
+                                     <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">No Active Pipelines</h3>
+                                     <p className="text-[10px] text-gray-400 font-bold uppercase mt-2">Active deals will materialize here once offers are accepted.</p>
+                                  </div>
+                               )}
+                            </div>
+                         )}
+
                      </div>
                   </div>
                )}
@@ -1100,6 +1192,29 @@ function ProfileContent() {
             </div>
          </div>
       </main>
+
+      {/* Payment Receipt Preview Modal */}
+      {paymentReceiptModal && (
+        <div className="fixed inset-0 z-[1100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPaymentReceiptModal(null)}>
+          <div className="relative max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setPaymentReceiptModal(null)} className="absolute -top-10 right-0 text-white/60 hover:text-white text-[10px] font-black uppercase tracking-widest">Close ✕</button>
+            <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-widest text-gray-900">Payment Receipt</p>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase">Buyer submitted proof of payment</p>
+                </div>
+              </div>
+              <div className="p-4">
+                <img src={paymentReceiptModal} alt="Payment Receipt" className="w-full rounded-xl object-contain max-h-[60vh]" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Leave Review Modal */}
       {isReviewModalOpen && (

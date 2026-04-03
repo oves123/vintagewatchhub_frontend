@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Fragment, Suspense, useMemo } from "react";
 import { Image, X, PlayCircle, Search, MoreVertical, Send, Smile, Paperclip } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import { 
   getUserChats, 
@@ -30,6 +30,7 @@ import "./messages.css";
 
 function MessagesContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialChatId = searchParams.get("chat");
   
   const [user, setUser] = useState(null);
@@ -54,6 +55,7 @@ function MessagesContent() {
   const [offerCounterForm, setOfferCounterForm] = useState({ offerId: null, amount: "" });
   const [currentDeal, setCurrentDeal] = useState(null);
   const [trackingInfo, setTrackingInfo] = useState({ courier: "", number: "" });
+  const [acceptedOverlay, setAcceptedOverlay] = useState(null); // { role: 'buyer'|'seller' }
   const fileInputRef = useRef(null);
 
   const showToast = (message, type = "success") => {
@@ -277,16 +279,28 @@ function MessagesContent() {
           ));
         }
 
-        // If it's a counter, send a text message to notify the buyer/seller
+        // If it's a counter, send an interactive offer message instead of text
         if (status === 'countered') {
-           await sendQuickMessage(`COUNTER OFFER: ₹${parseFloat(counterAmount).toLocaleString()}`, 'text');
+           await sendQuickMessage(`COUNTER OFFER: ₹${parseFloat(counterAmount).toLocaleString()}`, 'offer', { 
+             amount: parseFloat(counterAmount), 
+             status: 'countered', 
+             offer_id: offerId 
+           });
         } else {
            await sendQuickMessage(`Offer ${status.toUpperCase()}!`, 'text');
         }
 
         showToast(`Offer ${status} successfully.`);
-        if (status === 'accepted') loadActiveDeal();
-        loadMessages(activeChat.id); // Refresh messages to show latest status
+        if (status === 'accepted') {
+          loadActiveDeal();
+          // Show success overlay and redirect to profile hub
+          const isBuyer = activeChat?.buyer_id === user?.id;
+          setAcceptedOverlay({ role: isBuyer ? 'buyer' : 'seller' });
+          setTimeout(() => {
+            router.push(isBuyer ? '/profile?tab=buying' : '/profile?tab=selling');
+          }, 2500);
+        }
+        loadMessages(activeChat.id);
       } else {
         showToast(res.message || "Failed to respond", "error");
       }
@@ -542,7 +556,11 @@ function MessagesContent() {
                                           <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isOwn ? "bg-white/10" : "bg-blue-50"}`}>
                                              <Send className={`w-4 h-4 ${isOwn ? "text-white" : "text-blue-600"}`} ordnance="4" />
                                           </div>
-                                          <span className="text-[11px] font-black uppercase tracking-widest">{isOwn ? "OFFER SENT" : "OFFER RECEIVED"}</span>
+                                          <span className="text-[11px] font-black uppercase tracking-widest">
+                                              {msg.metadata?.status === 'countered' 
+                                                ? (isOwn ? "COUNTER OFFER SENT" : "COUNTER OFFER RECEIVED")
+                                                : (isOwn ? "OFFER SENT" : "OFFER RECEIVED")}
+                                           </span>
                                        </div>
                                        <div className="space-y-1">
                                           <p className={`text-2xl font-black ${isOwn ? "text-white" : "text-gray-900"}`}>₹{msg.metadata?.amount?.toLocaleString()}</p>
@@ -603,7 +621,8 @@ function MessagesContent() {
                                                        Counter
                                                      </button>
                                                   </div>
-                                                  <button 
+                                                  {msg.metadata?.status !== 'countered' && (
+                                                   <button 
                                                      onClick={() => handleOfferResponseInChat(msg.metadata.offer_id, 'declined', msg.id)} 
                                                      className={`w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition shadow-sm ${
                                                         isOwn ? 'bg-rose-50/10 text-rose-200 border border-rose-100/20 hover:bg-rose-100/20' : 'bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100'
@@ -611,17 +630,17 @@ function MessagesContent() {
                                                   >
                                                      Decline
                                                   </button>
+                                                   )}
                                                </div>
                                              )}
                                           </div>
                                        )}
-                                       {(msg.metadata?.status && msg.metadata.status !== 'pending') && (
+                                       {(msg.metadata?.status && msg.metadata.status !== 'pending' && msg.metadata.status !== 'countered') && (
                                           <div className={`mt-3 p-2.5 rounded-xl text-center text-[10px] font-black uppercase tracking-widest border ${
                                              msg.metadata.status === 'accepted' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 
-                                             msg.metadata.status === 'countered' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
                                              'bg-rose-500/10 border-rose-500/20 text-rose-400'
                                           }`}>
-                                            Offer {msg.metadata.status} {msg.metadata.status === 'countered' && `(₹${msg.metadata.counter_amount?.toLocaleString()})`}
+                                            Offer {msg.metadata.status}
                                           </div>
                                        )}
                                     </div>
@@ -837,6 +856,28 @@ function MessagesContent() {
                  </div>
               </div>
            </div>
+        </div>
+      )}
+
+      {/* OFFER ACCEPTED SUCCESS OVERLAY */}
+      {acceptedOverlay && (
+        <div className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-500">
+          <div className="text-center space-y-6 animate-in zoom-in-95 duration-500">
+            <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/30">
+              <CheckCircle className="w-12 h-12 text-white" />
+            </div>
+            <h2 className="text-3xl font-black text-white uppercase tracking-tight">Offer Accepted!</h2>
+            <p className="text-sm font-medium text-gray-400 max-w-xs leading-relaxed">
+              {acceptedOverlay.role === 'buyer'
+                ? 'Redirecting you to your Buyer Hub to complete the payment...'
+                : 'Redirecting you to your Seller Hub to manage this deal...'}
+            </p>
+            <div className="flex gap-1.5 justify-center mt-4">
+              {[0,1,2].map(i => (
+                <div key={i} className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

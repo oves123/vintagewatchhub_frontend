@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
-import { Search, RefreshCw, Eye, CheckCircle, XCircle } from "lucide-react";
+import { Search, RefreshCw, Eye, CheckCircle, XCircle, Image } from "lucide-react";
 
-export function OrdersTab({ orders, tabLoading, onResolve }) {
+export function OrdersTab({ orders, tabLoading, onResolve, API_BASE_URL }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [receiptPreview, setReceiptPreview] = useState(null);
   const filtered = orders.filter(o => {
     const q = search.toLowerCase();
     const m = o.product_title?.toLowerCase().includes(q) || o.buyer_name?.toLowerCase().includes(q) || o.seller_name?.toLowerCase().includes(q);
@@ -169,6 +170,23 @@ export function OrdersTab({ orders, tabLoading, onResolve }) {
           </div>
         )}
       </div>
+      {/* Receipt Preview Modal */}
+      {receiptPreview && (
+        <div className="fixed inset-0 z-[1000] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setReceiptPreview(null)}>
+          <div className="relative max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setReceiptPreview(null)} className="absolute -top-8 right-0 text-white/60 hover:text-white text-[10px] font-black uppercase tracking-widest">Close ✕</button>
+            <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50">
+                <CheckCircle size={16} className="text-emerald-500"/>
+                <p className="text-[11px] font-black uppercase tracking-widest text-gray-900">Payment Receipt — Submitted by Buyer</p>
+              </div>
+              <div className="p-4">
+                <img src={receiptPreview} alt="Payment Receipt" className="w-full rounded-xl object-contain max-h-[60vh]"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

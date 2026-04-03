@@ -506,7 +506,7 @@ function AdminPageContent() {
           )}
 
           {activeTab === "orders" && (
-            <OrdersTab orders={orders} tabLoading={tabLoading} onResolve={resolveDealAdmin}/>
+            <OrdersTab orders={orders} tabLoading={tabLoading} onResolve={resolveDealAdmin} API_BASE_URL={API_BASE_URL}/>
           )}
 
           {activeTab === "reports" && (

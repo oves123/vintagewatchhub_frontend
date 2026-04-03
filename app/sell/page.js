@@ -12,6 +12,7 @@ export default function SellPage() {
    const [categories, setCategories] = useState([]);
    const [loading, setLoading] = useState(false);
    const [initLoading, setInitLoading] = useState(true);
+   const [showSuccess, setShowSuccess] = useState({ show: false, message: "" });
    const router = useRouter();
 
    const [formData, setFormData] = useState({
@@ -307,8 +308,11 @@ export default function SellPage() {
          }
 
          if (res.product || res.message === "Product updated successfully" || res.message === "Listing successfully created") {
-            alert(type === 'draft' ? "Listing saved as draft!" : (editId ? "Listing updated successfully!" : "Item successfully listed!"));
-            router.push("/profile?tab=selling");
+            const msg = type === 'draft' ? "Listing saved as draft!" : (editId ? "Listing updated successfully!" : "Product successfully listed");
+            setShowSuccess({ show: true, message: msg });
+            setTimeout(() => {
+               router.push("/");
+            }, 2500);
          } else {
             alert(res.message || "Failed to process listing.");
          }
@@ -338,6 +342,19 @@ export default function SellPage() {
 
    return (
       <div className="bg-[#f8f9fa] min-h-screen pb-20 font-sans text-[#191919]">
+         {showSuccess.show && (
+            <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-white/95 backdrop-blur-sm animate-in fade-in duration-500">
+               <div className="flex flex-col items-center">
+                  <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-emerald-100 animate-in zoom-in duration-500">
+                     <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                     </svg>
+                  </div>
+                  <h2 className="text-3xl md:text-5xl font-black text-gray-900 uppercase tracking-tight mb-4 animate-in slide-in-from-bottom-4 duration-500 delay-150 text-center">{showSuccess.message}</h2>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest animate-in fade-in duration-500 delay-300">Redirecting to Main Page...</p>
+               </div>
+            </div>
+         )}
          <Navbar />
 
          <main className="max-w-4xl mx-auto px-4 py-8">
@@ -854,69 +871,163 @@ export default function SellPage() {
                   {/* STEP 6: Review & Preview */}
                   {step === 6 && (
                      <div className="animate-in fade-in duration-500 space-y-10">
-                        <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 relative overflow-hidden">
-                           <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
-                               <div className="w-full md:w-32 aspect-square rounded-xl overflow-hidden shadow-md border border-white relative whitespace-nowrap">
-                                  {previews[0]?.type === 'video' ? (
-                                     <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                                        <svg className="w-8 h-8 text-white opacity-50" fill="currentColor" viewBox="0 0 20 20">
-                                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                                        </svg>
-                                        <video src={previews[0]?.url} className="absolute inset-0 w-full h-full object-cover opacity-30" muted />
-                                     </div>
-                                  ) : (
-                                     <img src={previews[0]?.url || previews[0]} className="w-full h-full object-cover" />
-                                  )}
-                               </div>
-                              <div className="flex-grow space-y-2 text-center md:text-left">
-                                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{selectedCategory?.name}</p>
-                                 <h3 className="text-2xl font-bold tracking-tight text-gray-900 uppercase">{formData.title}</h3>
-                                 <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                                    <span className="px-3 py-1 bg-white rounded-md text-[10px] font-bold uppercase tracking-wider border border-gray-100 text-gray-500">{formData.condition_code}</span>
-                                    <span className="px-3 py-1 bg-blue-600 text-white rounded-md text-[11px] font-bold shadow-md shadow-blue-100">₹{parseFloat(formData.price).toLocaleString()}</span>
-                                 </div>
-                              </div>
+                        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+                           <div>
+                              <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Review Your Listing</h2>
+                              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1">This is how your asset will appear on the Hub</p>
                            </div>
-                        </div>
-
-                        <div className="bg-white p-8 rounded-2xl border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-8 shadow-sm">
-                           <div className="space-y-4">
-                              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Marketplace Standards</h4>
-                              <ul className="space-y-3">
-                                 <li className="flex items-center gap-3 text-sm font-semibold text-gray-700">
-                                    <div className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                                    </div>
-                                    Professional Hub Authentication
-                                 </li>
-                                 <li className="flex items-center gap-3 text-sm font-semibold text-gray-700">
-                                    <div className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                                    </div>
-                                    Indian Domestic Shipping Network
-                                 </li>
-                              </ul>
-                           </div>
-                           <div className="flex flex-col gap-3">
-                              <button
+                           <div className="flex gap-3 mt-4 md:mt-0">
+                               <button onClick={prevStep} className="bg-white text-gray-600 border border-gray-200 px-6 py-3 rounded-lg font-bold text-[11px] uppercase tracking-wider hover:bg-gray-50 transition-all">
+                                  Edit Details
+                               </button>
+                               <button
                                   onClick={() => handleSubmit('pending')}
-                                 disabled={loading}
-                                 className="w-full bg-blue-600 text-white p-4 rounded-lg font-bold text-[13px] uppercase tracking-wider hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-2"
-                              >
-                                 {loading ? 'Processing...' : 'Complete Listing'}
-                              </button>
-                              <button
-                                 onClick={() => handleSubmit('draft')}
-                                 disabled={loading}
-                                 className="w-full bg-white text-gray-600 border border-gray-200 p-4 rounded-lg font-bold text-[13px] uppercase tracking-wider hover:bg-gray-50 transition-all"
-                              >
-                                 Save as Draft
-                              </button>
+                                  disabled={loading}
+                                  className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-[11px] uppercase tracking-wider hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
+                               >
+                                  {loading ? 'Processing...' : 'Complete Listing'}
+                               </button>
                            </div>
                         </div>
 
-                        <div className="pt-4 flex justify-center">
-                           <button onClick={prevStep} className="text-[11px] font-bold text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest border-b border-gray-200 pb-1">Modify Details</button>
+                        {/* Preview Container */}
+                        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden relative opacity-100 border-2 border-blue-100">
+                           {/* Watermark/Banner */}
+                           <div className="absolute top-0 right-0 bg-blue-600 text-white px-6 py-1.5 rounded-bl-2xl font-black text-[9px] uppercase tracking-[0.2em] shadow-md z-20">
+                              Live Preview
+                           </div>
+
+                          <div className="grid grid-cols-1 lg:grid-cols-12">
+                            {/* Gallery Preview */}
+                            <div className="lg:col-span-6 p-6 md:p-10 border-r border-gray-100 bg-gray-50/10">
+                              <div className="aspect-square bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative">
+                                {previews[0]?.type === 'video' ? (
+                                  <video 
+                                    src={previews[0].url} 
+                                    className="w-full h-full object-contain" 
+                                    controls 
+                                    muted 
+                                  />
+                                ) : (
+                                  <img
+                                    src={previews[0]?.url || previews[0]}
+                                    alt="Preview"
+                                    className="w-full h-full object-contain mix-blend-multiply p-8"
+                                  />
+                                )}
+                              </div>
+                              <div className="grid grid-cols-4 md:grid-cols-5 gap-3 mt-6">
+                                 {previews.map((item, i) => (
+                                    <div key={i} className="aspect-square bg-white border border-gray-100 rounded-lg overflow-hidden relative">
+                                       {item.type === 'video' ? (
+                                         <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                                            <svg className="w-6 h-6 text-white opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                            </svg>
+                                         </div>
+                                       ) : (
+                                         <img src={item.url || item} className="w-full h-full object-cover" />
+                                       )}
+                                    </div>
+                                 ))}
+                              </div>
+                            </div>
+
+                            {/* Content Preview */}
+                            <div className="lg:col-span-6 p-8 md:p-12 flex flex-col">
+                              <div className="flex-grow">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <span className="bg-blue-600 text-white px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest">{formData.condition_code || "PRE-OWNED"}</span>
+                                    <div className="flex items-center gap-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                       <span className="text-blue-600">{selectedCategory?.name || 'Category'}</span>
+                                    </div>
+                                 </div>
+
+                                <h1 className="text-3xl md:text-4xl font-bold text-gray-950 leading-tight tracking-tight mb-6 uppercase">
+                                  {formData.title || "Listing Title"}
+                                </h1>
+                                
+                                <div className="flex flex-wrap items-center gap-5 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                                  <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                    Professional Hub Authentication
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
+                                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                    Verified Listing
+                                  </div>
+                                </div>
+
+                                <div className="mt-10 p-8 md:p-10 bg-gray-50/50 rounded-2xl border border-gray-100 relative overflow-hidden">
+                                  <div className="space-y-6 relative z-10">
+                                    <div>
+                                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Live Valuation</p>
+                                       <div className="flex flex-col gap-1">
+                                          <span className="text-4xl md:text-5xl font-bold text-gray-950 tracking-tight">₹{parseFloat(formData.price || 0).toLocaleString()}</span>
+                                          <div className="flex items-center gap-1.5 mt-1">
+                                             <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                                             <span className="text-[11px] font-black uppercase tracking-widest text-gray-500">
+                                                {formData.shipping_type === 'free' ? (
+                                                   <span className="text-emerald-600">Free Shipping</span>
+                                                ) : formData.shipping_type === 'contact' ? (
+                                                    <span className="text-blue-600">Contact for Quote</span>
+                                                ) : (
+                                                   <>+ ₹{parseFloat(formData.shipping_fee || 0).toLocaleString()} Shipping</>
+                                                )}
+                                             </span>
+                                          </div>
+                                       </div>
+                                    </div>
+                                    <div className="pt-6">
+                                       <button disabled className="w-full h-14 bg-gray-200 text-gray-400 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 cursor-not-allowed">
+                                          <span>Chat with Seller</span>
+                                       </button>
+                                       {formData.allow_offers && (
+                                          <button disabled className="w-full h-14 mt-4 bg-white border-2 border-gray-200 text-gray-400 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 cursor-not-allowed">
+                                             <span>Make Offer</span>
+                                          </button>
+                                       )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Specs Grid Preview */}
+                          <div className="border-t border-gray-100 bg-white">
+                             <div className="p-8 pb-4">
+                               <h2 className="text-lg font-bold text-gray-950 tracking-tight text-left">Technical Asset Specifications</h2>
+                             </div>
+                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-t border-gray-100 text-left">
+                                {Object.entries(formData.item_specifics || {})
+                                  .filter(([key]) => !key.endsWith('_manual_mode'))
+                                  .map(([key, value], i) => (
+                                  <div key={key} className="p-8 border-b border-gray-50 md:border-r">
+                                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{key.replace(/_/g, ' ')}</p>
+                                     <p className="text-base font-bold text-gray-900 uppercase">{value || 'N/A'}</p>
+                                  </div>
+                                ))}
+                             </div>
+                          </div>
+
+                          {/* Description Tab Preview */}
+                          <div className="border-t border-gray-100 bg-white p-8 px-8 md:px-12 text-left">
+                             <div className="flex gap-10 border-b border-gray-100 mb-8">
+                                <button className="pb-4 text-[12px] font-bold uppercase tracking-widest border-b-2 border-blue-600 text-blue-600">
+                                   Description
+                                </button>
+                             </div>
+                             <p className="text-sm font-medium text-gray-600 leading-relaxed whitespace-pre-wrap max-w-4xl text-left">
+                                {formData.description || "No description provided."}
+                             </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-center pt-6 pb-4">
+                           <button onClick={() => handleSubmit('draft')} disabled={loading} className="text-[11px] font-bold text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest border-b border-gray-200 pb-1">
+                              Save as Draft Instead
+                           </button>
                         </div>
                      </div>
                   )}
