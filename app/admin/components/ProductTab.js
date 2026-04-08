@@ -8,6 +8,7 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [notifyMsg, setNotifyMsg] = useState("");
+  const [sending, setSending] = useState(false);
 
   const getImg = (p) => {
     if (!p) return "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=400&auto=format&fit=crop";
