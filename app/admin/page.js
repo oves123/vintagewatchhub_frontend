@@ -244,14 +244,16 @@ function AdminPageContent() {
     } catch (err) { console.error(err); }
   };
 
-  const updateProductStatus = async (id, status) => {
+  const updateProductStatus = async (id, status, reason = "") => {
     // Optimistic update
     const oldProducts = [...products];
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, status, rejection_reason: status === 'rejected' ? reason : p.rejection_reason } : p));
     
     try {
       const res = await fetch(`${API_URL}/admin/products/${id}`, {
-        method: "PATCH", headers: getHeaders(), body: JSON.stringify({ status }),
+        method: "PATCH", 
+        headers: getHeaders(), 
+        body: JSON.stringify({ status, reason }),
       });
       if (!res.ok) throw new Error("Update failed");
       showToast(`Listing ${status} successfully`);

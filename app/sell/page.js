@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Navbar from "../../components/Navbar";
 import { useRouter } from "next/navigation";
-import { getCategories, createProduct, API_URL, API_BASE_URL } from "../../services/api";
+import { getCategories, createProduct, updateProduct, API_URL, API_BASE_URL } from "../../services/api";
 import { Camera, RefreshCw, X, Circle } from "lucide-react";
 import "./sell.css";
 
@@ -13,6 +13,8 @@ export default function SellPage() {
    const [loading, setLoading] = useState(false);
    const [initLoading, setInitLoading] = useState(true);
    const [showSuccess, setShowSuccess] = useState({ show: false, message: "" });
+   const [productStatus, setProductStatus] = useState(null);
+   const [rejectionReason, setRejectionReason] = useState(null);
    const router = useRouter();
 
    const [formData, setFormData] = useState({
@@ -88,6 +90,8 @@ export default function SellPage() {
                   shipping_fee: data.shipping_fee ? data.shipping_fee.toString() : "",
                   shipping_type: data.shipping_type || "fixed"
                });
+               if (data.status) setProductStatus(data.status);
+               if (data.rejection_reason) setRejectionReason(data.rejection_reason);
                if (data.images) {
                   setPreviews(data.images.map(img => ({
                      url: `${API_BASE_URL}/uploads/${img}`,
@@ -362,6 +366,17 @@ export default function SellPage() {
             <div className="mb-10">
                <h1 className="text-3xl font-bold tracking-tight text-gray-900 leading-tight">Create Listing</h1>
                <p className="text-gray-500 font-medium text-sm mt-2">Professional marketplace standards for collectors.</p>
+               
+               {productStatus === 'rejected' && rejectionReason && (
+                  <div className="mt-6 p-5 bg-rose-50 border border-rose-100 rounded-2xl animate-in slide-in-from-top-2 duration-500">
+                     <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-2 rounded-full bg-rose-500" />
+                        <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em]">Listing Rejected by Admin</p>
+                     </div>
+                     <p className="text-[13px] text-rose-700 font-bold leading-relaxed">{rejectionReason}</p>
+                     <p className="text-[10px] text-rose-400 font-medium mt-3 italic">Please address the issues above and update your listing to submit for re-review.</p>
+                  </div>
+               )}
             </div>
 
             {/* Multi-step Nav */}

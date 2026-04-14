@@ -34,6 +34,20 @@ function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const isVideo = (filename) => {
+    if (!filename) return false;
+    const ext = filename.split('.').pop().toLowerCase();
+    return ['mp4', 'webm', 'ogg', 'mov'].includes(ext);
+  };
+
+  const getImg = (images) => {
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=400&auto=format&fit=crop";
+    }
+    const firstImage = images.find(img => !isVideo(img));
+    return firstImage ? `${API_BASE_URL}/uploads/${firstImage}` : `${API_BASE_URL}/uploads/${images[0]}`;
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) {
@@ -647,7 +661,7 @@ function ProfileContent() {
                                <div key={offer.id} className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-md transition-all">
                                   <div className="flex items-center gap-4 mb-4">
                                      <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden">
-                                        {offer.images?.[0] ? <img src={`${API_BASE_URL}/uploads/${offer.images[0]}`} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                                        {offer.images?.[0] ? <img src={getImg(offer.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
                                      </div>
                                      <div className="flex-1 min-w-0">
                                         <h4 className="text-[13px] font-bold uppercase tracking-tight truncate">{offer.title}</h4>
@@ -705,7 +719,7 @@ function ProfileContent() {
                           )).map(deal => (
                             <div key={deal.id} className="border border-gray-100 rounded-2xl p-6 bg-white hover:shadow-xl hover:shadow-gray-100 transition-all flex flex-col md:flex-row gap-8 items-center">
                                <div className="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
-                                  {deal.images?.[0] ? <img src={`${API_BASE_URL}/uploads/${deal.images[0]}`} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                                  {deal.images?.[0] ? <img src={getImg(deal.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
                                </div>
                                <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-1">
@@ -906,7 +920,7 @@ function ProfileContent() {
                                 activity.listings.map(item => (
                                   <div key={item.id} className="group border border-gray-100 rounded-2xl p-5 hover:bg-white hover:shadow-xl transition-all relative">
                                      <div className="w-full aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden relative">
-                                        {item.images?.[0] ? <img src={`${API_BASE_URL}/uploads/${item.images[0]}`} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                                        {item.images?.[0] ? <img src={getImg(item.images)} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
                                         <div className={`absolute top-3 left-3 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${
                                           item.status === 'approved' || item.status === 'active' ? 'bg-black text-white' : 
                                           item.status === 'sold' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
@@ -915,6 +929,14 @@ function ProfileContent() {
                                         </div>
                                      </div>
                                      <h4 className="text-[11px] font-bold uppercase tracking-tight truncate leading-none mb-2">{item.title}</h4>
+                                     
+                                     {item.status === 'rejected' && item.rejection_reason && (
+                                       <div className="mb-3 p-2 bg-rose-50 border border-rose-100 rounded-lg">
+                                         <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1">Rejection Reason:</p>
+                                         <p className="text-[10px] text-rose-700 font-medium leading-tight">{item.rejection_reason}</p>
+                                       </div>
+                                     )}
+
                                      <div className="flex justify-between items-center">
                                         <span className="text-sm font-black text-gray-950">₹{parseFloat(item.price).toLocaleString()}</span>
                                         <div className="flex gap-1">

@@ -150,7 +150,10 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                           {p.status !== "approved" && (
                             <button onClick={() => updateProductStatus(p.id,"approved")} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all" title="Approve"><CheckCircle2 size={13}/></button>
                           )}
-                          <button onClick={() => updateProductStatus(p.id,"rejected")} className="p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all" title="Reject"><XCircle size={13}/></button>
+                          <button onClick={() => {
+                            const reason = window.prompt("Enter rejection reason:", notifyMsg);
+                            if (reason !== null) updateProductStatus(p.id, "rejected", reason);
+                          }} className="p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all" title="Reject"><XCircle size={13}/></button>
                           <button onClick={() => { if(confirm("Delete this product?")) deleteProduct(p.id); }} className="p-2 bg-gray-50 hover:bg-rose-50 hover:text-rose-600 text-gray-400 rounded-lg transition-all" title="Delete">
                             <span className="text-[11px] font-black">✕</span>
                           </button>
@@ -202,7 +205,10 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                           <CheckCircle2 size={16}/>
                         </button>
                       )}
-                      <button onClick={() => updateProductStatus(p.id,"rejected")} className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
+                      <button onClick={() => {
+                        const reason = window.prompt("Enter rejection reason:");
+                        if (reason !== null) updateProductStatus(p.id, "rejected", reason);
+                      }} className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
                         <XCircle size={16}/>
                       </button>
                       <button onClick={() => { if(confirm("Delete this product?")) deleteProduct(p.id); }} className="p-2.5 bg-gray-50 text-gray-400 rounded-xl">
@@ -346,7 +352,13 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                     ✓ Approve Listing
                   </button>
                 )}
-                <button onClick={() => { updateProductStatus(selectedProduct.id,"rejected"); setSelectedProduct(null); }}
+                <button onClick={() => {
+                  const reason = window.prompt("Enter rejection reason:", notifyMsg);
+                  if (reason !== null) {
+                    updateProductStatus(selectedProduct.id, "rejected", reason);
+                    setSelectedProduct(null);
+                  }
+                }}
                   className="flex-1 py-3 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all">
                   ✕ Reject Listing
                 </button>
