@@ -10,9 +10,11 @@ export default function ProductCard({ product, horizontal = false }) {
   const images = useMemo(() => {
     let imgs = [];
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
-      imgs = product.images.map(img => `${API_BASE_URL}/uploads/${img}`);
+      imgs = product.images.map(img => 
+        img?.startsWith('http') ? img : `${API_BASE_URL}/uploads/${img}`
+      );
     } else if (product?.image) {
-      imgs = [`${API_BASE_URL}/uploads/${product.image}`];
+      imgs = [product.image.startsWith('http') ? product.image : `${API_BASE_URL}/uploads/${product.image}`];
     } else {
       imgs = ["https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg"];
     }

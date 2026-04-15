@@ -12,11 +12,11 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
 
   const getImg = (p) => {
     if (!p) return "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=400&auto=format&fit=crop";
-    if (p.image) return `${API_BASE_URL}/uploads/${p.image}`;
+    if (p.image) return p.image.startsWith('http') ? p.image : `${API_BASE_URL}/uploads/${p.image}`;
     try {
       const imgs = Array.isArray(p.images) ? p.images : JSON.parse(p.images || "[]");
       const firstImg = imgs.find(f => !isVideo(f)) || imgs[0];
-      if (firstImg) return `${API_BASE_URL}/uploads/${firstImg}`;
+      if (firstImg) return firstImg.startsWith('http') ? firstImg : `${API_BASE_URL}/uploads/${firstImg}`;
     } catch {}
     return "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=400&auto=format&fit=crop";
   };
@@ -238,11 +238,11 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                     controls 
                     className="w-full h-full object-contain bg-black"
                   >
-                    <source src={`${API_BASE_URL}/uploads/${selectedMedia || getMediaList(selectedProduct)[0]}`} />
+                    <source src={(selectedMedia || getMediaList(selectedProduct)[0])?.startsWith('http') ? (selectedMedia || getMediaList(selectedProduct)[0]) : `${API_BASE_URL}/uploads/${selectedMedia || getMediaList(selectedProduct)[0]}`} />
                   </video>
                 ) : (
                   <img 
-                    src={selectedMedia ? `${API_BASE_URL}/uploads/${selectedMedia}` : getImg(selectedProduct)} 
+                    src={selectedMedia ? (selectedMedia.startsWith('http') ? selectedMedia : `${API_BASE_URL}/uploads/${selectedMedia}`) : getImg(selectedProduct)} 
                     className="w-full h-full object-contain" 
                     alt={selectedProduct.title}
                   />
@@ -273,7 +273,7 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                         </div>
                       </div>
                     ) : (
-                      <img src={`${API_BASE_URL}/uploads/${m}`} className="w-full h-full object-cover" />
+                      <img src={m.startsWith('http') ? m : `${API_BASE_URL}/uploads/${m}`} className="w-full h-full object-cover" />
                     )}
                   </button>
                 ))}

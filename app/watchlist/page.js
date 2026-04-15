@@ -54,6 +54,36 @@ export default function WatchlistPage() {
     }
   };
 
+  const getThumbnail = (item) => {
+    let images = [];
+    try {
+      images = typeof item.images === 'string' ? JSON.parse(item.images) : (Array.isArray(item.images) ? item.images : []);
+    } catch (e) { images = []; }
+
+    const firstImage = (images.length > 0) ? images[0] : item.image;
+    
+    if (!firstImage) {
+      return "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=400&auto=format&fit=crop";
+    }
+    
+    return firstImage.startsWith('http') ? firstImage : `${API_BASE_URL}/uploads/${firstImage}`;
+  };
+
+  const formatTimeLeft = (endTime) => {
+    if (!endTime) return null;
+    const now = new Date();
+    const end = new Date(endTime);
+    const diff = end - now;
+
+    if (diff <= 0) return "Auction Ended";
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    if (days > 0) return `Ends in ${days}d ${hours}h`;
+    return `Ends in ${hours}h`;
+  };
+
   return (
     <div className="bg-[#fafafa] min-h-screen flex flex-col">
       <Navbar />
@@ -96,12 +126,17 @@ export default function WatchlistPage() {
                 </button>
                 
                 <Link href={`/products/${item.product_id}`}>
-                  <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center p-4">
+                  <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center relative overflow-hidden">
                     <img
-                      src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg"
+                      src={getThumbnail(item)}
                       alt={item.title}
-                      className="max-h-full object-contain mix-blend-multiply transition-transform group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     />
+                    {item.product_type === 'auction' && (
+                      <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                        Auction
+                      </div>
+                    )}
                   </div>
                 </Link>
 
@@ -119,7 +154,9 @@ export default function WatchlistPage() {
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                     <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Ends in 2d 14h</span>
+                     <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                        {item.product_type === 'auction' ? formatTimeLeft(item.auction_end) : "Fixed Price"}
+                     </span>
                      <Link href={`/products/${item.product_id}`} className="text-xs font-bold text-blue-600 hover:underline">
                         View Item
                      </Link>

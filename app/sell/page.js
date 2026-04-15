@@ -94,8 +94,8 @@ export default function SellPage() {
                if (data.rejection_reason) setRejectionReason(data.rejection_reason);
                if (data.images) {
                   setPreviews(data.images.map(img => ({
-                     url: `${API_BASE_URL}/uploads/${img}`,
-                     type: 'image'
+                     url: img.startsWith('http') ? img : `${API_BASE_URL}/uploads/${img}`,
+                     type: img.match(/\.(mp4|mov|webm|quicktime)$/i) ? 'video' : 'image'
                   })));
                }
             });

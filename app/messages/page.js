@@ -422,7 +422,7 @@ function MessagesContent() {
                          <div className="relative shrink-0">
                             <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-100 bg-gray-50 uppercase font-black text-gray-300 flex items-center justify-center text-lg">
                                {otherAvatar ? (
-                                 <img src={`${API_BASE_URL}/uploads/${otherAvatar}`} className="w-full h-full object-cover" />
+                                 <img src={otherAvatar.startsWith('http') ? otherAvatar : `${API_BASE_URL}/uploads/${otherAvatar}`} className="w-full h-full object-cover" />
                                ) : otherName?.[0]}
                             </div>
                             {isOnline && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />}
@@ -442,7 +442,7 @@ function MessagesContent() {
                             </div>
                             <Link href={`/products/${chat.product_id}`} className="mt-2 flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity hover:underline">
                                <div className="w-5 h-5 rounded overflow-hidden bg-gray-100 shrink-0">
-                                  <img src={`${API_BASE_URL}/uploads/${chat.product_image}`} className="w-full h-full object-cover" />
+                                  <img src={chat.product_image?.startsWith('http') ? chat.product_image : `${API_BASE_URL}/uploads/${chat.product_image}`} className="w-full h-full object-cover" />
                                </div>
                                <span className="text-[10px] font-bold text-gray-400 truncate uppercase tracking-tighter">{chat.product_title}</span>
                             </Link>
@@ -468,7 +468,7 @@ function MessagesContent() {
                       <div className="relative shrink-0">
                          <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-100 bg-gray-50 font-bold text-gray-300 flex items-center justify-center">
                             {(activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar) ? (
-                              <img src={`${API_BASE_URL}/uploads/${activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar}`} className="w-full h-full object-cover" />
+                              <img src={(activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar).startsWith('http') ? (activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar) : `${API_BASE_URL}/uploads/${activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar}`} className="w-full h-full object-cover" />
                             ) : (activeChat.buyer_id === user.id ? activeChat.seller_name : activeChat.buyer_name)?.[0]}
                          </div>
                          {onlineUsers.has(activeChat.buyer_id === user.id ? activeChat.seller_id : activeChat.buyer_id) && (
@@ -657,15 +657,15 @@ function MessagesContent() {
                                  ) : msg.type === 'image' || msg.type === 'video' ? (
                                     <div 
                                       className="relative rounded-xl overflow-hidden cursor-pointer"
-                                      onClick={() => setSelectedImage(`${API_BASE_URL}/uploads/${msg.message}`)}
+                                      onClick={() => setSelectedImage(msg.message.startsWith('http') ? msg.message : `${API_BASE_URL}/uploads/${msg.message}`)}
                                     >
                                        {msg.type === 'video' ? (
                                           <div className="relative aspect-video bg-black flex items-center justify-center min-w-[200px]">
-                                             <video src={`${API_BASE_URL}/uploads/${msg.message}`} className="max-w-full max-h-[250px] opacity-70" />
+                                             <video src={msg.message.startsWith('http') ? msg.message : `${API_BASE_URL}/uploads/${msg.message}`} className="max-w-full max-h-[250px] opacity-70" />
                                              <PlayCircle className="absolute w-12 h-12 text-white shadow-2xl" />
                                           </div>
                                        ) : (
-                                          <img src={`${API_BASE_URL}/uploads/${msg.message}`} className="max-w-full max-h-[300px] object-cover" />
+                                          <img src={msg.message.startsWith('http') ? msg.message : `${API_BASE_URL}/uploads/${msg.message}`} className="max-w-full max-h-[300px] object-cover" />
                                        )}
                                     </div>
                                  ) : (

@@ -10,10 +10,10 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   const getImg = (p) => {
-    if (p?.image) return `${API_BASE_URL}/uploads/${p.image}`;
+    if (p?.image) return p.image.startsWith('http') ? p.image : `${API_BASE_URL}/uploads/${p.image}`;
     try {
       const imgs = Array.isArray(p?.images) ? p.images : JSON.parse(p?.images || "[]");
-      if (imgs[0]) return `${API_BASE_URL}/uploads/${imgs[0]}`;
+      if (imgs[0]) return imgs[0].startsWith('http') ? imgs[0] : `${API_BASE_URL}/uploads/${imgs[0]}`;
     } catch {}
     return "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=400&auto=format&fit=crop";
   };
@@ -283,6 +283,40 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
                           <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase ${p.status === "approved" ? "bg-emerald-50 text-emerald-600" : p.status === "pending" ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"}`}>{p.status}</span>
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Payment Information */}
+                  <div>
+                    <h4 className="text-[11px] font-black text-gray-900 uppercase tracking-widest mb-3 flex items-center gap-2 text-blue-600"><ShieldCheck size={13}/> Financial Identity</h4>
+                    <div className="bg-blue-50/30 rounded-2xl border border-blue-100/50 p-5">
+                       {(() => {
+                         const pm = typeof userDetails.user?.payment_methods === 'string' ? JSON.parse(userDetails.user?.payment_methods || "{}") : (userDetails.user?.payment_methods || {});
+                         const hasData = pm && (pm.upi || pm.bank_name || pm.account_number || pm.ifsc);
+                         
+                         if (!hasData) return <p className="text-[10px] text-gray-400 text-center py-4 font-bold italic">No payment methods configured by user.</p>;
+                         
+                         return (
+                           <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+                              <div>
+                                 <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">UPI ID</p>
+                                 <p className="text-[11px] font-bold text-gray-900">{pm.upi || "—"}</p>
+                              </div>
+                              <div>
+                                 <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Bank Name</p>
+                                 <p className="text-[11px] font-bold text-gray-900">{pm.bank_name || "—"}</p>
+                              </div>
+                              <div>
+                                 <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Account Number</p>
+                                 <p className="text-[11px] font-bold text-gray-900 font-mono tracking-tighter">{pm.account_number || "—"}</p>
+                              </div>
+                              <div>
+                                 <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">IFSC Code</p>
+                                 <p className="text-[11px] font-bold text-gray-900 font-mono uppercase">{pm.ifsc || "—"}</p>
+                              </div>
+                           </div>
+                         );
+                       })()}
                     </div>
                   </div>
 

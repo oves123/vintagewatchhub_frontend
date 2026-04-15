@@ -45,7 +45,8 @@ function ProfileContent() {
       return "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=400&auto=format&fit=crop";
     }
     const firstImage = images.find(img => !isVideo(img));
-    return firstImage ? `${API_BASE_URL}/uploads/${firstImage}` : `${API_BASE_URL}/uploads/${images[0]}`;
+    const target = firstImage || images[0];
+    return target && target.startsWith('http') ? target : `${API_BASE_URL}/uploads/${target}`;
   };
 
   useEffect(() => {
@@ -963,7 +964,7 @@ function ProfileContent() {
                                    <div key={deal.id} className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 hover:shadow-xl transition-all group">
                                       {/* Product Visual */}
                                       <div className="w-full md:w-48 aspect-square rounded-2xl bg-gray-50 flex-shrink-0 relative overflow-hidden">
-                                         <img src={deal.images?.[0] ? `${API_BASE_URL}/uploads/${deal.images[0]}` : '/placeholder.png'} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt="product" />
+                                         <img src={deal.images?.[0] ? getImg(deal.images) : '/placeholder.png'} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt="product" />
                                          <div className="absolute top-4 left-4">
                                             <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${
                                                deal.status === 'ACCEPTED' ? 'bg-blue-600 text-white' : 
@@ -1032,7 +1033,7 @@ function ProfileContent() {
                                                      </div>
                                                      {deal.payment_receipt && (
                                                         <button 
-                                                           onClick={() => setPaymentReceiptModal(`${API_BASE_URL}/uploads/${deal.payment_receipt}`)}
+                                                           onClick={() => setPaymentReceiptModal(deal.payment_receipt?.startsWith('http') ? deal.payment_receipt : `${API_BASE_URL}/uploads/${deal.payment_receipt}`)}
                                                            className="w-full py-2 bg-white border border-gray-200 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
                                                         >
                                                            <Camera className="w-4 h-4" /> View Receipt

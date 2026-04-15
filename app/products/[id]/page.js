@@ -54,7 +54,20 @@ export default function ProductPage({ params }) {
   }, [id]);
 
   useEffect(() => {
-    fetch(`${API_URL}/products/${id}`)
+    const storedUser = localStorage.getItem("user");
+    let viewerId = "";
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        viewerId = parsed.id;
+      } catch (e) {
+        console.error("Error parsing user for view tracking", e);
+      }
+    }
+
+    const url = `${API_URL}/products/${id}${viewerId ? `?viewerId=${viewerId}` : ''}`;
+
+    fetch(url)
       .then((res) => {
         if (res.status === 404) throw new Error("404");
         return res.json();
@@ -249,13 +262,13 @@ export default function ProductPage({ params }) {
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
       product.images.forEach(img => {
         list.push({
-          url: `${API_BASE_URL}/uploads/${img}`,
+          url: img.startsWith('http') ? img : `${API_BASE_URL}/uploads/${img}`,
           type: img.match(/\.(mp4|mov|webm|quicktime)$/i) ? 'video' : 'image'
         });
       });
     } else if (product?.image) {
       list.push({
-        url: `${API_BASE_URL}/uploads/${product.image}`,
+        url: product.image.startsWith('http') ? product.image : `${API_BASE_URL}/uploads/${product.image}`,
         type: product.image.match(/\.(mp4|mov|webm|quicktime)$/i) ? 'video' : 'image'
       });
     }
@@ -442,27 +455,39 @@ export default function ProductPage({ params }) {
                     
                     <div className="pt-6">
                       <div className="flex flex-col gap-4">
-                        <button 
-                           onClick={handleChatWithSeller}
-                           className="w-full h-14 bg-blue-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-3 group"
-                        >
-                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                           </svg>
-                           <span>Chat with Seller</span>
-                        </button>
-                        
-                        {product.allow_offers && (!user || user.id !== product.seller_id) && (
-                           <button 
-                             onClick={() => {
-                               if (!user) return router.push("/login?redirect=/products/" + id);
-                               setShowOfferModal(true);
-                             }}
-                             className="w-full h-14 bg-white border-2 border-gray-900 text-gray-900 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-gray-50 transition-all flex items-center justify-center gap-3 group"
+                        {isSeller ? (
+                           <Link 
+                             href={`/sell?edit=${product.id}`}
+                             className="w-full h-14 bg-emerald-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-3 group"
                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                              <span>Make Offer</span>
-                           </button>
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                              <span>Manage This Listing</span>
+                           </Link>
+                        ) : (
+                           <>
+                              <button 
+                                 onClick={handleChatWithSeller}
+                                 className="w-full h-14 bg-blue-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-3 group"
+                              >
+                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                 </svg>
+                                 <span>Chat with Seller</span>
+                              </button>
+                              
+                              {product.allow_offers && (
+                                 <button 
+                                   onClick={() => {
+                                     if (!user) return router.push("/login?redirect=/products/" + id);
+                                     setShowOfferModal(true);
+                                   }}
+                                   className="w-full h-14 bg-white border-2 border-gray-900 text-gray-900 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-gray-50 transition-all flex items-center justify-center gap-3 group"
+                                 >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <span>Make Offer</span>
+                                 </button>
+                              )}
+                           </>
                         )}
                       </div>
                     </div>
@@ -471,17 +496,19 @@ export default function ProductPage({ params }) {
                 </div>
               </div>
 
-                <div className="mt-10 grid grid-cols-2 gap-3">
-                  <button 
-                    onClick={toggleWatchlist}
-                    className={`bg-white border px-6 py-4 rounded-lg font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${isInWatchlist ? 'border-rose-200 text-rose-600 bg-rose-50' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                  >
-                     <svg className={`w-4 h-4 ${isInWatchlist ? 'text-rose-600' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" /></svg>
-                     {isInWatchlist ? 'Watchlisted' : 'Watchlist'}
-                  </button>
+                <div className={`mt-10 grid gap-3 ${isSeller ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {!isSeller && (
+                    <button 
+                      onClick={toggleWatchlist}
+                      className={`bg-white border px-6 py-4 rounded-lg font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${isInWatchlist ? 'border-rose-200 text-rose-600 bg-rose-50' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                    >
+                       <svg className={`w-4 h-4 ${isInWatchlist ? 'text-rose-600' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" /></svg>
+                       {isInWatchlist ? 'Watchlisted' : 'Watchlist'}
+                    </button>
+                  )}
                   <button 
                     onClick={handleShare}
-                    className="bg-white border border-gray-100 text-gray-400 px-6 py-4 rounded-lg font-bold text-[11px] uppercase tracking-widest hover:text-gray-900 hover:border-gray-200 transition-all"
+                    className="bg-white border border-gray-100 text-gray-400 px-6 py-4 rounded-lg font-bold text-[11px] uppercase tracking-widest hover:text-gray-900 hover:border-gray-200 transition-all w-full"
                   >
                     {copied ? 'Copied!' : 'Share Listing'}
                   </button>
@@ -768,7 +795,7 @@ export default function ProductPage({ params }) {
                        >
                           <div className="w-full sm:w-24 h-48 sm:h-24 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
                              <img 
-                               src={item.images?.[0] ? `${API_BASE_URL}/uploads/${item.images[0]}` : 'https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg'} 
+                               src={item.images?.[0] ? (item.images[0].startsWith('http') ? item.images[0] : `${API_BASE_URL}/uploads/${item.images[0]}`) : 'https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg'} 
                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                              />
                           </div>
