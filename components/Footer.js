@@ -92,7 +92,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-white/50">
-            &copy; {year} WatchCollectorHub Inc. All Rights Reserved.
+            &copy; {year} WatchCollector Inc. All Rights Reserved.
           </p>
           <div className="flex gap-5 text-[11px] text-white/50">
             <Link href="#" className="hover:text-white/80 transition-colors">Privacy</Link>
