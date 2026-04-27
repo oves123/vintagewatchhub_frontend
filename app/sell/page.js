@@ -37,6 +37,11 @@ export default function SellPage() {
          accepted: ["Hub Wallet", "Stripe", "Bank Transfer"]
       },
       allow_offers: false,
+      allow_buy_now: false,
+      buy_it_now_price: "",
+      allow_auction: false,
+      starting_bid: "",
+      auction_end: "",
       shipping_fee: "",
       shipping_type: "fixed"
    });
@@ -87,6 +92,11 @@ export default function SellPage() {
                      accepted: ["Hub Wallet", "Stripe", "Bank Transfer"]
                   },
                   allow_offers: data.allow_offers || false,
+                  allow_buy_now: data.allow_buy_now || false,
+                  buy_it_now_price: data.buy_it_now_price ? data.buy_it_now_price.toString() : "",
+                  allow_auction: data.allow_auction || false,
+                  starting_bid: data.starting_bid ? data.starting_bid.toString() : "",
+                  auction_end: data.auction_end || "",
                   shipping_fee: data.shipping_fee ? data.shipping_fee.toString() : "",
                   shipping_type: data.shipping_type || "fixed"
                });
@@ -132,18 +142,34 @@ export default function SellPage() {
       [categories, formData.category_id]);
 
 
-    const handleInputChange = (e) => {
-       const { name, value } = e.target;
-       if (name === "price") {
-          // Only allow numbers and one decimal point
-          const cleanValue = value.replace(/[^0-9.]/g, '');
-          const parts = cleanValue.split('.');
-          if (parts.length > 2) return; // Only one decimal point
-          setFormData(prev => ({ ...prev, [name]: cleanValue }));
-          return;
-       }
-       setFormData(prev => ({ ...prev, [name]: value }));
-    };
+     const handleInputChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        if (name === "price" || name === "buy_it_now_price" || name === "starting_bid") {
+           // Only allow numbers and one decimal point
+           const cleanValue = value.replace(/[^0-9.]/g, '');
+           const parts = cleanValue.split('.');
+           if (parts.length > 2) return; // Only one decimal point
+           setFormData(prev => ({ ...prev, [name]: cleanValue }));
+           return;
+        }
+        
+        if (type === "checkbox") {
+           const selectedOptions = [
+              name === 'allow_buy_now' ? checked : formData.allow_buy_now,
+              name === 'allow_auction' ? checked : formData.allow_auction,
+              name === 'allow_offers' ? checked : formData.allow_offers
+           ].filter(Boolean).length;
+
+           if (selectedOptions > 2) {
+              alert("You can choose a maximum of 2 listing options (e.g., Buy It Now + Best Offer).");
+              return;
+           }
+           setFormData(prev => ({ ...prev, [name]: checked }));
+           return;
+        }
+
+        setFormData(prev => ({ ...prev, [name]: value }));
+     };
 
    const handleNestedChange = (parent, field, value) => {
       setFormData(prev => ({
@@ -299,6 +325,11 @@ export default function SellPage() {
          finalData.append("shipping_info", JSON.stringify(formData.shipping_info));
          finalData.append("payment_info", JSON.stringify(formData.payment_info));
          finalData.append("allow_offers", formData.allow_offers);
+         finalData.append("allow_buy_now", formData.allow_buy_now);
+         finalData.append("buy_it_now_price", formData.buy_it_now_price || 0);
+         finalData.append("allow_auction", formData.allow_auction);
+         finalData.append("starting_bid", formData.starting_bid || 0);
+         finalData.append("auction_end", formData.auction_end || "");
          finalData.append("shipping_fee", formData.shipping_fee || 0);
          finalData.append("shipping_type", formData.shipping_type);
 
@@ -766,30 +797,100 @@ export default function SellPage() {
                          </div>
 
                          <div className="max-w-2xl mx-auto space-y-10">
-                            {/* Product Price */}
-                            <div className="relative group bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 hover:border-blue-200 transition-all">
-                               <div className="flex flex-col items-center gap-6">
-                                  <div className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 rounded-full border border-blue-100">
-                                     <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Item Valuation</span>
-                                  </div>
-                                  <div className="relative w-full max-w-sm">
-                                     <div className="absolute left-0 top-1/2 -translate-y-1/2 flex flex-col items-center">
-                                        <span className="text-3xl font-black text-gray-200">₹</span>
-                                        <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest">INR</span>
-                                     </div>
-                                     <input
-                                        type="text"
-                                        name="price"
-                                        value={formData.price}
-                                        onChange={handleInputChange}
-                                        className="w-full text-center text-6xl font-black bg-transparent outline-none text-gray-950 placeholder:text-gray-100 px-10 focus:placeholder:opacity-0 transition-all font-mono"
-                                        placeholder="0.00"
-                                        inputMode="decimal"
-                                     />
-                                  </div>
-                               </div>
-                            </div>
+                             {/* Listing Type Options */}
+                             <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-8">
+                                <div className="text-center space-y-2">
+                                   <div className="flex items-center justify-center gap-2 px-4 py-1.5 bg-indigo-50 rounded-full border border-indigo-100 w-fit mx-auto">
+                                      <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+                                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Listing Formats (Choose up to 2)</span>
+                                   </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                   {/* Buy It Now */}
+                                   <label className={`p-6 rounded-2xl border-2 cursor-pointer transition-all ${formData.allow_buy_now ? 'border-blue-600 bg-blue-50/30' : 'border-gray-50 hover:border-gray-200'}`}>
+                                      <div className="flex items-center justify-between mb-4">
+                                         <span className="text-sm font-black uppercase tracking-widest text-gray-900">Buy It Now</span>
+                                         <input 
+                                            type="checkbox" 
+                                            name="allow_buy_now" 
+                                            checked={formData.allow_buy_now} 
+                                            onChange={handleInputChange} 
+                                            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                         />
+                                      </div>
+                                      {formData.allow_buy_now && (
+                                         <div className="space-y-2 animate-in fade-in zoom-in-95 duration-200">
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Fixed Price (₹)</p>
+                                            <input 
+                                               type="text" 
+                                               name="buy_it_now_price" 
+                                               value={formData.buy_it_now_price} 
+                                               onChange={handleInputChange}
+                                               placeholder="Enter price"
+                                               className="w-full bg-white border border-gray-200 p-3 rounded-xl font-bold text-lg outline-none focus:border-blue-500"
+                                            />
+                                         </div>
+                                      )}
+                                   </label>
+
+                                   {/* Auction */}
+                                   <label className={`p-6 rounded-2xl border-2 cursor-pointer transition-all ${formData.allow_auction ? 'border-amber-600 bg-amber-50/30' : 'border-gray-50 hover:border-gray-200'}`}>
+                                      <div className="flex items-center justify-between mb-4">
+                                         <span className="text-sm font-black uppercase tracking-widest text-gray-900">Auction</span>
+                                         <input 
+                                            type="checkbox" 
+                                            name="allow_auction" 
+                                            checked={formData.allow_auction} 
+                                            onChange={handleInputChange} 
+                                            className="w-5 h-5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                                         />
+                                      </div>
+                                      {formData.allow_auction && (
+                                         <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                                            <div>
+                                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Starting Bid (₹)</p>
+                                               <input 
+                                                  type="text" 
+                                                  name="starting_bid" 
+                                                  value={formData.starting_bid} 
+                                                  onChange={handleInputChange}
+                                                  placeholder="0.00"
+                                                  className="w-full bg-white border border-gray-200 p-3 rounded-xl font-bold text-lg outline-none focus:border-amber-500"
+                                               />
+                                            </div>
+                                            <div>
+                                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">End Date & Time</p>
+                                               <input 
+                                                  type="datetime-local" 
+                                                  name="auction_end" 
+                                                  value={formData.auction_end} 
+                                                  onChange={handleInputChange}
+                                                  className="w-full bg-white border border-gray-200 p-3 rounded-xl font-bold text-xs outline-none focus:border-amber-500"
+                                               />
+                                            </div>
+                                         </div>
+                                      )}
+                                   </label>
+
+                                   {/* Best Offer */}
+                                   <label className={`p-6 rounded-2xl border-2 cursor-pointer transition-all ${formData.allow_offers ? 'border-emerald-600 bg-emerald-50/30' : 'border-gray-50 hover:border-gray-200'}`}>
+                                      <div className="flex items-center justify-between mb-4">
+                                         <span className="text-sm font-black uppercase tracking-widest text-gray-900">Accept Offers</span>
+                                         <input 
+                                            type="checkbox" 
+                                            name="allow_offers" 
+                                            checked={formData.allow_offers} 
+                                            onChange={handleInputChange} 
+                                            className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                         />
+                                      </div>
+                                      <p className="text-[10px] font-medium text-gray-500 leading-relaxed">
+                                         Allow buyers to send you offers for your consideration.
+                                      </p>
+                                   </label>
+                                </div>
+                             </div>
 
                             {/* Shipping Options */}
                             <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-8">
@@ -872,13 +973,18 @@ export default function SellPage() {
                                <svg className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
                                Basics
                             </button>
-                            <button
-                               onClick={nextStep}
-                               disabled={!formData.price || (formData.shipping_type === 'fixed' && !formData.shipping_fee)}
-                               className="bg-blue-600 text-white px-12 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all disabled:opacity-20 shadow-xl shadow-blue-100 hover:scale-105 active:scale-95"
-                            >
-                               Review Listing
-                            </button>
+                             <button
+                                onClick={nextStep}
+                                disabled={
+                                   (!formData.allow_buy_now && !formData.allow_auction && !formData.allow_offers) ||
+                                   (formData.allow_buy_now && !formData.buy_now_price) ||
+                                   (formData.allow_auction && (!formData.starting_bid || !formData.auction_end)) ||
+                                   (formData.shipping_type === 'fixed' && !formData.shipping_fee)
+                                }
+                                className="bg-blue-600 text-white px-12 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all disabled:opacity-20 shadow-xl shadow-blue-100 hover:scale-105 active:scale-95"
+                             >
+                                Review Listing
+                             </button>
                          </div>
                       </div>
                    )}

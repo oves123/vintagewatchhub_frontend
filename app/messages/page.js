@@ -492,34 +492,11 @@ function MessagesContent() {
                       </div>
                    </div>
 
-                       <div className="flex items-center gap-1.5 md:gap-4 shrink-0">
-                          {activeChat.product_status !== 'sold' && !currentDeal && (
-                            <div className="flex gap-1 md:gap-2">
-                              {activeChat.seller_id === user.id && (
-                                <button 
-                                  onClick={() => { setFinalPrice(activeChat.product_price); setShowDealModal(true); }}
-                                  className="bg-emerald-600 text-white px-2.5 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-[11px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center gap-1.5"
-                                >
-                                   <CheckCircle className="w-3.5 h-3.5 md:w-4 h-4" />
-                                   <span className="hidden sm:inline">{labels.chat_confirm_deal_btn || "Confirm Deal"}</span>
-                                   <span className="sm:hidden">Confirm</span>
-                                </button>
-                              )}
-                              {activeChat.buyer_id === user.id && (
-                                <button 
-                                  onClick={handleMakeOffer}
-                                  className="bg-black text-white px-2.5 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-gray-200"
-                                >
-                                   <span className="hidden sm:inline">{labels.chat_make_offer_btn || "Make Offer"}</span>
-                                   <span className="sm:hidden">Offer</span>
-                                </button>
-                              )}
-                            </div>
-                          )}
-                          <button className="p-1 text-gray-400 hover:text-gray-900 transition-colors">
-                             <MoreVertical className="w-4 h-4 md:w-5 h-5" />
-                          </button>
-                       </div>
+                        <div className="flex items-center gap-1.5 md:gap-4 shrink-0">
+                           <button className="p-1 text-gray-400 hover:text-gray-900 transition-colors">
+                              <MoreVertical className="w-4 h-4 md:w-5 h-5" />
+                           </button>
+                        </div>
                 </header>
 
 

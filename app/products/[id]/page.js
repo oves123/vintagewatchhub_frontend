@@ -4,11 +4,9 @@ import { useEffect, useState, use, useMemo } from "react";
 import Navbar from "../../../components/Navbar";
 import ProductCard from "../../../components/ProductCard";
 import Link from "next/link";
-import { io } from "socket.io-client";
 import { API_URL, API_BASE_URL, createChat, getSellerReviews, createReport } from "../../../services/api";
 import { useRouter } from "next/navigation";
 
-const socket = io(API_BASE_URL);
 
 export default function ProductPage({ params }) {
   const router = useRouter();
@@ -36,6 +34,12 @@ export default function ProductPage({ params }) {
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
   const [reportSending, setReportSending] = useState(false);
+
+  // Bid State
+  const [showBidModal, setShowBidModal] = useState(false);
+  const [bidAmount, setBidAmount] = useState("");
+  const [bidHistory, setBidHistory] = useState([]);
+  const [bidSending, setBidSending] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -115,8 +119,17 @@ export default function ProductPage({ params }) {
           setReviewStats(data.stats || { average_rating: 0, review_count: 0 });
         })
         .catch(console.error);
+      // Fetch bid history
+      if (product?.allow_auction) {
+        fetch(`${API_URL}/bids/history/${id}`)
+          .then(res => res.json())
+          .then(data => {
+            if (Array.isArray(data)) setBidHistory(data);
+          })
+          .catch(console.error);
+      }
     }
-  }, [product?.seller_id]);
+  }, [product?.seller_id, product?.allow_auction, id]);
 
   const isSeller = user?.id === product?.seller_id;
 
@@ -226,6 +239,65 @@ export default function ProductPage({ params }) {
     } finally {
        setOfferSending(false);
     }
+  };
+
+  const handlePlaceBid = async () => {
+    if (!user) {
+      router.push("/login?redirect=/products/" + id);
+      return;
+    }
+    if (!bidAmount || isNaN(bidAmount) || parseFloat(bidAmount) <= 0) {
+      alert("Please enter a valid bid amount.");
+      return;
+    }
+    
+    const currentHighest = bidHistory[0]?.bid_amount || product.starting_bid;
+    if (parseFloat(bidAmount) <= parseFloat(currentHighest)) {
+      alert(`Your bid must be higher than the current highest bid of ₹${parseFloat(currentHighest).toLocaleString()}`);
+      return;
+    }
+
+    setBidSending(true);
+    try {
+      const res = await fetch(`${API_URL}/bids/place`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({
+          product_id: parseInt(id),
+          user_id: user.id,
+          bid_amount: parseFloat(bidAmount)
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setShowBidModal(false);
+        setBidAmount("");
+        // Refresh bid history
+        const historyRes = await fetch(`${API_URL}/bids/history/${id}`);
+        const historyData = await historyRes.json();
+        if (Array.isArray(historyData)) setBidHistory(historyData);
+        alert("Bid placed successfully!");
+      } else {
+        alert(data.message || "Failed to place bid");
+      }
+    } catch (err) {
+      alert("Error placing bid. Please try again.");
+    } finally {
+      setBidSending(false);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!user) {
+      router.push("/login?redirect=/products/" + id);
+      return;
+    }
+    // Redirect to checkout or handle payment logic
+    // For now, let's redirect to a checkout page (which might need to be created)
+    router.push(`/checkout?product_id=${id}&type=buy_now`);
   };
 
   const handleReportSeller = async () => {
@@ -452,6 +524,7 @@ export default function ProductPage({ params }) {
                           </div>
                        </div>
                     </div>
+                  </div>
                     
                     <div className="pt-6">
                       <div className="flex flex-col gap-4">
@@ -465,16 +538,44 @@ export default function ProductPage({ params }) {
                            </Link>
                         ) : (
                            <>
-                              <button 
-                                 onClick={handleChatWithSeller}
-                                 className="w-full h-14 bg-blue-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-3 group"
-                              >
-                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                 </svg>
-                                 <span>Chat with Seller</span>
-                              </button>
-                              
+                              {product.allow_buy_now && (
+                                <button 
+                                  onClick={handleBuyNow}
+                                  className="w-full h-14 bg-blue-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-3 group"
+                                >
+                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                   <span>Buy It Now - ₹{parseFloat(product.buy_it_now_price || product.price).toLocaleString()}</span>
+                                </button>
+                              )}
+
+                              {product.allow_auction && (
+                                <div className="space-y-3">
+                                  <div className="flex justify-between items-center px-1">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                      {bidHistory.length > 0 ? "Current Bid" : "Starting Bid"}
+                                    </span>
+                                    <span className="text-sm font-black text-gray-900">
+                                      ₹{parseFloat(bidHistory[0]?.bid_amount || product.starting_bid).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <button 
+                                    onClick={() => {
+                                      if (!user) return router.push("/login?redirect=/products/" + id);
+                                      setShowBidModal(true);
+                                    }}
+                                    className="w-full h-14 bg-amber-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-amber-700 transition-all shadow-lg shadow-amber-100 flex items-center justify-center gap-3 group"
+                                  >
+                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                     <span>Place Bid</span>
+                                  </button>
+                                  {product.auction_end && (
+                                    <p className="text-[9px] text-center font-bold text-amber-600 uppercase tracking-widest">
+                                      Ends: {new Date(product.auction_end).toLocaleString()}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+
                               {product.allow_offers && (
                                  <button 
                                    onClick={() => {
@@ -487,14 +588,22 @@ export default function ProductPage({ params }) {
                                     <span>Make Offer</span>
                                  </button>
                               )}
+
+                              <button 
+                                 onClick={handleChatWithSeller}
+                                 className="w-full h-14 bg-gray-50 border border-gray-200 text-gray-600 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-white hover:border-blue-600 hover:text-blue-600 transition-all flex items-center justify-center gap-3 group"
+                              >
+                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                 </svg>
+                                 <span>Chat with Seller</span>
+                              </button>
                            </>
                         )}
                       </div>
                     </div>
                     <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-widest mt-4">Direct acquisition via verified hub support</p>
                   </div>
-                </div>
-              </div>
 
                 <div className={`mt-10 grid gap-3 ${isSeller ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   {!isSeller && (
@@ -582,13 +691,15 @@ export default function ProductPage({ params }) {
                         >
                           Report Seller
                         </button>
-                     )}
-                   </div>
-                 </div>
-               )}
-            </div>
-          </div>
-        </div>
+                                </div>
+                  </div>
+                )}
+             </div>
+           </div>
+         </div>
+       </div>
+div>
+      )}
 
         {/* Technical Grid (Specs & Condition) */}
         <section className="mt-20">
@@ -836,6 +947,47 @@ export default function ProductPage({ params }) {
            </svg>
            <span className="text-[11px] font-black uppercase tracking-widest">Link copied to clipboard</span>
         </div>
+      )}
+      {/* Bid Modal */}
+      {showBidModal && (
+         <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowBidModal(false)} />
+            <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+               <div className="p-8 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Place Your Bid</h3>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Acquire this asset via auction</p>
+                  </div>
+                  <button onClick={() => setShowBidModal(false)} className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-all">
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+               </div>
+               <div className="p-8 space-y-6">
+                  <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col items-center">
+                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Current Highest Bid</p>
+                     <p className="text-3xl font-black text-gray-900">₹{parseFloat(bidHistory[0]?.bid_amount || product.starting_bid).toLocaleString()}</p>
+                  </div>
+
+                  <div>
+                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Your Bid Amount (₹)</label>
+                     <input 
+                       type="number" 
+                       value={bidAmount}
+                       onChange={e => setBidAmount(e.target.value)}
+                       placeholder={`Next bid: ₹${(parseFloat(bidHistory[0]?.bid_amount || product.starting_bid) + 1).toLocaleString()}`}
+                       className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-xl text-lg font-black outline-none focus:ring-2 focus:ring-amber-500/20 focus:bg-white transition-all"
+                     />
+                  </div>
+                  <button 
+                    onClick={handlePlaceBid}
+                    disabled={bidSending || !bidAmount}
+                    className="w-full py-5 bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-amber-700 transition-all shadow-xl shadow-amber-100 disabled:opacity-50"
+                  >
+                     {bidSending ? "Transmitting..." : "Confirm Bid"}
+                  </button>
+               </div>
+            </div>
+         </div>
       )}
 
       {/* Offer Modal */}

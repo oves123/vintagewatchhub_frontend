@@ -132,7 +132,14 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                       </td>
                       <td className="px-4 py-4 text-[11px] font-bold text-gray-600">{p.seller_name || "—"}</td>
                       <td className="px-4 py-4"><span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-lg text-[9px] font-black uppercase">{p.category_name || "General"}</span></td>
-                      <td className="px-4 py-4"><span className="px-2 py-1 bg-blue-50 text-[#1e3a5f] rounded-lg text-[9px] font-black uppercase">{p.product_type || "fixed"}</span></td>
+                      <td className="px-4 py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {p.allow_buy_now && <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[7px] font-black uppercase">Buy Now</span>}
+                          {p.allow_auction && <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-[7px] font-black uppercase">Auction</span>}
+                          {p.allow_offers && <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[7px] font-black uppercase">Offers</span>}
+                          {!p.allow_buy_now && !p.allow_auction && !p.allow_offers && <span className="text-[9px] text-gray-300">None</span>}
+                        </div>
+                      </td>
                       <td className="px-4 py-4 text-[12px] font-black text-gray-900">₹{parseFloat(p.price||0).toLocaleString()}</td>
                       <td className="px-4 py-4">
                         <div className="flex flex-col">
@@ -285,12 +292,12 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                 {[
                   ["Seller", selectedProduct.seller_name || "—"],
                   ["Category", selectedProduct.category_name || "—"],
-                  ["Type", selectedProduct.product_type || "fixed"],
-                  ["Views", selectedProduct.views || 0],
-                  ["Condition", selectedProduct.condition_code || "—"],
+                  ["Buy Now", selectedProduct.allow_buy_now ? `Yes (₹${parseFloat(selectedProduct.buy_it_now_price || selectedProduct.price).toLocaleString()})` : "No"],
+                  ["Auction", selectedProduct.allow_auction ? `Yes (Start: ₹${parseFloat(selectedProduct.starting_bid).toLocaleString()})` : "No"],
+                  ["Auction End", selectedProduct.auction_end ? new Date(selectedProduct.auction_end).toLocaleString() : "—"],
+                  ["Offers Allowed", selectedProduct.allow_offers ? "Yes" : "No"],
                   ["Shipping Fee", selectedProduct.shipping_type === 'free' ? "Free" : selectedProduct.shipping_type === 'contact' ? "TBD" : `₹${parseFloat(selectedProduct.shipping_fee||0).toLocaleString()}`],
                   ["Shipping Type", selectedProduct.shipping_type || "fixed"],
-                  ["Offers Allowed", selectedProduct.allow_offers ? "Yes" : "No"],
                 ].map(([k,v]) => (
                   <div key={k} className="flex justify-between bg-white rounded-xl px-3 py-2 border border-gray-100">
                     <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{k}</span>
