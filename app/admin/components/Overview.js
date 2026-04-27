@@ -29,6 +29,8 @@ export default function Overview({ stats, analytics, analyticsRange, setAnalytic
     { label: "Pending Review", value: stats?.pendingVerifications?.toLocaleString() },
     { label: "Total Orders", value: stats?.totalOrders?.toLocaleString() },
     { label: "Gross Turnover", value: `₹${(stats?.grossTurnover || 0).toLocaleString()}` },
+    { label: "Commission Earned", value: `₹${(stats?.commissionEarned || 0).toLocaleString()}` },
+    { label: "Pending Payouts", value: `₹${(stats?.pendingPayouts || 0).toLocaleString()}` },
     { label: "Market Value", value: `₹${(stats?.totalValue || 0).toLocaleString()}` },
     { label: "Watchlists", value: stats?.totalWatchlists?.toLocaleString() },
     { label: "Site Visitors", value: stats?.totalVisitors?.toLocaleString() },
@@ -89,11 +91,12 @@ export default function Overview({ stats, analytics, analyticsRange, setAnalytic
 
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Review Pending", desc: `${stats?.pendingVerifications || 0} listings waiting`, tab: "products", icon: Package, color: "bg-amber-50 text-amber-700 border-amber-100" },
-          { label: "Manage Users", desc: `${stats?.totalUsers || 0} registered accounts`, tab: "users", icon: Users, color: "bg-blue-50 text-[#1e3a5f] border-blue-100" },
-          { label: "View Orders", desc: `${stats?.totalOrders || 0} total transactions`, tab: "orders", icon: ShoppingCart, color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
+          { label: "Manage Users", desc: `${stats?.totalUsers || 0} accounts`, tab: "users", icon: Users, color: "bg-blue-50 text-[#1e3a5f] border-blue-100" },
+          { label: "View Orders", desc: `${stats?.totalOrders || 0} total`, tab: "orders", icon: ShoppingCart, color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
+          { label: "Escrow & Payouts", desc: `₹${(stats?.pendingPayouts || 0).toLocaleString()} pending`, tab: "escrow", icon: TrendingUp, color: "bg-rose-50 text-rose-700 border-rose-100" },
         ].map(q => (
           <button key={q.tab} onClick={() => setActiveTab(q.tab)} className={`flex items-center gap-4 p-5 rounded-2xl border text-left hover:shadow-md transition-all ${q.color}`}>
             <q.icon size={22} />

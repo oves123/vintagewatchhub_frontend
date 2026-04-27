@@ -14,6 +14,8 @@ export default function RegisterPage() {
     state: "",
     pincode: "",
     password: "",
+    seller_type: "individual_collector",
+    gst_number: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -207,6 +209,47 @@ export default function RegisterPage() {
                 Password
               </label>
             </div>
+
+            <div className="relative">
+              <select
+                className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer appearance-none"
+                value={formData.seller_type}
+                onChange={(e) => setFormData({...formData, seller_type: e.target.value})}
+                id="seller_type"
+              >
+                <option value="individual_collector">Individual Collector</option>
+                <option value="business_seller">Business Seller</option>
+              </select>
+              <label 
+                htmlFor="seller_type" 
+                className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4"
+              >
+                Account Type
+              </label>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 mt-2">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+              </div>
+            </div>
+
+            {formData.seller_type === 'business_seller' && (
+              <div className="relative animate-in fade-in slide-in-from-top-1 duration-200">
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
+                  placeholder=" "
+                  value={formData.gst_number}
+                  onChange={(e) => setFormData({...formData, gst_number: e.target.value})}
+                  id="gst_number"
+                />
+                <label 
+                  htmlFor="gst_number" 
+                  className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
+                >
+                  GST Number
+                </label>
+              </div>
+            )}
 
             <p className="text-[11px] text-gray-500 py-2">
               By selecting **Create account**, you agree to our <span className="text-blue-600">User Agreement</span> and acknowledge reading our <span className="text-blue-600">Privacy Notice</span>.

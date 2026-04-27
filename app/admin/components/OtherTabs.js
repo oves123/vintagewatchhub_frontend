@@ -350,3 +350,99 @@ export function ReportsTab({ reports, onResolve, tabLoading }) {
     </div>
   );
 }
+
+export function EscrowTab({ escrowDeals, tabLoading, onRelease, API_BASE_URL }) {
+  const [search, setSearch] = useState("");
+  const filtered = escrowDeals.filter(d => {
+    const q = search.toLowerCase();
+    return d.product_title?.toLowerCase().includes(q) || 
+           d.buyer_name?.toLowerCase().includes(q) || 
+           d.seller_name?.toLowerCase().includes(q);
+  });
+
+  return (
+    <div className="space-y-5">
+      <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
+          <input 
+            value={search} 
+            onChange={e=>setSearch(e.target.value)} 
+            placeholder="Search confirmed deals..." 
+            className="w-full pl-9 pr-4 py-3 bg-gray-50 rounded-xl text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 placeholder:text-gray-400"
+          />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {tabLoading ? (
+          <div className="flex justify-center py-16"><RefreshCw className="animate-spin text-[#1e3a5f]" size={24}/></div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  {["Deal Info", "Buyer", "Seller Info", "Financials", "Payout Status", "Action"].map(h=>(
+                    <th key={h} className="text-left px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 && (
+                  <tr><td colSpan={6} className="text-center py-14 text-[11px] text-gray-300 font-bold uppercase">No escrow records found</td></tr>
+                )}
+                {filtered.map(d => (
+                  <tr key={d.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <p className="text-[11px] font-black text-gray-900">#D-{d.id}</p>
+                      <p className="text-[10px] font-bold text-gray-500 truncate max-w-[150px]">{d.product_title}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-[11px] font-bold text-gray-700">{d.buyer_name}</p>
+                      <p className="text-[9px] text-gray-400 font-medium">{new Date(d.buyer_confirmed_at).toLocaleDateString()}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-[11px] font-bold text-gray-700">{d.seller_name}</p>
+                      {d.seller_payment_info && (
+                        <p className="text-[9px] text-blue-600 font-bold truncate max-w-[120px]">
+                          {typeof d.seller_payment_info === 'string' ? d.seller_payment_info : JSON.stringify(d.seller_payment_info)}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-[12px] font-black text-gray-900">₹{parseFloat(d.amount).toLocaleString()}</p>
+                        <p className="text-[8px] font-bold text-rose-500 uppercase">Comm: ₹{parseFloat(d.total_platform_fee || 0).toLocaleString()}</p>
+                        <p className="text-[9px] font-black text-emerald-600 uppercase">Payout: ₹{parseFloat(d.seller_payout || 0).toLocaleString()}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${
+                        d.payout_status === 'RELEASED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'
+                      }`}>
+                        {d.payout_status}
+                      </span>
+                      {d.payout_released_at && (
+                        <p className="text-[7px] text-gray-400 mt-1 font-bold uppercase tracking-tight">Released: {new Date(d.payout_released_at).toLocaleDateString()}</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {d.payout_status === 'PENDING' && (
+                        <button 
+                          onClick={() => onRelease(d.id)}
+                          className="px-3 py-2 bg-[#1e3a5f] text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[#2e538a] transition-all shadow-lg shadow-blue-100"
+                        >
+                          Release Payout
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

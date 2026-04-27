@@ -1043,14 +1043,38 @@ function ProfileContent() {
                                                )}
 
                                                {deal.status === 'SHIPPED' && (
-                                                  <div className="flex items-start gap-3">
-                                                     <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center"><Send className="w-4 h-4 text-white" /></div>
-                                                     <div>
-                                                        <p className="text-[11px] font-black text-gray-900 uppercase">In Transit</p>
-                                                        <p className="text-[10px] text-blue-600 font-bold uppercase mt-1 tracking-widest">{deal.courier_name} · {deal.tracking_number}</p>
-                                                     </div>
-                                                  </div>
-                                               )}
+                                                   <div className="flex items-start gap-3">
+                                                      <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center"><Send className="w-4 h-4 text-white" /></div>
+                                                      <div>
+                                                         <p className="text-[11px] font-black text-gray-900 uppercase">In Transit</p>
+                                                         <p className="text-[10px] text-blue-600 font-bold uppercase mt-1 tracking-widest">{deal.courier_name} · {deal.tracking_number}</p>
+                                                      </div>
+                                                   </div>
+                                                )}
+
+                                                {deal.status === 'CONFIRMED' && (
+                                                   <div className="flex flex-col gap-3">
+                                                      <div className="flex items-center gap-3">
+                                                         <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center"><CheckCircle className="w-4 h-4 text-emerald-600" /></div>
+                                                         <div>
+                                                            <p className="text-[10px] font-black text-gray-900 uppercase">Deal Completed</p>
+                                                            <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">Buyer has confirmed receipt.</p>
+                                                         </div>
+                                                      </div>
+                                                      <div className="mt-2 p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                                                         <div className="flex justify-between items-center mb-1">
+                                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Payout Status</p>
+                                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${deal.payout_status === 'RELEASED' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                                               {deal.payout_status || 'PENDING'}
+                                                            </span>
+                                                         </div>
+                                                         <p className="text-sm font-black text-gray-950">₹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
+                                                         {deal.payout_released_at && (
+                                                            <p className="text-[7px] text-gray-400 mt-1 font-bold uppercase tracking-tight">Released on {new Date(deal.payout_released_at).toLocaleDateString()}</p>
+                                                         )}
+                                                      </div>
+                                                   </div>
+                                                )}
                                             </div>
 
                                             {/* Right - Immediate Action */}

@@ -10,7 +10,7 @@ import AdminSidebar from "../../components/AdminSidebar";
 import Overview from "./components/Overview";
 import UserTab from "./components/UserTab";
 import ProductTab from "./components/ProductTab";
-import { OrdersTab, ChatsTab, ReportsTab } from "./components/OtherTabs";
+import { OrdersTab, ChatsTab, ReportsTab, EscrowTab } from "./components/OtherTabs";
 import SettingsTab from "./components/SettingsTab";
 
 const TAB_LABELS = {
@@ -18,6 +18,7 @@ const TAB_LABELS = {
   users: "User Management",
   products: "Listings & Approvals",
   orders: "Orders",
+  escrow: "Escrow & Payouts",
   reports: "Reports & Complaints",
   chats: "Chats & Messages",
   settings: "Platform Protocol",
@@ -35,6 +36,7 @@ function AdminPageContent() {
   const [users, setUsers] = useState([]);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [escrowDeals, setEscrowDeals] = useState([]);
   const [chats, setChats] = useState([]);
   const [reports, setReports] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -128,6 +130,7 @@ function AdminPageContent() {
     if (activeTab === "users" && users.length === 0) fetchUsers();
     if (activeTab === "products" && products.length === 0) fetchProducts();
     if (activeTab === "orders" && orders.length === 0) fetchOrders();
+    if (activeTab === "escrow" && escrowDeals.length === 0) fetchEscrowDeals();
     if (activeTab === "chats" && chats.length === 0) fetchChats();
     if (activeTab === "reports" && reports.length === 0) fetchReports();
   }, [activeTab]);
@@ -186,6 +189,16 @@ function AdminPageContent() {
       const d = await res.json();
       setOrders(Array.isArray(d) ? d : []);
     } catch { showToast("Failed to load orders", "error"); }
+    finally { setTabLoading(false); }
+  };
+
+  const fetchEscrowDeals = async () => {
+    setTabLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/escrow`, { headers: getHeaders() });
+      const d = await res.json();
+      setEscrowDeals(Array.isArray(d) ? d : []);
+    } catch { showToast("Failed to load escrow data", "error"); }
     finally { setTabLoading(false); }
   };
 
@@ -305,9 +318,6 @@ function AdminPageContent() {
       fetchUsers(); fetchStats();
     } catch (e) { showToast(e.message, "error"); }
   };
-
-
-
   const resolveDealAdmin = async (id, status) => {
     try {
       const res = await fetch(`${API_URL}/admin/deals/${id}/resolve`, {
@@ -318,6 +328,19 @@ function AdminPageContent() {
       if (!res.ok) throw new Error("Resolution failed");
       showToast(`Deal #${id} resolved as ${status.toUpperCase()}`);
       fetchOrders(); fetchStats();
+    } catch (e) { showToast(e.message, "error"); }
+  };
+
+  const releasePayoutAdmin = async (id) => {
+    if (!confirm("Are you sure you want to release this payout? This action is irreversible.")) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/deals/${id}/release-payout`, {
+        method: "PATCH",
+        headers: getHeaders()
+      });
+      if (!res.ok) throw new Error("Payout release failed");
+      showToast("Payout released successfully");
+      fetchEscrowDeals(); fetchStats();
     } catch (e) { showToast(e.message, "error"); }
   };
 
@@ -509,6 +532,10 @@ function AdminPageContent() {
 
           {activeTab === "orders" && (
             <OrdersTab orders={orders} tabLoading={tabLoading} onResolve={resolveDealAdmin} API_BASE_URL={API_BASE_URL}/>
+          )}
+
+          {activeTab === "escrow" && (
+            <EscrowTab escrowDeals={escrowDeals} tabLoading={tabLoading} onRelease={releasePayoutAdmin} API_BASE_URL={API_BASE_URL}/>
           )}
 
           {activeTab === "reports" && (

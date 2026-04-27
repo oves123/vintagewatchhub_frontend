@@ -113,8 +113,8 @@ export default function WatchlistPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {watchlist.map((item) => (
-              <div key={item.product_id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow group relative">
+            {watchlist.map((item, idx) => (
+              <div key={`${item.product_id}-${idx}`} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow group relative">
                 <button 
                   onClick={() => removeFromWatchlist(item.product_id)}
                   className="absolute top-2 right-2 z-10 p-2 bg-white rounded-full shadow-sm text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition"
