@@ -691,15 +691,14 @@ export default function ProductPage({ params }) {
                         >
                           Report Seller
                         </button>
-                                </div>
+                      )}
+                    </div>
                   </div>
                 )}
-             </div>
-           </div>
-         </div>
-       </div>
-div>
-      )}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Technical Grid (Specs & Condition) */}
         <section className="mt-20">
