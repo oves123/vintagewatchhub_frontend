@@ -895,13 +895,15 @@ function ProfileContent() {
 
                      {/* Sub Tabs */}
                      <div className="flex gap-8 border-b border-gray-100 mb-10 overflow-x-auto no-scrollbar">
-                        {['inventory', 'deals'].map(sub => (
+                        {['inventory', 'deals', 'negotiations'].map(sub => (
                           <button 
                              key={sub}
                              onClick={() => setSellingSubTab(sub)}
                              className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${sellingSubTab === sub ? 'text-blue-600 border-blue-600' : 'text-gray-300 border-transparent hover:text-gray-900'}`}
                           >
-                             {sub === 'inventory' ? `Inventory (${activity.listings?.length || 0})` : `Active Deals${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length > 0 ? ` (${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length})` : ''}`}
+                             {sub === 'inventory' ? `Inventory (${activity.listings?.length || 0})` : 
+                              sub === 'deals' ? `Active Deals${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length > 0 ? ` (${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length})` : ''}` :
+                              `Negotiations${offers.filter(o => o.seller_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length > 0 ? ` (${offers.filter(o => o.seller_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length})` : ''}`}
                           </button>
                         ))}
                      </div>
@@ -1151,22 +1153,72 @@ function ProfileContent() {
                                    </div>
                                  ))
                                ) : (
-                                  <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-sm border-dashed">
-                                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <FileText className="w-8 h-8 text-gray-200" />
-                                     </div>
-                                     <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">No Active Pipelines</h3>
-                                     <p className="text-[10px] text-gray-400 font-bold uppercase mt-2">Active deals will materialize here once offers are accepted.</p>
-                                  </div>
+                                   <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-sm border-dashed">
+                                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                         <FileText className="w-8 h-8 text-gray-200" />
+                                      </div>
+                                      <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">No Active Pipelines</h3>
+                                      <p className="text-[10px] text-gray-400 font-bold uppercase mt-2">Active deals will materialize here once offers are accepted.</p>
+                                   </div>
                                )}
                             </div>
-                         )}
+                          )}
 
-                     </div>
-                  </div>
-               )}
+                          {/* Seller Negotiations Tab */}
+                          {sellingSubTab === 'negotiations' && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                               {offers.filter(o => o.seller_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length > 0 ? (
+                                 offers.filter(o => o.seller_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED')).map(offer => (
+                                   <div key={offer.id} className="bg-white border border-gray-100 rounded-3xl p-6 hover:shadow-xl transition-all flex flex-col md:flex-row gap-6">
+                                      <div className="w-24 h-24 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
+                                         {offer.images?.[0] ? <img src={getImg(offer.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                                      </div>
+                                      <div className="flex-1">
+                                         <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                               <h4 className="text-sm font-bold uppercase tracking-tight">{offer.title}</h4>
+                                               <p className="text-[9px] font-bold text-gray-400 uppercase mt-1">From: {offer.buyer_name}</p>
+                                            </div>
+                                            <div className="text-right">
+                                               <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Offered Price</p>
+                                               <p className="text-xl font-black text-blue-600">₹{parseFloat(offer.amount).toLocaleString()}</p>
+                                            </div>
+                                         </div>
+                                         
+                                         {offer.message && (
+                                           <div className="mt-3 p-3 bg-gray-50 rounded-xl border-l-4 border-blue-600">
+                                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Buyer's Message:</p>
+                                              <p className="text-[11px] font-medium text-gray-700 italic leading-relaxed">"{offer.message}"</p>
+                                           </div>
+                                         )}
 
+                                         <div className="mt-4 flex justify-between items-center">
+                                            <div className="flex items-center gap-2">
+                                               <span className="text-[8px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded uppercase tracking-widest">
+                                                  Expires in: {getRemainingTime(offer.expires_at)}
+                                               </span>
+                                            </div>
+                                            <button 
+                                               onClick={() => router.push(`/messages?chat=${offer.chat_id}`)}
+                                               className="px-6 py-2 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full hover:bg-blue-600 transition shadow-lg shadow-gray-100 flex items-center gap-2"
+                                            >
+                                               <Send className="w-3 h-3" /> Chat & Respond
+                                            </button>
+                                         </div>
+                                      </div>
+                                   </div>
+                                 ))
+                               ) : (
+                                 <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-sm border-dashed">
+                                    <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No pending offers received</p>
+                                 </div>
+                               )}
+                            </div>
+                          )}
 
+                      </div>
+                   </div>
+                )}
                {/* Feedback Received Tab */}
                {activeTab === "feedback" && (
                   <div className="animate-in fade-in slide-in-from-left-4 duration-500">
