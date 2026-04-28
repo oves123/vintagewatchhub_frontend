@@ -92,6 +92,8 @@ function ProfileContent() {
           state: profData.state || "",
           pincode: profData.pincode || "",
           bio: profData.bio || "",
+          seller_type: profData.seller_type || "individual",
+          gst_number: profData.gst_number || "",
           payment_methods: profData.payment_methods || { upi: "", bank_name: "", account_number: "", ifsc: "" }
         });
       } catch (err) {
@@ -135,6 +137,8 @@ function ProfileContent() {
     state: "",
     pincode: "",
     bio: "",
+    seller_type: "individual",
+    gst_number: "",
     payment_methods: { upi: "", bank_name: "", account_number: "", ifsc: "" }
   });
 
@@ -157,6 +161,8 @@ function ProfileContent() {
         state: res.user.state || "",
         pincode: res.user.pincode || "",
         bio: res.user.bio || "",
+        seller_type: res.user.seller_type || "individual",
+        gst_number: res.user.gst_number || "",
         payment_methods: res.user.payment_methods || { upi: "", bank_name: "", account_number: "", ifsc: "" }
       });
       showToast(updatedData ? "Configuration synchronized." : "Identity updated.");
@@ -560,6 +566,28 @@ function ProfileContent() {
                           />
                       </div>
 
+                      <div className="space-y-4 pt-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Seller Type</label>
+                          <select 
+                             value={profileForm.seller_type}
+                             onChange={(e) => setProfileForm({...profileForm, seller_type: e.target.value})}
+                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                          >
+                             <option value="individual">Individual</option>
+                             <option value="business">Business</option>
+                          </select>
+                      </div>
+
+                      <div className="space-y-4 pt-4">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">GST Number (Optional)</label>
+                          <input 
+                             type="text" value={profileForm.gst_number}
+                             onChange={(e) => setProfileForm({...profileForm, gst_number: e.target.value})}
+                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             placeholder="e.g. 22AAAAA0000A1Z5"
+                          />
+                      </div>
+
                       <div className="md:col-span-2 mt-12 mb-6 pt-12 border-t border-gray-100">
                           <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Payment Information</h2>
                           <p className="text-xs text-gray-400 mt-2 font-medium">Add payment methods to receive funds from buyers after a successful deal.</p>
@@ -724,14 +752,21 @@ function ProfileContent() {
                                </div>
                                <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-1">
-                                     <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
-                                       deal.status === 'CONFIRMED' ? 'bg-black text-white' : 
-                                       deal.status === 'SHIPPED' ? 'bg-amber-500 text-white' : 
-                                       deal.status === 'DELIVERED' ? 'bg-emerald-500 text-white' : 
-                                       'bg-blue-500 text-white'
-                                     }`}>
-                                        {['ACCEPTED', 'PAID'].includes(deal.status) ? (deal.status === 'PAID' ? '✓ Payment Verified' : 'Action Required: Pay Now') : deal.status}
-                                     </span>
+                                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                                        deal.status === 'CONFIRMED' ? 'bg-black text-white' : 
+                                        deal.status === 'SHIPPED' ? 'bg-amber-500 text-white' : 
+                                        deal.status === 'DELIVERED' ? 'bg-emerald-500 text-white' : 
+                                        'bg-blue-500 text-white'
+                                      }`}>
+                                         {
+                                          deal.status === 'PAID' ? '✓ Payment Verified' : 
+                                          deal.status === 'SHIPPED' ? 'SHIPPED' :
+                                          deal.status === 'DELIVERED' ? 'IN 48H INSPECTION' :
+                                          deal.status === 'CONFIRMED' ? 'COMPLETED' :
+                                          deal.status === 'ACCEPTED' ? 'ACTION REQUIRED: PAY NOW' :
+                                          deal.status
+                                         }
+                                      </span>
                                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Deal #D-{deal.id}</span>
                                      {deal.payment_status === 'PAID' && (
                                        <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest ml-auto">PAID via {deal.payment_method}</span>

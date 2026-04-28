@@ -42,6 +42,8 @@ export default function SellPage() {
       allow_auction: false,
       starting_bid: "",
       auction_end: "",
+      reserve_price: "",
+      auction_duration: "3",
       shipping_fee: "",
       shipping_type: "fixed"
    });
@@ -97,6 +99,8 @@ export default function SellPage() {
                   allow_auction: data.allow_auction || false,
                   starting_bid: data.starting_bid ? data.starting_bid.toString() : "",
                   auction_end: data.auction_end || "",
+                  reserve_price: data.reserve_price ? data.reserve_price.toString() : "",
+                  auction_duration: data.auction_duration || "3",
                   shipping_fee: data.shipping_fee ? data.shipping_fee.toString() : "",
                   shipping_type: data.shipping_type || "fixed"
                });
@@ -144,7 +148,7 @@ export default function SellPage() {
 
      const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-        if (name === "price" || name === "buy_it_now_price" || name === "starting_bid") {
+        if (name === "price" || name === "buy_it_now_price" || name === "starting_bid" || name === "reserve_price") {
            // Only allow numbers and one decimal point
            const cleanValue = value.replace(/[^0-9.]/g, '');
            const parts = cleanValue.split('.');
@@ -330,7 +334,17 @@ export default function SellPage() {
          finalData.append("buy_it_now_price", formData.buy_it_now_price || 0);
          finalData.append("allow_auction", formData.allow_auction);
          finalData.append("starting_bid", formData.starting_bid || 0);
-         finalData.append("auction_end", formData.auction_end || "");
+         finalData.append("reserve_price", formData.reserve_price || 0);
+         
+         if (formData.allow_auction && !editId) {
+            const durationDays = parseInt(formData.auction_duration || "3");
+            const endTime = new Date();
+            endTime.setDate(endTime.getDate() + durationDays);
+            finalData.append("auction_end", endTime.toISOString());
+         } else {
+            finalData.append("auction_end", formData.auction_end || "");
+         }
+
          finalData.append("shipping_fee", formData.shipping_fee || 0);
          finalData.append("shipping_type", formData.shipping_type);
 
@@ -861,15 +875,31 @@ export default function SellPage() {
                                                />
                                             </div>
                                             <div>
-                                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">End Date & Time</p>
-                                               <input 
-                                                  type="datetime-local" 
-                                                  name="auction_end" 
-                                                  value={formData.auction_end} 
-                                                  onChange={handleInputChange}
-                                                  className="w-full bg-white border border-gray-200 p-3 rounded-xl font-bold text-xs outline-none focus:border-amber-500"
-                                               />
-                                            </div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reserve Price (₹) - Optional</p>
+                                                <input 
+                                                   type="text" 
+                                                   name="reserve_price" 
+                                                   value={formData.reserve_price} 
+                                                   onChange={handleInputChange}
+                                                   placeholder="Minimum amount to sell"
+                                                   className="w-full bg-white border border-gray-200 p-3 rounded-xl font-bold text-lg outline-none focus:border-amber-500"
+                                                />
+                                             </div>
+                                             <div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Auction Duration</p>
+                                                <select 
+                                                   name="auction_duration" 
+                                                   value={formData.auction_duration || "3"} 
+                                                   onChange={handleInputChange}
+                                                   className="w-full bg-white border border-gray-200 p-3 rounded-xl font-bold text-xs outline-none focus:border-amber-500"
+                                                >
+                                                   <option value="1">1 Day</option>
+                                                   <option value="3">3 Days</option>
+                                                   <option value="5">5 Days</option>
+                                                   <option value="7">7 Days</option>
+                                                   <option value="10">10 Days</option>
+                                                </select>
+                                             </div>
                                          </div>
                                       )}
                                    </label>

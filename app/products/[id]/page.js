@@ -6,6 +6,7 @@ import ProductCard from "../../../components/ProductCard";
 import Link from "next/link";
 import { API_URL, API_BASE_URL, createChat, getSellerReviews, createReport } from "../../../services/api";
 import { useRouter } from "next/navigation";
+import socket from "../../../services/socket";
 
 
 export default function ProductPage({ params }) {
@@ -40,6 +41,7 @@ export default function ProductPage({ params }) {
   const [bidAmount, setBidAmount] = useState("");
   const [bidHistory, setBidHistory] = useState([]);
   const [bidSending, setBidSending] = useState(false);
+  const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -56,6 +58,61 @@ export default function ProductPage({ params }) {
         .catch(err => console.error("Failed to fetch watchlist:", err));
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    
+    socket.emit("joinAuction", id);
+
+    const handleNewBid = (data) => {
+      console.log("Real-time bid received:", data);
+      // Update bid history
+      setBidHistory(prev => {
+        // Avoid duplicate bids if fetch also happens
+        if (prev.some(b => b.bid_amount === data.bid_amount)) return prev;
+        const newBid = {
+          bid_amount: data.bid_amount,
+          user_name: data.user_name || "Recent Bidder",
+          created_at: new Date().toISOString()
+        };
+        return [newBid, ...prev];
+      });
+      // Update product end time if extended
+      if (data.auction_end) {
+        setProduct(prev => ({ ...prev, auction_end: data.auction_end }));
+      }
+    };
+
+    socket.on("newBid", handleNewBid);
+
+    return () => {
+      socket.off("newBid", handleNewBid);
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!product?.allow_auction || !product?.auction_end) return;
+
+    const calculateTimeLeft = () => {
+      const difference = new Date(product.auction_end) - new Date();
+      if (difference <= 0) return "AUCTION ENDED";
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+      return `${hours}h ${minutes}m ${seconds}s`;
+    };
+
+    setTimeLeft(calculateTimeLeft());
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [product?.auction_end, product?.allow_auction]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -251,10 +308,15 @@ export default function ProductPage({ params }) {
       return;
     }
     
-    const currentHighest = bidHistory[0]?.bid_amount || product.starting_bid;
-    if (parseFloat(bidAmount) <= parseFloat(currentHighest)) {
-      alert(`Your bid must be higher than the current highest bid of ₹${parseFloat(currentHighest).toLocaleString()}`);
-      return;
+    const currentHighest = bidHistory[0]?.bid_amount;
+    if (currentHighest) {
+       if (parseFloat(bidAmount) <= parseFloat(currentHighest)) {
+         alert(`Your bid must be higher than the current highest bid of ₹${parseFloat(currentHighest).toLocaleString()}`);
+         return;
+       }
+    } else if (parseFloat(bidAmount) < parseFloat(product.starting_bid)) {
+       alert(`Your bid must be at least the starting bid of ₹${parseFloat(product.starting_bid).toLocaleString()}`);
+       return;
     }
 
     setBidSending(true);
@@ -563,15 +625,21 @@ export default function ProductPage({ params }) {
                                       if (!user) return router.push("/login?redirect=/products/" + id);
                                       setShowBidModal(true);
                                     }}
-                                    className="w-full h-14 bg-amber-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-amber-700 transition-all shadow-lg shadow-amber-100 flex items-center justify-center gap-3 group"
+                                    disabled={timeLeft === "AUCTION ENDED"}
+                                    className={`w-full h-14 text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-3 group ${timeLeft === "AUCTION ENDED" ? 'bg-gray-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 shadow-amber-100'}`}
                                   >
                                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                     <span>Place Bid</span>
+                                     <span>{timeLeft === "AUCTION ENDED" ? "Auction Ended" : "Place Bid"}</span>
                                   </button>
                                   {product.auction_end && (
-                                    <p className="text-[9px] text-center font-bold text-amber-600 uppercase tracking-widest">
-                                      Ends: {new Date(product.auction_end).toLocaleString()}
-                                    </p>
+                                    <div className="flex flex-col items-center gap-1">
+                                       <p className="text-[10px] text-center font-bold text-amber-600 uppercase tracking-widest animate-pulse">
+                                          {timeLeft}
+                                       </p>
+                                       <p className="text-[8px] text-center font-bold text-gray-400 uppercase tracking-widest">
+                                          Ends: {new Date(product.auction_end).toLocaleString()}
+                                       </p>
+                                    </div>
                                   )}
                                 </div>
                               )}

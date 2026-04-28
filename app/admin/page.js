@@ -10,7 +10,7 @@ import AdminSidebar from "../../components/AdminSidebar";
 import Overview from "./components/Overview";
 import UserTab from "./components/UserTab";
 import ProductTab from "./components/ProductTab";
-import { OrdersTab, ChatsTab, ReportsTab, EscrowTab } from "./components/OtherTabs";
+import { OrdersTab, ChatsTab, ReportsTab, EscrowTab, AuctionsTab } from "./components/OtherTabs";
 import SettingsTab from "./components/SettingsTab";
 
 const TAB_LABELS = {
@@ -19,6 +19,7 @@ const TAB_LABELS = {
   products: "Listings & Approvals",
   orders: "Orders",
   escrow: "Escrow & Payouts",
+  auctions: "Auction Oversight",
   reports: "Reports & Complaints",
   chats: "Chats & Messages",
   settings: "Platform Protocol",
@@ -37,6 +38,7 @@ function AdminPageContent() {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [escrowDeals, setEscrowDeals] = useState([]);
+  const [auctions, setAuctions] = useState([]);
   const [chats, setChats] = useState([]);
   const [reports, setReports] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -132,6 +134,7 @@ function AdminPageContent() {
     if (activeTab === "orders" && orders.length === 0) fetchOrders();
     if (activeTab === "escrow" && escrowDeals.length === 0) fetchEscrowDeals();
     if (activeTab === "chats" && chats.length === 0) fetchChats();
+    if (activeTab === "auctions" && auctions.length === 0) fetchAuctions();
     if (activeTab === "reports" && reports.length === 0) fetchReports();
   }, [activeTab]);
 
@@ -209,6 +212,16 @@ function AdminPageContent() {
       const d = await res.json();
       setChats(Array.isArray(d) ? d : []);
     } catch { showToast("Failed to load chats", "error"); }
+    finally { setTabLoading(false); }
+  };
+
+  const fetchAuctions = async () => {
+    setTabLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/auctions`, { headers: getHeaders() });
+      const d = await res.json();
+      setAuctions(Array.isArray(d) ? d : []);
+    } catch { showToast("Failed to load auctions", "error"); }
     finally { setTabLoading(false); }
   };
 
@@ -536,6 +549,10 @@ function AdminPageContent() {
 
           {activeTab === "escrow" && (
             <EscrowTab escrowDeals={escrowDeals} tabLoading={tabLoading} onRelease={releasePayoutAdmin} API_BASE_URL={API_BASE_URL}/>
+          )}
+
+          {activeTab === "auctions" && (
+            <AuctionsTab auctions={auctions} tabLoading={tabLoading} API_BASE_URL={API_BASE_URL}/>
           )}
 
           {activeTab === "reports" && (

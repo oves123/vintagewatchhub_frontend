@@ -148,7 +148,14 @@ export default function ProductCard({ product, horizontal = false }) {
                 Price Guide
               </p>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold text-gray-950">₹{parseFloat(product.price).toLocaleString()}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-gray-950">₹{parseFloat(product.allow_auction ? (product.current_bid || product.starting_bid) : product.price).toLocaleString()}</span>
+                  {product.allow_auction && (
+                    <span className="bg-amber-100 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                      {product.current_bid ? 'Current Bid' : 'Starting Bid'}
+                    </span>
+                  )}
+                </div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-0.5">
                    {product.shipping_type === 'free' ? (
                       <span className="text-emerald-600">Free Shipping</span>
@@ -244,7 +251,14 @@ export default function ProductCard({ product, horizontal = false }) {
               Price Guide
             </p>
             <div className="flex flex-col">
-              <span className="text-xl font-bold text-gray-950">₹{parseFloat(product.price).toLocaleString()}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold text-gray-950">₹{parseFloat(product.allow_auction ? (product.current_bid || product.starting_bid) : product.price).toLocaleString()}</span>
+                {product.allow_auction && (
+                  <span className="bg-amber-100 text-amber-700 text-[7px] font-black px-1 py-0.5 rounded uppercase tracking-tighter">
+                    {product.current_bid ? 'Bid' : 'Start'}
+                  </span>
+                )}
+              </div>
               <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-0.5">
                  {product.shipping_type === 'free' ? (
                     <span className="text-emerald-600">Free Delivery</span>
