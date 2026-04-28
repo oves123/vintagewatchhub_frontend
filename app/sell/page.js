@@ -969,23 +969,34 @@ export default function SellPage() {
                             </div>
                          </div>
 
-                         <div className="pt-12 flex justify-between items-center max-w-2xl mx-auto w-full">
+                        <div className="pt-12 flex justify-between items-center max-w-2xl mx-auto w-full">
                             <button onClick={prevStep} className="group flex items-center gap-2 text-[11px] font-black text-gray-400 hover:text-gray-900 transition-all uppercase tracking-widest">
                                <svg className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
                                Basics
                             </button>
-                             <button
-                                onClick={nextStep}
-                                disabled={
-                                   (!formData.allow_buy_now && !formData.allow_auction && !formData.allow_offers) ||
-                                   (formData.allow_buy_now && !formData.buy_it_now_price) ||
-                                   (formData.allow_auction && (!formData.starting_bid || !formData.auction_end)) ||
-                                   (formData.shipping_type === 'fixed' && !formData.shipping_fee)
-                                }
-                                className="bg-blue-600 text-white px-12 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all disabled:opacity-20 shadow-xl shadow-blue-100 hover:scale-105 active:scale-95"
-                             >
-                                Review Listing
-                             </button>
+                             <div className="flex flex-col items-end gap-2">
+                                 {formData.allow_buy_now && !formData.buy_it_now_price && (
+                                    <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider animate-pulse">Enter Buy It Now Price</p>
+                                 )}
+                                 {formData.allow_auction && (!formData.starting_bid || !formData.auction_end) && (
+                                    <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider animate-pulse">Complete Auction Details</p>
+                                 )}
+                                 {formData.shipping_type === 'fixed' && !formData.shipping_fee && (
+                                    <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider animate-pulse">Enter Shipping Fee</p>
+                                 )}
+                                 <button
+                                    onClick={nextStep}
+                                    disabled={
+                                       (!formData.allow_buy_now && !formData.allow_auction && !formData.allow_offers) ||
+                                       (formData.allow_buy_now && !formData.buy_it_now_price) ||
+                                       (formData.allow_auction && (!formData.starting_bid || !formData.auction_end)) ||
+                                       (formData.shipping_type === 'fixed' && !formData.shipping_fee)
+                                    }
+                                    className="bg-blue-600 text-white px-12 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed disabled:shadow-none shadow-xl shadow-blue-100 hover:scale-105 active:scale-95"
+                                 >
+                                    Review Listing
+                                 </button>
+                              </div>
                          </div>
                       </div>
                    )}
