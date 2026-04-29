@@ -23,7 +23,7 @@ function ProfileContent() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState({ order_id: null, seller_id: null, rating: 5, comment: "", product_title: "", product_id: null });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-  const [trackingForm, setTrackingForm] = useState({ order_id: null, tracking_number: "", courier_name: "" });
+  const [trackingForm, setTrackingForm] = useState({ order_id: null, tracking_number: "", courier_name: "", packing_video: null });
   const [isSubmittingTracking, setIsSubmittingTracking] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ dealId: null, method: "UPI", receipt: null });
@@ -180,16 +180,21 @@ function ProfileContent() {
       showToast("Please enter a tracking number.", "error");
       return;
     }
+    if (!trackingForm.packing_video && (!deals.find(d => d.id === orderId)?.packing_video)) {
+      showToast("Packing video is mandatory for shipment.", "error");
+      return;
+    }
 
     setIsSubmittingTracking(true);
     try {
       const res = await markOrderShipped(orderId, user.id, {
         tracking_number: trackingForm.tracking_number,
-        courier_name: trackingForm.courier_name
+        courier_name: trackingForm.courier_name,
+        packing_video: trackingForm.packing_video
       });
       if (res.message) {
         showToast("Shipping updated successfully!");
-        setTrackingForm({ order_id: null, tracking_number: "", courier_name: "" });
+        setTrackingForm({ order_id: null, tracking_number: "", courier_name: "", packing_video: null });
         setEditingTrackingId(null);
         await loadActivity();
       } else {
@@ -215,6 +220,7 @@ function ProfileContent() {
       const data = await res.json();
       if (res.ok) {
           showToast(`Offer ${status} successfully.`);
+          setCounterForm({ offerId: null, amount: "" });
           loadActivity();
       } else {
           showToast(data.message || "Action failed", "error");
@@ -711,17 +717,23 @@ function ProfileContent() {
                                            ₹{parseFloat(offer.status === 'countered' ? offer.counter_amount : offer.amount).toLocaleString()}
                                         </p>
                                      </div>
-                                     <div className="flex flex-col items-end gap-2">
-                                        {offer.chat_id ? (
+                                     <div className="flex flex-col items-end gap-2 w-full mt-4">
+                                        {offer.status === 'countered' && (
+                                           <div className="flex w-full gap-2 mt-2">
+                                              <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition">Accept</button>
+                                              <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2 bg-rose-50 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-100 transition border border-rose-200">Decline</button>
+                                           </div>
+                                        )}
+                                        {offer.chat_id && (
                                            <button 
                                               onClick={() => router.push(`/messages?chat=${offer.chat_id}`)}
-                                              className="mt-2 px-6 py-2 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full hover:bg-blue-600 transition shadow-lg shadow-gray-100 flex items-center gap-2"
+                                              className="w-full mt-2 px-6 py-2 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-600 transition shadow-lg shadow-gray-100 flex items-center justify-center gap-2"
                                            >
                                               <Send className="w-3 h-3" /> Chat & Negotiate
                                            </button>
-                                        ) : (
-                                           <p className="mt-2 text-[8px] font-bold text-gray-400 uppercase italic">Navigate to chat to respond</p>
                                         )}
+                                        {offer.status === 'declined' && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest text-center w-full mt-2">Declined</p>}
+                                        {offer.status === 'rejected' && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest text-center w-full mt-2">Rejected/Expired</p>}
                                      </div>
                                   </div>
 
@@ -899,9 +911,18 @@ function ProfileContent() {
                                   )}
 
                                   {deal.tracking_number && (
-                                     <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                     <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 mt-2">
                                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
-                                        <p className="text-[10px] font-bold text-gray-900 truncate">{deal.tracking_number}</p>
+                                        <a 
+                                           href={`https://www.google.com/search?q=${encodeURIComponent((deal.courier_name || '') + ' tracking ' + deal.tracking_number)}`}
+                                           target="_blank"
+                                           className="text-[10px] font-bold text-blue-600 truncate hover:underline flex items-center gap-1"
+                                        >
+                                           {deal.tracking_number} <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                        {deal.packing_video && (
+                                           <a href={deal.packing_video.startsWith('http') ? deal.packing_video : `${API_BASE_URL}/uploads/${deal.packing_video}`} target="_blank" className="text-[9px] font-bold text-blue-600 uppercase tracking-widest mt-2 inline-flex items-center gap-1 hover:underline"><Camera className="w-3 h-3" /> View Packing Video</a>
+                                        )}
                                      </div>
                                   )}
                                </div>
@@ -1118,19 +1139,47 @@ function ProfileContent() {
                                             <div className="flex flex-col justify-center">
                                                 {(deal.status === 'PAID' || editingTrackingId === deal.id) && (
                                                    <div className="space-y-3">
-                                                      <div className="flex gap-2">
-                                                         <input 
-                                                            placeholder="COURIER NAME" 
-                                                            className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-gray-200"
-                                                            value={trackingForm.order_id === deal.id ? trackingForm.courier_name : (deal.courier_name || '')}
-                                                            onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, courier_name: e.target.value.toUpperCase() })}
-                                                         />
-                                                         <input 
-                                                            placeholder="TRACKING #" 
-                                                            className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-gray-200"
-                                                            value={trackingForm.order_id === deal.id ? trackingForm.tracking_number : (deal.tracking_number || '')}
-                                                            onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, tracking_number: e.target.value.toUpperCase() })}
-                                                         />
+                                                      <div className="flex flex-col gap-2">
+                                                         <div className="flex gap-2">
+                                                            <select 
+                                                               className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 text-gray-900"
+                                                               value={trackingForm.order_id === deal.id ? trackingForm.courier_name : (deal.courier_name || '')}
+                                                               onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, courier_name: e.target.value })}
+                                                            >
+                                                               <option value="">SELECT COURIER</option>
+                                                               <option value="DTDC">DTDC</option>
+                                                               <option value="Bluedart">Bluedart</option>
+                                                               <option value="Delhivery">Delhivery</option>
+                                                               <option value="FedEx">FedEx</option>
+                                                               <option value="India Post">India Post</option>
+                                                               <option value="Other">Other</option>
+                                                            </select>
+                                                            <input 
+                                                               placeholder="TRACKING #" 
+                                                               className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-gray-200"
+                                                               value={trackingForm.order_id === deal.id ? trackingForm.tracking_number : (deal.tracking_number || '')}
+                                                               onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, tracking_number: e.target.value.toUpperCase() })}
+                                                            />
+                                                         </div>
+                                                         
+                                                         <div className="relative group w-full">
+                                                            <input 
+                                                                type="file" 
+                                                                accept="video/mp4,video/webm"
+                                                                onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, packing_video: e.target.files[0] })}
+                                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                                            />
+                                                            <div className="w-full bg-white border-2 border-dashed border-gray-200 rounded-xl px-4 py-3 flex flex-col items-center justify-center gap-1 group-hover:border-blue-300 transition-colors">
+                                                               {trackingForm.order_id === deal.id && trackingForm.packing_video ? (
+                                                                  <span className="text-[10px] font-bold text-gray-900 truncate">Video Selected: {trackingForm.packing_video.name}</span>
+                                                               ) : (
+                                                                  <>
+                                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest"><Camera className="w-3 h-3 inline-block mr-1" /> Upload Packing Video</span>
+                                                                    <span className="text-[8px] text-gray-400 font-medium">Mandatory for shipment verification</span>
+                                                                  </>
+                                                               )}
+                                                            </div>
+                                                         </div>
                                                       </div>
                                                       <div className="flex gap-2">
                                                          <button 
@@ -1154,17 +1203,29 @@ function ProfileContent() {
 
                                                 {deal.status === 'SHIPPED' && editingTrackingId !== deal.id && (
                                                    <div className="flex flex-col gap-3">
-                                                      <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
-                                                         <p className="text-sm font-bold text-gray-900">{deal.tracking_number}</p>
-                                                      </div>
+                                                      {deal.tracking_number && (
+                                                         <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
+                                                            <a 
+                                                               href={`https://www.google.com/search?q=${encodeURIComponent((deal.courier_name || '') + ' tracking ' + deal.tracking_number)}`}
+                                                               target="_blank"
+                                                               className="text-[10px] font-bold text-blue-600 truncate hover:underline flex items-center gap-1"
+                                                            >
+                                                               {deal.tracking_number} <ExternalLink className="w-3 h-3" />
+                                                            </a>
+                                                         </div>
+                                                      )}
+                                                      {deal.packing_video && (
+                                                         <a href={deal.packing_video.startsWith('http') ? deal.packing_video : `${API_BASE_URL}/uploads/${deal.packing_video}`} target="_blank" className="text-[9px] font-bold text-blue-600 uppercase tracking-widest mt-2 inline-flex items-center gap-1 hover:underline"><Camera className="w-3 h-3" /> View Packing Video</a>
+                                                      )}
                                                       <button 
                                                          onClick={() => {
                                                             setEditingTrackingId(deal.id);
                                                             setTrackingForm({
                                                                order_id: deal.id,
                                                                courier_name: deal.courier_name || '',
-                                                               tracking_number: deal.tracking_number || ''
+                                                               tracking_number: deal.tracking_number || '',
+                                                               packing_video: null
                                                             });
                                                          }}
                                                          className="w-full py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
@@ -1227,17 +1288,44 @@ function ProfileContent() {
                                            </div>
                                          )}
 
-                                         <div className="mt-4 flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                               <span className="text-[8px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded uppercase tracking-widest">
-                                                  Expires in: {getRemainingTime(offer.expires_at)}
-                                               </span>
+                                         <div className="mt-4 flex flex-col gap-3">
+                                            <div className="flex justify-between items-center w-full">
+                                                <span className="text-[8px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded uppercase tracking-widest">
+                                                   Expires in: {getRemainingTime(offer.expires_at)}
+                                                </span>
+                                                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Offer Count: {offer.offer_count}/5</span>
                                             </div>
+                                            {offer.status === 'pending' && (
+                                                <>
+                                                   {counterForm.offerId === offer.id ? (
+                                                      <div className="flex items-center gap-2">
+                                                         <span className="text-sm font-bold text-gray-500">₹</span>
+                                                         <input 
+                                                            type="number" 
+                                                            value={counterForm.amount} 
+                                                            onChange={e => setCounterForm({...counterForm, amount: e.target.value})}
+                                                            className="flex-1 py-2 px-3 border border-gray-200 rounded outline-none text-xs font-bold"
+                                                            placeholder="Counter Amount"
+                                                         />
+                                                         <button onClick={() => handleOfferResponse(offer.id, 'countered', counterForm.amount)} className="px-4 py-2 bg-blue-600 text-white rounded text-[9px] font-bold uppercase hover:bg-blue-700">Send</button>
+                                                         <button onClick={() => setCounterForm({offerId: null, amount: ""})} className="px-4 py-2 bg-gray-100 text-gray-600 rounded text-[9px] font-bold uppercase hover:bg-gray-200">Cancel</button>
+                                                      </div>
+                                                   ) : (
+                                                      <div className="flex w-full gap-2">
+                                                         <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2.5 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition">Accept</button>
+                                                         <button onClick={() => setCounterForm({offerId: offer.id, amount: offer.amount})} className="flex-1 py-2.5 bg-white border-2 border-gray-900 text-gray-900 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-50 transition">Counter</button>
+                                                         <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-100 transition">Decline</button>
+                                                      </div>
+                                                   )}
+                                                </>
+                                            )}
+                                            {offer.status === 'countered' && <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest text-center mt-2">Awaiting Buyer Response</p>}
+                                            {offer.status === 'declined' && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest text-center mt-2">Declined</p>}
                                             <button 
                                                onClick={() => router.push(`/messages?chat=${offer.chat_id}`)}
-                                               className="px-6 py-2 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full hover:bg-blue-600 transition shadow-lg shadow-gray-100 flex items-center gap-2"
+                                               className="w-full mt-1 px-6 py-2.5 bg-gray-100 text-gray-700 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-200 transition flex items-center justify-center gap-2"
                                             >
-                                               <Send className="w-3 h-3" /> Chat & Respond
+                                               <Send className="w-3 h-3" /> Go to Chat
                                             </button>
                                          </div>
                                       </div>

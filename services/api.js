@@ -233,13 +233,20 @@ export const createReview = async (reviewData) => {
 // Orders - Sale Confirmation Flow (7-Stage State Machine)
 export const markOrderShipped = async (dealId, sellerId, trackingData) => {
   const token = localStorage.getItem("token");
+  const formData = new FormData();
+  formData.append("seller_id", sellerId);
+  formData.append("tracking_number", trackingData.tracking_number);
+  formData.append("courier_name", trackingData.courier_name);
+  if (trackingData.packing_video) {
+    formData.append("packing_video", trackingData.packing_video);
+  }
+
   const res = await fetch(`${API_URL}/orders/${dealId}/shipped`, {
     method: "PATCH",
     headers: {
-      "Content-Type": "application/json",
       ...(token ? { "Authorization": `Bearer ${token}` } : {})
     },
-    body: JSON.stringify({ seller_id: sellerId, ...trackingData })
+    body: formData
   });
   return res.json();
 };

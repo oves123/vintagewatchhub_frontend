@@ -9,10 +9,6 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
-    city: "",
-    state: "",
-    pincode: "",
     password: "",
     seller_type: "individual_collector",
     gst_number: "",
@@ -118,79 +114,7 @@ export default function RegisterPage() {
               </label>
             </div>
 
-            <div className="relative">
-              <input
-                type="tel"
-                required
-                className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
-                placeholder=" "
-                value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                id="phone"
-              />
-              <label 
-                htmlFor="phone" 
-                className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
-              >
-                Phone Number
-              </label>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
-                  placeholder=" "
-                  value={formData.city}
-                  onChange={(e) => setFormData({...formData, city: e.target.value})}
-                  id="city"
-                />
-                <label 
-                  htmlFor="city" 
-                  className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
-                >
-                  City
-                </label>
-              </div>
 
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
-                  placeholder=" "
-                  value={formData.state}
-                  onChange={(e) => setFormData({...formData, state: e.target.value})}
-                  id="state"
-                />
-                <label 
-                  htmlFor="state" 
-                  className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
-                >
-                  State
-                </label>
-              </div>
-            </div>
-
-            <div className="relative">
-              <input
-                type="text"
-                required
-                className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
-                placeholder=" "
-                value={formData.pincode}
-                onChange={(e) => setFormData({...formData, pincode: e.target.value})}
-                id="pincode"
-              />
-              <label 
-                htmlFor="pincode" 
-                className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
-              >
-                Pincode
-              </label>
-            </div>
 
             <div className="relative">
               <input

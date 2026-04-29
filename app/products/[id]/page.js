@@ -7,6 +7,7 @@ import Link from "next/link";
 import { API_URL, API_BASE_URL, createChat, getSellerReviews, createReport } from "../../../services/api";
 import { useRouter } from "next/navigation";
 import socket from "../../../services/socket";
+import ProfileOnboardingModal from "../../../components/ProfileOnboardingModal";
 
 
 export default function ProductPage({ params }) {
@@ -23,6 +24,10 @@ export default function ProductPage({ params }) {
   const [reviews, setReviews] = useState([]);
   const [reviewStats, setReviewStats] = useState({ average_rating: 0, review_count: 0 });
   const [copied, setCopied] = useState(false);
+  
+  // Onboarding State
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
   
   // Offer State
   const [showOfferModal, setShowOfferModal] = useState(false);
@@ -48,6 +53,14 @@ export default function ProductPage({ params }) {
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
+      fetch(`${API_URL}/users/${parsedUser.id}`)
+        .then(res => res.json())
+        .then(data => {
+           setUser(data);
+           localStorage.setItem("user", JSON.stringify({...parsedUser, ...data}));
+        })
+        .catch(console.error);
+
       fetch(`${API_URL}/watchlist/${parsedUser.id}`)
         .then(res => res.json())
         .then(data => {
@@ -259,6 +272,11 @@ export default function ProductPage({ params }) {
       router.push("/login");
       return;
     }
+    if (!user.address || !user.city || !user.phone) {
+       setPendingAction(() => () => setShowOfferModal(true));
+       setShowOnboarding(true);
+       return;
+    }
     if (!offerAmount || isNaN(offerAmount) || parseFloat(offerAmount) <= 0) {
        alert("Please enter a valid offer amount.");
        return;
@@ -302,6 +320,11 @@ export default function ProductPage({ params }) {
     if (!user) {
       router.push("/login?redirect=/products/" + id);
       return;
+    }
+    if (!user.address || !user.city || !user.phone) {
+       setPendingAction(() => () => setShowBidModal(true));
+       setShowOnboarding(true);
+       return;
     }
     if (!bidAmount || isNaN(bidAmount) || parseFloat(bidAmount) <= 0) {
       alert("Please enter a valid bid amount.");
@@ -352,14 +375,39 @@ export default function ProductPage({ params }) {
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!user) {
       router.push("/login?redirect=/products/" + id);
       return;
     }
-    // Redirect to checkout or handle payment logic
-    // For now, let's redirect to a checkout page (which might need to be created)
-    router.push(`/checkout?product_id=${id}&type=buy_now`);
+    if (!user.address || !user.city || !user.phone) {
+       setPendingAction(() => () => handleBuyNow());
+       setShowOnboarding(true);
+       return;
+    }
+    
+    try {
+      const res = await fetch(`${API_URL}/orders/buy-now`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({
+          product_id: parseInt(id),
+          buyer_id: user.id
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "Deal secured successfully. Redirecting to your active deals to complete payment.");
+        router.push("/profile?tab=buying");
+      } else {
+        alert(data.message || "Failed to initiate buy now.");
+      }
+    } catch (err) {
+      alert("Error processing your request. Please try again.");
+    }
   };
 
   const handleReportSeller = async () => {
@@ -434,6 +482,16 @@ export default function ProductPage({ params }) {
     setZoom({ x, y, show: true });
   };
 
+  const handleOnboardingComplete = (updatedUser) => {
+     setUser(updatedUser);
+     localStorage.setItem("user", JSON.stringify({...JSON.parse(localStorage.getItem("user")), ...updatedUser}));
+     setShowOnboarding(false);
+     if (pendingAction) {
+        pendingAction();
+        setPendingAction(null);
+     }
+  };
+
   if (notFound) {
     return (
       <div className="min-h-screen bg-white font-sans">
@@ -450,6 +508,12 @@ export default function ProductPage({ params }) {
 
   return (
     <div className="bg-[#f7f7f7] min-h-screen pb-20 font-sans text-[#191919]">
+      <ProfileOnboardingModal 
+         isOpen={showOnboarding} 
+         onClose={() => setShowOnboarding(false)} 
+         user={user} 
+         onComplete={handleOnboardingComplete} 
+      />
       <Navbar />
 
       <main className="max-w-[1300px] mx-auto px-4 py-4 md:py-8">

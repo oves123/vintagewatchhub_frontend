@@ -5,6 +5,7 @@ import Navbar from "../../components/Navbar";
 import { useRouter } from "next/navigation";
 import { getCategories, createProduct, updateProduct, API_URL, API_BASE_URL } from "../../services/api";
 import { Camera, RefreshCw, X, Circle } from "lucide-react";
+import ProfileOnboardingModal from "../../components/ProfileOnboardingModal";
 import "./sell.css";
 
 export default function SellPage() {
@@ -15,6 +16,8 @@ export default function SellPage() {
    const [showSuccess, setShowSuccess] = useState({ show: false, message: "" });
    const [productStatus, setProductStatus] = useState(null);
    const [rejectionReason, setRejectionReason] = useState(null);
+   const [showOnboarding, setShowOnboarding] = useState(false);
+   const [currentUser, setCurrentUser] = useState(null);
    const router = useRouter();
 
    const [formData, setFormData] = useState({
@@ -114,6 +117,16 @@ export default function SellPage() {
                }
             });
       }
+
+      // Fetch latest user profile to check completeness
+      fetch(`${API_URL}/users/${JSON.parse(user).id}`)
+        .then(res => res.json())
+        .then(data => {
+           setCurrentUser(data);
+           if (!data.address || !data.city || !data.phone) {
+              setShowOnboarding(true);
+           }
+        });
 
       getCategories().then((data) => {
          setCategories(data);
@@ -385,6 +398,12 @@ export default function SellPage() {
    const nextStep = () => setStep(s => s + 1);
    const prevStep = () => setStep(s => s - 1);
 
+   const handleOnboardingComplete = (updatedUser) => {
+      setCurrentUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify({...JSON.parse(localStorage.getItem("user")), ...updatedUser}));
+      setShowOnboarding(false);
+   };
+
    if (initLoading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col gap-4">
       <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
       <p className="font-black text-xs uppercase tracking-[0.5em] text-blue-600 ml-2">Loading Hub...</p>
@@ -392,6 +411,12 @@ export default function SellPage() {
 
    return (
       <div className="bg-[#f8f9fa] min-h-screen pb-20 font-sans text-[#191919]">
+         <ProfileOnboardingModal 
+            isOpen={showOnboarding} 
+            onClose={() => router.push('/')} 
+            user={currentUser} 
+            onComplete={handleOnboardingComplete} 
+         />
          {showSuccess.show && (
             <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-white/95 backdrop-blur-sm animate-in fade-in duration-500">
                <div className="flex flex-col items-center">
