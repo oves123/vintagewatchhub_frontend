@@ -5,7 +5,7 @@ import Navbar from "../../components/Navbar";
 import { getUserProfile, updateUserProfile, getUserActivity, API_BASE_URL, API_URL, getSellerReviews, createReview, markOrderShipped, markOrderDelivered, confirmOrderReceived, confirmOrderSale, cancelDeal, disputeDeal, getUserDeals, markOrderPaid } from "../../services/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { X, Camera, CheckCircle, FileText, ExternalLink, Send } from "lucide-react";
+import { X, Camera, CheckCircle, FileText, ExternalLink, Send, Edit2 } from "lucide-react";
 
 function ProfileContent() {
   const [user, setUser] = useState(null);
