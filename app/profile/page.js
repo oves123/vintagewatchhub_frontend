@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import Navbar from "../../components/Navbar";
 import { getUserProfile, updateUserProfile, getUserActivity, API_BASE_URL, API_URL, getSellerReviews, createReview, markOrderShipped, markOrderDelivered, confirmOrderReceived, confirmOrderSale, cancelDeal, disputeDeal, getUserDeals, markOrderPaid } from "../../services/api";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -32,6 +32,31 @@ function ProfileContent() {
   const [toast, setToast] = useState(null); 
   const [counterForm, setCounterForm] = useState({ offerId: null, amount: "" });
   const router = useRouter();
+
+  // Grouped Negotiations Logic - Show only the latest offer per product
+  const sellerNegotiations = useMemo(() => {
+    if (!Array.isArray(offers)) return [];
+    const filtered = offers.filter(o => o.seller_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED'));
+    const grouped = {};
+    filtered.forEach(o => {
+      if (!grouped[o.product_id] || grouped[o.product_id].id < o.id) {
+        grouped[o.product_id] = o;
+      }
+    });
+    return Object.values(grouped).sort((a, b) => b.id - a.id);
+  }, [offers, user?.id]);
+
+  const buyerNegotiations = useMemo(() => {
+    if (!Array.isArray(offers)) return [];
+    const filtered = offers.filter(o => o.buyer_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED'));
+    const grouped = {};
+    filtered.forEach(o => {
+      if (!grouped[o.product_id] || grouped[o.product_id].id < o.id) {
+        grouped[o.product_id] = o;
+      }
+    });
+    return Object.values(grouped).sort((a, b) => b.id - a.id);
+  }, [offers, user?.id]);
   const searchParams = useSearchParams();
 
   const isVideo = (filename) => {
@@ -669,8 +694,7 @@ function ProfileContent() {
                         >
                            {sub} {
                              sub === 'negotiations' ? (
-                                (Array.isArray(offers) && offers.filter(o => o.buyer_id === user.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length > 0) && 
-                                `(${offers.filter(o => o.buyer_id === user.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length})`
+                                buyerNegotiations.length > 0 && `(${buyerNegotiations.length})`
                              ) :
                              (Array.isArray(deals) && deals.filter(d => d.buyer_id == user.id && (
                                sub === 'active' ? ['ACCEPTED', 'PAID'].includes(d.status) : 
@@ -691,8 +715,8 @@ function ProfileContent() {
                    <div className="space-y-8">
                       {buyingSubTab === 'negotiations' ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           {Array.isArray(offers) && offers.filter(o => o.buyer_id === user.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length > 0 ? (
-                             offers.filter(o => o.buyer_id === user.id && (!o.deal_status || o.deal_status === 'EXPIRED')).map(offer => (
+                            {buyerNegotiations.length > 0 ? (
+                              buyerNegotiations.map(offer => (
                                <div key={offer.id} className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-md transition-all">
                                   <div className="flex items-center gap-4 mb-4">
                                      <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden">
@@ -959,7 +983,7 @@ function ProfileContent() {
                           >
                              {sub === 'inventory' ? `Inventory (${activity.listings?.length || 0})` : 
                               sub === 'deals' ? `Active Deals${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length > 0 ? ` (${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length})` : ''}` :
-                              `Negotiations${offers.filter(o => o.seller_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length > 0 ? ` (${offers.filter(o => o.seller_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length})` : ''}`}
+                              `Negotiations${sellerNegotiations.length > 0 ? ` (${sellerNegotiations.length})` : ''}`}
                           </button>
                         ))}
                      </div>
@@ -1263,8 +1287,8 @@ function ProfileContent() {
                           {/* Seller Negotiations Tab */}
                           {sellingSubTab === 'negotiations' && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                               {offers.filter(o => o.seller_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED')).length > 0 ? (
-                                 offers.filter(o => o.seller_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED')).map(offer => (
+                               {sellerNegotiations.length > 0 ? (
+                                 sellerNegotiations.map(offer => (
                                    <div key={offer.id} className="bg-white border border-gray-100 rounded-3xl p-6 hover:shadow-xl transition-all flex flex-col md:flex-row gap-6">
                                       <div className="w-24 h-24 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
                                          {offer.images?.[0] ? <img src={getImg(offer.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}

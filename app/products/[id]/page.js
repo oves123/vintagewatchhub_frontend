@@ -1030,33 +1030,53 @@ export default function ProductPage({ params }) {
 
               <div className="flex-1 overflow-y-auto p-8 bg-gray-50/30">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {sellerListings.map(item => (
-                       <Link 
-                          key={item.id}
-                          href={`/products/${item.id}`}
-                          onClick={() => setShowItemsModal(false)}
-                          className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 hover:shadow-xl hover:shadow-gray-200/50 transition-all group flex flex-col sm:flex-row gap-4 sm:gap-5"
-                       >
-                          <div className="w-full sm:w-24 h-48 sm:h-24 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
-                             <img 
-                               src={item.images?.[0] ? (item.images[0].startsWith('http') ? item.images[0] : `${API_BASE_URL}/uploads/${item.images[0]}`) : 'https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg'} 
-                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                             />
-                          </div>
-                          <div className="flex-1 min-w-0 py-1">
-                             <div className="flex justify-between items-start gap-2">
-                                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1.5">{item.category || 'Asset'}</p>
-                                <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{item.condition_code || 'Pre-Owned'}</span>
-                             </div>
-                             <h4 className="text-sm font-bold text-gray-900 uppercase tracking-tight truncate mb-1">{item.title}</h4>
-                             <p className="text-lg font-black text-gray-950">₹{parseFloat(item.price).toLocaleString()}</p>
-                             <div className="mt-3 flex items-center gap-2">
-                                <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">View Details</span>
-                                <svg className="w-3 h-3 text-gray-300 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                             </div>
-                          </div>
-                       </Link>
-                    ))}
+                    {sellerListings.map(item => {
+                       const isSold = item.status === 'sold' || item.status === 'under_offer';
+                       return (
+                        <Link 
+                           key={item.id}
+                           href={isSold ? "#" : `/products/${item.id}`}
+                           onClick={(e) => {
+                             if (isSold) {
+                               e.preventDefault();
+                               return;
+                             }
+                             setShowItemsModal(false);
+                           }}
+                           className={`bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 transition-all group flex flex-col sm:flex-row gap-4 sm:gap-5 ${isSold ? 'cursor-default opacity-90' : 'hover:shadow-xl hover:shadow-gray-200/50'}`}
+                        >
+                           <div className="w-full sm:w-24 h-48 sm:h-24 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0 relative">
+                              <img 
+                                src={item.images?.[0] ? (item.images[0].startsWith('http') ? item.images[0] : `${API_BASE_URL}/uploads/${item.images[0]}`) : 'https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg'} 
+                                className={`w-full h-full object-cover transition-transform duration-500 ${!isSold && 'group-hover:scale-110'}`} 
+                              />
+                              {isSold && (
+                                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
+                                   <span className="bg-red-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-white/20">
+                                      {item.status === 'under_offer' ? 'RESERVED' : 'SOLD'}
+                                   </span>
+                                </div>
+                              )}
+                           </div>
+                           <div className="flex-1 min-w-0 py-1">
+                              <div className="flex justify-between items-start gap-2">
+                                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1.5">{item.category || 'Asset'}</p>
+                                 <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{item.condition_code || 'Pre-Owned'}</span>
+                              </div>
+                              <h4 className="text-sm font-bold text-gray-900 uppercase tracking-tight truncate mb-1">{item.title}</h4>
+                              <p className="text-lg font-black text-gray-950">₹{parseFloat(item.price).toLocaleString()}</p>
+                              <div className="mt-3 flex items-center gap-2">
+                                 <span className={`text-[9px] font-bold uppercase tracking-widest ${isSold ? 'text-red-500' : 'text-gray-300'}`}>
+                                    {isSold ? (item.status === 'under_offer' ? 'Deal in Progress' : 'Listing Closed') : 'View Details'}
+                                 </span>
+                                 {!isSold && (
+                                   <svg className="w-3 h-3 text-gray-300 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                 )}
+                              </div>
+                           </div>
+                        </Link>
+                       );
+                    })}
                  </div>
               </div>
 
