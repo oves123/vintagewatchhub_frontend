@@ -206,7 +206,9 @@ function MessagesContent() {
       }
     } catch (err) {
       console.error("Upload failed:", err);
-      showToast("Failed to upload media", "error");
+      // Backend returns errors as JSON { error: "..." }
+      const errorMsg = err.response?.data?.error || err.message || "Failed to upload media";
+      showToast(errorMsg, "error");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -223,9 +225,13 @@ function MessagesContent() {
         setMessages([...messages, res]);
         setNewMessage("");
         loadChats(); // Refresh last message in sidebar
+      } else if (res.error) {
+        showToast(res.error, "error");
       }
     } catch (err) {
       console.error("Error sending message:", err);
+      const errorMsg = err.response?.data?.error || err.message || "Failed to send message";
+      showToast(errorMsg, "error");
     }
   };
 
@@ -235,9 +241,13 @@ function MessagesContent() {
       if (res.id) {
         setMessages([...messages, res]);
         loadChats();
+      } else if (res.error) {
+        showToast(res.error, "error");
       }
     } catch (err) {
       console.error("Error sending quick message:", err);
+      const errorMsg = err.response?.data?.error || err.message || "Safety Check Failed";
+      showToast(errorMsg, "error");
     }
   };
 
