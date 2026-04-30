@@ -53,13 +53,15 @@ export default function ProductPage({ params }) {
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
-      fetch(`${API_URL}/users/${parsedUser.id}`)
-        .then(res => res.json())
-        .then(data => {
-           setUser(data);
-           localStorage.setItem("user", JSON.stringify({...parsedUser, ...data}));
-        })
-        .catch(console.error);
+      if (parsedUser.id) {
+        fetch(`${API_URL}/user/profile/${parsedUser.id}`)
+          .then(res => res.json())
+          .then(data => {
+             setUser(data);
+             localStorage.setItem("user", JSON.stringify({...parsedUser, ...data}));
+          })
+          .catch(console.error);
+      }
 
       fetch(`${API_URL}/watchlist/${parsedUser.id}`)
         .then(res => res.json())

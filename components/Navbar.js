@@ -59,6 +59,7 @@ export default function Navbar() {
   }, [mobileOpen]);
 
   const fetchWatchlistCount = async (userId) => {
+    if (!userId) return;
     try {
       const res = await fetch(`${API_URL}/watchlist/${userId}`);
       if (res.ok) {
@@ -69,6 +70,7 @@ export default function Navbar() {
   };
 
   const fetchUnreadCount = async (userId) => {
+    if (!userId) return;
     try {
       const res = await getTotalUnreadCount(userId);
       setUnreadMessagesCount(res.total || 0);

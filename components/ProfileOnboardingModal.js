@@ -33,7 +33,7 @@ export default function ProfileOnboardingModal({ isOpen, onClose, user, onComple
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/users/${user.id}`, {
+      const res = await fetch(`${API_URL}/user/profile/${user.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

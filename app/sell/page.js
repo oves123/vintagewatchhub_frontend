@@ -119,14 +119,17 @@ export default function SellPage() {
       }
 
       // Fetch latest user profile to check completeness
-      fetch(`${API_URL}/users/${JSON.parse(user).id}`)
-        .then(res => res.json())
-        .then(data => {
-           setCurrentUser(data);
-           if (!data.address || !data.city || !data.phone) {
-              setShowOnboarding(true);
-           }
-        });
+      const userId = user ? JSON.parse(user).id : null;
+      if (userId) {
+         fetch(`${API_URL}/user/profile/${userId}`)
+           .then(res => res.json())
+           .then(data => {
+              setCurrentUser(data);
+              if (!data.address || !data.city || !data.phone) {
+                 setShowOnboarding(true);
+              }
+           });
+      }
 
       getCategories().then((data) => {
          setCategories(data);
