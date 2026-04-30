@@ -809,9 +809,18 @@ function ProfileContent() {
                                      )}
                                   </div>
                                   <h4 className="text-sm font-bold uppercase tracking-tight mb-2">{deal.title}</h4>
-                                  <div className="flex items-center gap-4 mb-4">
-                                     <span className="text-lg font-black text-gray-950">₹{parseFloat(deal.amount).toLocaleString()}</span>
-                                     <p className="text-[10px] font-medium text-gray-400 uppercase">Seller: {deal.seller_name}</p>
+                                  <div className="flex flex-col gap-1 mb-4">
+                                     <div className="flex items-baseline gap-2">
+                                        <span className="text-lg font-black text-gray-950">₹{(parseFloat(deal.amount || 0) + parseFloat(deal.shipping_fee || 0)).toLocaleString()}</span>
+                                        <span className="text-[9px] font-bold text-gray-400 uppercase">Total Paid</span>
+                                     </div>
+                                     <div className="flex items-center gap-3">
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Item: ₹{parseFloat(deal.amount).toLocaleString()}</p>
+                                        {parseFloat(deal.shipping_fee || 0) > 0 && (
+                                           <p className="text-[9px] font-bold text-blue-600 uppercase tracking-tight">Shipping: ₹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
+                                        )}
+                                        <p className="text-[9px] font-medium text-gray-400 uppercase ml-auto">Seller: {deal.seller_name}</p>
+                                     </div>
                                   </div>
 
                                   {/* Buyer Status Timeline */}
@@ -1067,8 +1076,15 @@ function ProfileContent() {
                                                   <h3 className="text-xl font-bold text-gray-950 uppercase tracking-tight leading-none">{deal.product_title}</h3>
                                                </div>
                                                <div className="text-right">
-                                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Settlement</p>
-                                                  <p className="text-2xl font-black text-gray-950 leading-none">₹{parseFloat(deal.amount).toLocaleString()}</p>
+                                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Your Payout</p>
+                                                  <p className="text-2xl font-black text-gray-950 leading-none">₹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
+                                                  <div className="flex flex-col items-end mt-2">
+                                                     <p className="text-[8px] font-bold text-gray-400 uppercase">Sale: ₹{parseFloat(deal.amount).toLocaleString()}</p>
+                                                     {parseFloat(deal.shipping_fee || 0) > 0 && (
+                                                        <p className="text-[8px] font-bold text-blue-600 uppercase">Shipping: +₹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
+                                                     )}
+                                                     <p className="text-[8px] font-bold text-rose-500 uppercase">Fee: -₹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</p>
+                                                  </div>
                                                </div>
                                             </div>
 

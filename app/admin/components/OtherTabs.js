@@ -46,7 +46,16 @@ export function OrdersTab({ orders, tabLoading, onResolve, API_BASE_URL }) {
                       <td className="px-4 py-3 text-[11px] font-bold text-gray-700 max-w-[160px] truncate">{o.product_title||"—"}</td>
                       <td className="px-4 py-3 text-[11px] font-medium text-gray-600">{o.buyer_name||"—"}</td>
                       <td className="px-4 py-3 text-[11px] font-medium text-gray-600">{o.seller_name||"—"}</td>
-                      <td className="px-4 py-3 text-[12px] font-black text-gray-900">₹{parseFloat(o.total_amount||o.amount||0).toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                         <div className="flex flex-col gap-0.5">
+                            <p className="text-[12px] font-black text-gray-900 leading-none">₹{parseFloat(o.amount || 0).toLocaleString()}</p>
+                            {parseFloat(o.shipping_fee || 0) > 0 && (
+                               <p className="text-[8px] font-bold text-blue-600 uppercase tracking-tight">+ ₹{parseFloat(o.shipping_fee).toLocaleString()} SHP</p>
+                            )}
+                            <div className="h-[1px] w-8 bg-gray-100 my-0.5"></div>
+                            <p className="text-[10px] font-black text-gray-950">₹{(parseFloat(o.amount || 0) + parseFloat(o.shipping_fee || 0)).toLocaleString()}</p>
+                         </div>
+                      </td>
                       <td className="px-4 py-3">
                          <div className="flex flex-col gap-1">
                             <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-tighter ${o.payment_status==='PAID'?'bg-emerald-50 text-emerald-600 border border-emerald-100':'bg-amber-50 text-amber-600 border border-amber-100'}`}>
@@ -138,12 +147,17 @@ export function OrdersTab({ orders, tabLoading, onResolve, API_BASE_URL }) {
                          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Seller</p>
                          <p className="text-[10px] font-bold text-gray-700">{o.seller_name||"—"}</p>
                        </div>
-                       <div className="col-span-2 pt-1 mt-1 border-t border-gray-100">
-                         <div className="flex justify-between items-center">
-                           <p className="text-[14px] font-black text-gray-900">₹{parseFloat(o.total_amount||o.amount||0).toLocaleString()}</p>
-                           {o.tracking_number && <p className="text-[8px] font-bold text-blue-600 tracking-tight px-2 py-0.5 bg-blue-50 rounded-full">TRK: {o.tracking_number}</p>}
-                         </div>
-                       </div>
+                        <div className="col-span-2 pt-1 mt-1 border-t border-gray-100">
+                          <div className="flex justify-between items-center">
+                            <div className="flex flex-col">
+                               <p className="text-[14px] font-black text-gray-900 leading-none">₹{(parseFloat(o.amount || 0) + parseFloat(o.shipping_fee || 0)).toLocaleString()}</p>
+                               {parseFloat(o.shipping_fee || 0) > 0 && (
+                                  <p className="text-[8px] font-bold text-blue-600 uppercase mt-1">Incl. ₹{parseFloat(o.shipping_fee).toLocaleString()} Shipping</p>
+                               )}
+                            </div>
+                            {o.tracking_number && <p className="text-[8px] font-bold text-blue-600 tracking-tight px-2 py-0.5 bg-blue-50 rounded-full">TRK: {o.tracking_number}</p>}
+                          </div>
+                        </div>
                     </div>
 
                     { (o.status === 'CANCELLED' || o.status === 'DISPUTED') && o.cancel_reason && (
@@ -413,13 +427,19 @@ export function EscrowTab({ escrowDeals, tabLoading, onRelease, API_BASE_URL }) 
                         </p>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col gap-0.5">
-                        <p className="text-[12px] font-black text-gray-900">₹{parseFloat(d.amount).toLocaleString()}</p>
-                        <p className="text-[8px] font-bold text-rose-500 uppercase">Comm: ₹{parseFloat(d.total_platform_fee || 0).toLocaleString()}</p>
-                        <p className="text-[9px] font-black text-emerald-600 uppercase">Payout: ₹{parseFloat(d.seller_payout || 0).toLocaleString()}</p>
-                      </div>
-                    </td>
+                     <td className="px-4 py-3">
+                       <div className="flex flex-col gap-0.5">
+                         <p className="text-[12px] font-black text-gray-900">₹{(parseFloat(d.amount || 0) + parseFloat(d.shipping_fee || 0)).toLocaleString()}</p>
+                         <div className="flex flex-wrap gap-x-2">
+                           <span className="text-[8px] font-bold text-blue-500 uppercase">Item: ₹{parseFloat(d.amount).toLocaleString()}</span>
+                           {parseFloat(d.shipping_fee || 0) > 0 && (
+                             <span className="text-[8px] font-bold text-blue-600 uppercase">Ship: ₹{parseFloat(d.shipping_fee).toLocaleString()}</span>
+                           )}
+                         </div>
+                         <p className="text-[8px] font-bold text-rose-500 uppercase">Comm: ₹{parseFloat(d.total_platform_fee || 0).toLocaleString()}</p>
+                         <p className="text-[9px] font-black text-emerald-600 uppercase">Seller Payout: ₹{parseFloat(d.seller_payout || 0).toLocaleString()}</p>
+                       </div>
+                     </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${
                         d.payout_status === 'RELEASED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'

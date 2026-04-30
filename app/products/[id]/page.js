@@ -668,11 +668,20 @@ export default function ProductPage({ params }) {
                            <>
                               {product.allow_buy_now && (
                                 <button 
-                                  onClick={handleBuyNow}
-                                  className="w-full h-14 bg-blue-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-3 group"
+                                  onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow}
+                                  className={`w-full h-14 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-3 group ${product.shipping_type === 'contact' ? 'bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 shadow-blue-50' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100'}`}
                                 >
-                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                                   <span>Buy It Now - ₹{parseFloat(product.buy_it_now_price || product.price).toLocaleString()}</span>
+                                   {product.shipping_type === 'contact' ? (
+                                      <>
+                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                                         <span>Request Shipping Quote</span>
+                                      </>
+                                   ) : (
+                                      <>
+                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                         <span>Buy It Now - ₹{(parseFloat(product.buy_it_now_price || product.price) + (product.shipping_type === 'fixed' ? parseFloat(product.shipping_fee || 0) : 0)).toLocaleString()}</span>
+                                      </>
+                                   )}
                                 </button>
                               )}
 
