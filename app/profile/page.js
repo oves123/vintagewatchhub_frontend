@@ -792,14 +792,14 @@ function ProfileContent() {
                                         deal.status === 'CONFIRMED' ? 'bg-black text-white' : 
                                         deal.status === 'SHIPPED' ? 'bg-amber-500 text-white' : 
                                         deal.status === 'DELIVERED' ? 'bg-emerald-500 text-white' : 
-                                        'bg-blue-500 text-white'
+                                        ['CANCELLED', 'REFUND_PENDING'].includes(deal.status) ? 'bg-rose-500 text-white' : 'bg-blue-500 text-white'
                                       }`}>
                                          {
                                           deal.status === 'PAID' ? '✓ Payment Verified' : 
                                           deal.status === 'SHIPPED' ? 'SHIPPED' :
                                           deal.status === 'DELIVERED' ? 'IN 48H INSPECTION' :
                                           deal.status === 'CONFIRMED' ? 'COMPLETED' :
-                                          deal.status === 'ACCEPTED' ? 'ACTION REQUIRED: PAY NOW' :
+                                          deal.status === 'ACCEPTED' ? 'ACTION REQUIRED: PAY NOW' : deal.status === 'REFUND_PENDING' ? 'REFUND PENDING' :
                                           deal.status
                                          }
                                       </span>
@@ -824,7 +824,8 @@ function ProfileContent() {
                                   </div>
 
                                   {/* Buyer Status Timeline */}
-                                  <div className="flex items-center gap-1 mb-6">
+                                  {!['CANCELLED', 'REFUND_PENDING'].includes(deal.status) ? (
+                                      <div className="flex items-center gap-1 mb-6">
                                      {['ACCEPTED', 'PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'].map((s, idx) => {
                                         const statuses = ['ACCEPTED', 'PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'];
                                         const currentIdx = statuses.indexOf(deal.status);
@@ -839,6 +840,12 @@ function ProfileContent() {
                                         );
                                      })}
                                   </div>
+                                   ) : (
+                                      <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl">
+                                         <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Transaction Terminated</p>
+                                         <p className="text-[11px] font-bold text-rose-800 leading-tight">{deal.cancel_reason || 'No reason provided.'}</p>
+                                      </div>
+                                   )}
 
                                   {deal.payment_status === 'PENDING' && deal.status === 'ACCEPTED' && deal.seller_payment_info && (
                                      <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
@@ -900,7 +907,7 @@ function ProfileContent() {
                                      </>
                                    )}
                                   
-                                  {deal.status === 'ACCEPTED' && !deal.shipped_at && (
+                                  {((deal.status === 'ACCEPTED') || (deal.status === 'PAID' && new Date(deal.expires_at) < new Date())) && !deal.shipped_at && (
                                      <div className="flex flex-col gap-2">
                                         {deal.payment_status === 'PENDING' && (
                                            <button 
@@ -914,7 +921,7 @@ function ProfileContent() {
                                            onClick={() => handleCancelDeal(deal.id)}
                                            className="w-full py-2 border border-gray-100 text-gray-400 rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-gray-50 transition"
                                         >
-                                           Cancel Order
+                                           {deal.status === 'PAID' ? 'Request Refund & Cancel' : 'Cancel Order'}
                                         </button>
                                      </div>
                                   )}
@@ -1275,12 +1282,12 @@ function ProfileContent() {
                                                    </div>
                                                 )}
 
-                                               {deal.status === 'ACCEPTED' && (
+                                               {((deal.status === 'ACCEPTED') || (deal.status === 'PAID' && new Date(deal.expires_at) < new Date())) && (
                                                   <button 
                                                      onClick={() => handleCancelDeal(deal.id)}
                                                      className="w-full py-3 border-2 border-dashed border-gray-100 text-gray-300 rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:border-rose-100 hover:text-rose-500 hover:bg-rose-50 transition-all"
                                                   >
-                                                     Cancel Deal
+                                                     {deal.status === 'PAID' ? 'Cancel & Process Refund' : 'Cancel Deal'}
                                                   </button>
                                                )}
                                             </div>

@@ -8,6 +8,7 @@ import { API_URL, API_BASE_URL, createChat, getSellerReviews, createReport } fro
 import { useRouter } from "next/navigation";
 import socket from "../../../services/socket";
 import ProfileOnboardingModal from "../../../components/ProfileOnboardingModal";
+import { ShieldCheck, Truck, Clock, CheckCircle, ArrowLeft, ExternalLink, Info, X, Camera, Send, FileText, Edit2 } from "lucide-react";
 
 
 export default function ProductPage({ params }) {
@@ -47,6 +48,10 @@ export default function ProductPage({ params }) {
   const [bidHistory, setBidHistory] = useState([]);
   const [bidSending, setBidSending] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
+
+  // Buy Now Modal State
+  const [showBuyNowModal, setShowBuyNowModal] = useState(false);
+  const [isSecuring, setIsSecuring] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -377,7 +382,7 @@ export default function ProductPage({ params }) {
     }
   };
 
-  const handleBuyNow = async () => {
+  const handleBuyNow = () => {
     if (!user) {
       router.push("/login?redirect=/products/" + id);
       return;
@@ -388,6 +393,11 @@ export default function ProductPage({ params }) {
        return;
     }
     
+    setShowBuyNowModal(true);
+  };
+
+  const confirmBuyNow = async () => {
+    setIsSecuring(true);
     try {
       const res = await fetch(`${API_URL}/orders/buy-now`, {
         method: "POST",
@@ -402,13 +412,15 @@ export default function ProductPage({ params }) {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message || "Deal secured successfully. Redirecting to your active deals to complete payment.");
+        alert("Deal Secured! Redirecting to your deals to complete payment.");
         router.push("/profile?tab=buying");
       } else {
         alert(data.message || "Failed to initiate buy now.");
       }
     } catch (err) {
       alert("Error processing your request. Please try again.");
+    } finally {
+      setIsSecuring(false);
     }
   };
 
@@ -1241,10 +1253,131 @@ export default function ProductPage({ params }) {
                     {reportSending ? "Protecting Community..." : "Submit Report"}
                  </button>
               </div>
+            </div>
+         </div>
+      )}
+
+      {/* Buy It Now Confirmation Modal */}
+      {showBuyNowModal && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
+           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => !isSecuring && setShowBuyNowModal(false)} />
+           <div className="relative w-full max-w-5xl bg-[#fcfcfc] rounded-[40px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh]">
+              
+              <div className="p-6 md:p-8 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
+                 <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                       <ShieldCheck className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                       <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Confirm Acquisition</h3>
+                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Asset #D-{id} • Verified Transaction</p>
+                    </div>
+                 </div>
+                 <button 
+                   onClick={() => !isSecuring && setShowBuyNowModal(false)}
+                   className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all"
+                 >
+                    <X className="w-5 h-5" />
+                 </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 md:p-10">
+                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    {/* Left side info */}
+                    <div className="lg:col-span-7 space-y-6">
+                       {/* Product Card */}
+                       <div className="bg-white rounded-3xl border border-gray-100 p-6 flex gap-6 shadow-sm">
+                          <div className="w-24 h-24 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100">
+                             <img 
+                               src={product.images?.[0] ? (product.images[0].startsWith('http') ? product.images[0] : `${API_BASE_URL}/uploads/${product.images[0]}`) : '/placeholder.png'} 
+                               className="w-full h-full object-cover"
+                               alt={product.title}
+                             />
+                          </div>
+                          <div className="flex-1">
+                             <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">{product.category || 'Luxury Asset'}</p>
+                             <h4 className="text-base font-bold uppercase tracking-tight text-gray-900 leading-tight mb-2">{product.title}</h4>
+                             <div className="flex gap-2">
+                                <span className="px-2 py-0.5 bg-gray-50 rounded text-[8px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100">{product.condition_code || 'Pre-owned'}</span>
+                                <span className="px-2 py-0.5 bg-emerald-50 rounded text-[8px] font-bold uppercase tracking-widest text-emerald-600 border border-emerald-100">Auth. Guaranteed</span>
+                             </div>
+                          </div>
+                       </div>
+
+                       {/* Shipping Info */}
+                       <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                          <div className="flex items-center gap-2 mb-4">
+                             <Truck className="w-4 h-4 text-gray-400" />
+                             <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-900">Destination Hub</h5>
+                          </div>
+                          <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                             <p className="text-xs font-bold text-gray-900">{user?.name}</p>
+                             <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{user?.address}, {user?.city}, {user?.state} - {user?.pincode}</p>
+                             {/* <p className="text-[11px] font-bold text-blue-600 mt-2">{user?.phone}</p> */}
+                          </div>
+                       </div>
+
+                       {/* Trust Badge */}
+                       <div className="bg-blue-600 rounded-3xl p-6 text-white shadow-xl shadow-blue-100 flex items-start gap-4">
+                          <Clock className="w-5 h-5 mt-0.5" />
+                          <div>
+                             <p className="text-sm font-bold uppercase tracking-tight">48-Hour Shipment SLA</p>
+                             <p className="text-[10px] opacity-80 mt-1 font-medium leading-relaxed">Seller is contractually obligated to ship within 48 hours. Your payment remains in escrow until verification.</p>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Right side pricing */}
+                    <div className="lg:col-span-5">
+                       <div className="bg-white rounded-3xl border-2 border-black p-8 sticky top-0">
+                          <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-900 mb-6 border-b border-gray-100 pb-3">Acquisition Summary</h5>
+                          
+                          <div className="space-y-4">
+                             <div className="flex justify-between items-center">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Asset Value</p>
+                                <p className="text-sm font-black text-gray-900">₹{parseFloat(product.buy_it_now_price || product.price).toLocaleString()}</p>
+                             </div>
+                             <div className="flex justify-between items-center">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Shipping Fee</p>
+                                <p className="text-sm font-bold text-gray-900">{product.shipping_type === 'fixed' ? `₹${parseFloat(product.shipping_fee || 0).toLocaleString()}` : 'FREE'}</p>
+                             </div>
+                             <div className="flex justify-between items-center">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Authentication</p>
+                                <p className="text-[9px] font-black text-emerald-600 uppercase">Included</p>
+                             </div>
+
+                             <div className="pt-6 border-t border-dashed border-gray-200 mt-6">
+                                <div className="flex justify-between items-end mb-8">
+                                   <div>
+                                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total cost</p>
+                                   </div>
+                                   <p className="text-3xl font-black text-gray-950 tracking-tighter">₹{(parseFloat(product.buy_it_now_price || product.price) + (product.shipping_type === 'fixed' ? parseFloat(product.shipping_fee || 0) : 0)).toLocaleString()}</p>
+                                </div>
+
+                                <button 
+                                  onClick={confirmBuyNow}
+                                  disabled={isSecuring}
+                                  className={`w-full py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl ${isSecuring ? 'bg-gray-100 text-gray-400' : 'bg-black text-white hover:bg-blue-600 shadow-blue-100 active:scale-[0.98]'}`}
+                                >
+                                   {isSecuring ? (
+                                      <span className="animate-pulse">Securing...</span>
+                                   ) : (
+                                      <>
+                                         <span>Commit & Secure</span>
+                                         <CheckCircle className="w-4 h-4" />
+                                      </>
+                                   )}
+                                </button>
+                                <p className="text-[8px] text-center text-gray-400 font-bold uppercase tracking-widest mt-4">Funds held in Hub Escrow Protection</p>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
            </div>
         </div>
       )}
-
-    </div>
+   </div>
   );
 }
