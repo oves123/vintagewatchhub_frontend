@@ -1036,7 +1036,7 @@ export default function SellPage() {
                                  {formData.allow_buy_now && !formData.buy_it_now_price && (
                                     <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider animate-pulse">Enter Buy It Now Price</p>
                                  )}
-                                 {formData.allow_auction && (!formData.starting_bid || !formData.auction_end) && (
+                                 {formData.allow_auction && (!formData.starting_bid || !formData.auction_duration) && (
                                     <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider animate-pulse">Complete Auction Details</p>
                                  )}
                                  {formData.shipping_type === 'fixed' && !formData.shipping_fee && (
@@ -1047,7 +1047,7 @@ export default function SellPage() {
                                     disabled={
                                        (!formData.allow_buy_now && !formData.allow_auction && !formData.allow_offers) ||
                                        (formData.allow_buy_now && !formData.buy_it_now_price) ||
-                                       (formData.allow_auction && (!formData.starting_bid || !formData.auction_end)) ||
+                                       (formData.allow_auction && (!formData.starting_bid || !formData.auction_duration)) ||
                                        (formData.shipping_type === 'fixed' && !formData.shipping_fee)
                                     }
                                     className="bg-blue-600 text-white px-12 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed disabled:shadow-none shadow-xl shadow-blue-100 hover:scale-105 active:scale-95"

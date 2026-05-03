@@ -89,10 +89,15 @@ export default function ProductPage({ params }) {
       // Update bid history
       setBidHistory(prev => {
         // Avoid duplicate bids if fetch also happens
-        if (prev.some(b => b.bid_amount === data.bid_amount)) return prev;
+        if (prev.some(b => b.bid_amount === data.bid_amount && b.user_name === data.user_name)) return prev;
         const newBid = {
           bid_amount: data.bid_amount,
           user_name: data.user_name || "Recent Bidder",
+          profile_image: data.profile_image,
+          rating: data.rating,
+          total_sold: data.total_sold,
+          total_bought: data.total_bought,
+          review_count: data.review_count,
           created_at: new Date().toISOString()
         };
         return [newBid, ...prev];
@@ -885,7 +890,8 @@ export default function ProductPage({ params }) {
         {/* Extended Data Tabs */}
         <section className="mt-20">
              <div className="flex gap-10 border-b border-gray-100 mb-10 overflow-x-auto no-scrollbar">
-              {["description", "condition"].map(t => {
+              {["description", "condition", "bid history"].map(t => {
+                if (t === "bid history" && !product.allow_auction) return null;
                 return (
                   <button 
                     key={t} onClick={() => setActiveTab(t)}
@@ -910,6 +916,54 @@ export default function ProductPage({ params }) {
                     )}
                 </div>
               )}
+              {activeTab === "bid history" && (
+                 <div className="animate-in fade-in duration-500 space-y-6">
+                    {bidHistory.length > 0 ? (
+                      <div className="space-y-4">
+                        {bidHistory.map((bid, i) => (
+                          <div key={i} className={`p-6 rounded-2xl border transition-all ${i === 0 ? 'bg-amber-50/50 border-amber-100 shadow-sm' : 'bg-white border-gray-100'}`}>
+                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div className="flex items-center gap-4">
+                                   <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-black text-lg shadow-sm ${i === 0 ? 'bg-amber-500' : 'bg-blue-600'}`}>
+                                      {bid.user_name?.charAt(0).toUpperCase()}
+                                   </div>
+                                   <div>
+                                      <div className="flex items-center gap-2">
+                                         <p className="font-bold text-gray-900">{bid.user_name}</p>
+                                         {i === 0 && (
+                                            <span className="bg-amber-600 text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full">Highest Bidder</span>
+                                         )}
+                                      </div>
+                                      <div className="flex items-center gap-3 mt-1">
+                                         <div className="flex items-center gap-0.5">
+                                            {[1,2,3,4,5].map(s => (
+                                               <svg key={s} className={`w-2.5 h-2.5 ${s <= Math.round(bid.rating || 0) ? 'text-amber-400' : 'text-gray-200'} fill-current`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                            ))}
+                                         </div>
+                                         <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">({bid.review_count || 0} reviews)</span>
+                                      </div>
+                                      <div className="flex items-center gap-2 mt-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                         <span className="text-emerald-600">{bid.total_sold || 0} Sold</span>
+                                         <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
+                                         <span className="text-blue-600">{bid.total_bought || 0} Bought</span>
+                                      </div>
+                                   </div>
+                                </div>
+                                <div className="text-right">
+                                   <p className="text-2xl font-black text-gray-900 tracking-tight">₹{parseFloat(bid.bid_amount).toLocaleString()}</p>
+                                   <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">{new Date(bid.created_at).toLocaleString()}</p>
+                                </div>
+                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-20 text-center border-2 border-dashed border-gray-100 rounded-[40px] bg-gray-50/20">
+                         <p className="text-[11px] font-black text-gray-300 uppercase tracking-[0.3em]">No Bidding Activity Logged</p>
+                      </div>
+                    )}
+                 </div>
+               )}
               {activeTab === "condition" && (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-500">
                    <div className="col-span-full mb-4">

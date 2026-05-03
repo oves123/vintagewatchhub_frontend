@@ -10,7 +10,7 @@ import AdminSidebar from "../../components/AdminSidebar";
 import Overview from "./components/Overview";
 import UserTab from "./components/UserTab";
 import ProductTab from "./components/ProductTab";
-import { OrdersTab, ChatsTab, ReportsTab, EscrowTab, AuctionsTab } from "./components/OtherTabs";
+import { OrdersTab, ChatsTab, ReportsTab, EscrowTab, AuctionsTab, BidsTab } from "./components/OtherTabs";
 import SettingsTab from "./components/SettingsTab";
 
 const TAB_LABELS = {
@@ -20,6 +20,7 @@ const TAB_LABELS = {
   orders: "Orders",
   escrow: "Escrow & Payouts",
   auctions: "Auction Oversight",
+  bids: "Global Bid History",
   reports: "Reports & Complaints",
   chats: "Chats & Messages",
   settings: "Platform Protocol",
@@ -39,6 +40,7 @@ function AdminPageContent() {
   const [orders, setOrders] = useState([]);
   const [escrowDeals, setEscrowDeals] = useState([]);
   const [auctions, setAuctions] = useState([]);
+  const [bids, setBids] = useState([]);
   const [chats, setChats] = useState([]);
   const [reports, setReports] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -135,6 +137,7 @@ function AdminPageContent() {
     if (activeTab === "escrow" && escrowDeals.length === 0) fetchEscrowDeals();
     if (activeTab === "chats" && chats.length === 0) fetchChats();
     if (activeTab === "auctions" && auctions.length === 0) fetchAuctions();
+    if (activeTab === "bids" && bids.length === 0) fetchBids();
     if (activeTab === "reports" && reports.length === 0) fetchReports();
   }, [activeTab]);
 
@@ -222,6 +225,16 @@ function AdminPageContent() {
       const d = await res.json();
       setAuctions(Array.isArray(d) ? d : []);
     } catch { showToast("Failed to load auctions", "error"); }
+    finally { setTabLoading(false); }
+  };
+
+  const fetchBids = async () => {
+    setTabLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/bids`, { headers: getHeaders() });
+      const d = await res.json();
+      setBids(Array.isArray(d) ? d : []);
+    } catch { showToast("Failed to load bid history", "error"); }
     finally { setTabLoading(false); }
   };
 
@@ -552,7 +565,11 @@ function AdminPageContent() {
           )}
 
           {activeTab === "auctions" && (
-            <AuctionsTab auctions={auctions} tabLoading={tabLoading} API_BASE_URL={API_BASE_URL}/>
+            <AuctionsTab auctions={auctions} tabLoading={tabLoading} API_BASE_URL={API_BASE_URL} onOpenBids={(auctionId) => { setActiveTab("bids"); }} />
+          )}
+
+          {activeTab === "bids" && (
+            <BidsTab bids={bids} tabLoading={tabLoading} />
           )}
 
           {activeTab === "reports" && (

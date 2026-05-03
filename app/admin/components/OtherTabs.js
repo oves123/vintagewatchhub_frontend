@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Search, RefreshCw, Eye, CheckCircle, XCircle, Image } from "lucide-react";
+import { Search, RefreshCw, Eye, CheckCircle, XCircle, Image, Gavel } from "lucide-react";
 
 export function OrdersTab({ orders, tabLoading, onResolve, API_BASE_URL }) {
   const [search, setSearch] = useState("");
@@ -471,7 +471,7 @@ export function EscrowTab({ escrowDeals, tabLoading, onRelease, API_BASE_URL }) 
   );
 }
 
-export function AuctionsTab({ auctions, tabLoading, API_BASE_URL }) {
+export function AuctionsTab({ auctions, tabLoading, onOpenBids, API_BASE_URL }) {
   const [search, setSearch] = useState("");
   const filtered = auctions.filter(a => a.title?.toLowerCase().includes(search.toLowerCase()) || a.seller_name?.toLowerCase().includes(search.toLowerCase()));
 
@@ -500,12 +500,12 @@ export function AuctionsTab({ auctions, tabLoading, API_BASE_URL }) {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead><tr className="border-b border-gray-100 bg-gray-50">
-                {["Auction ID","Product","Seller","Starting Bid","Reserve","Current Bid","Bids","Ends In"].map(h=>(
+                {["Auction ID","Product","Seller","Starting Bid","Reserve","Current Bid","Bids","Ends In", "Audit"].map(h=>(
                   <th key={h} className="text-left px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">{h}</th>
                 ))}
               </tr></thead>
               <tbody>
-                {filtered.length===0&&<tr><td colSpan={8} className="text-center py-14 text-[11px] text-gray-300 font-bold uppercase">No auctions found</td></tr>}
+                {filtered.length===0&&<tr><td colSpan={9} className="text-center py-14 text-[11px] text-gray-300 font-bold uppercase">No auctions found</td></tr>}
                 {filtered.map(a=>(
                   <tr key={a.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 text-[11px] font-black text-gray-900">#A-{a.id}</td>
@@ -519,6 +519,65 @@ export function AuctionsTab({ auctions, tabLoading, API_BASE_URL }) {
                        <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${getRemainingTime(a.auction_end) === 'EXPIRED' ? 'bg-gray-100 text-gray-400' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
                           {getRemainingTime(a.auction_end)}
                        </span>
+                    </td>
+                    <td className="px-4 py-3">
+                       <button 
+                          onClick={() => onOpenBids(a.id)}
+                          className="p-2 bg-gray-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all"
+                          title="Audit Bids"
+                       >
+                          <Gavel size={14}/>
+                       </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function BidsTab({ bids, tabLoading }) {
+  const [search, setSearch] = useState("");
+  const filtered = bids.filter(b => 
+    b.product_title?.toLowerCase().includes(search.toLowerCase()) || 
+    b.bidder_name?.toLowerCase().includes(search.toLowerCase()) ||
+    b.bidder_email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search global bid history..." className="w-full pl-9 pr-4 py-3 bg-gray-50 rounded-xl text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 placeholder:text-gray-400"/>
+        </div>
+      </div>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {tabLoading ? <div className="flex justify-center py-16"><RefreshCw className="animate-spin text-[#1e3a5f]" size={24}/></div> : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead><tr className="border-b border-gray-100 bg-gray-50">
+                {["Bid ID","Product","Bidder","Amount","Time"].map(h=>(
+                  <th key={h} className="text-left px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {filtered.length===0&&<tr><td colSpan={5} className="text-center py-14 text-[11px] text-gray-300 font-bold uppercase">No bidding activity logged</td></tr>}
+                {filtered.map(b=>(
+                  <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 text-[11px] font-black text-gray-900">#B-{b.id}</td>
+                    <td className="px-4 py-3 text-[11px] font-bold text-gray-700 max-w-[250px] truncate">{b.product_title}</td>
+                    <td className="px-4 py-3">
+                       <p className="text-[11px] font-bold text-gray-900">{b.bidder_name}</p>
+                       <p className="text-[9px] text-gray-400 font-medium">{b.bidder_email}</p>
+                    </td>
+                    <td className="px-4 py-3 text-[12px] font-black text-emerald-600">₹{parseFloat(b.bid_amount).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-[10px] text-gray-400 font-medium">
+                       {new Date(b.created_at).toLocaleString()}
                     </td>
                   </tr>
                 ))}
