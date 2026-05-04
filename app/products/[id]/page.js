@@ -464,13 +464,15 @@ export default function ProductPage({ params }) {
       product.images.forEach(img => {
         list.push({
           url: img.startsWith('http') ? img : `${API_BASE_URL}/uploads/${img}`,
-          type: img.match(/\.(mp4|mov|webm|quicktime)$/i) ? 'video' : 'image'
+          path: img,
+          type: img.match(/\.(mp4|mov|webm|quicktime|avi|mkv)$/i) ? 'video' : 'image'
         });
       });
     } else if (product?.image) {
       list.push({
         url: product.image.startsWith('http') ? product.image : `${API_BASE_URL}/uploads/${product.image}`,
-        type: product.image.match(/\.(mp4|mov|webm|quicktime)$/i) ? 'video' : 'image'
+        path: product.image,
+        type: product.image.match(/\.(mp4|mov|webm|quicktime|avi|mkv)$/i) ? 'video' : 'image'
       });
     }
 
@@ -558,7 +560,7 @@ export default function ProductPage({ params }) {
                     className="w-full h-full object-contain" 
                     controls 
                     autoPlay 
-                    muted 
+                    muted={product.video_settings?.[mediaItems[selectedImage].path]?.muted ?? true} 
                   />
                 ) : (
                   <img

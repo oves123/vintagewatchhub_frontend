@@ -62,6 +62,31 @@ export default function SellPage() {
    const canvasRef = useRef(null);
    const mediaRecorderRef = useRef(null);
    const recordedChunksRef = useRef([]);
+   const [isDragging, setIsDragging] = useState(false);
+   const [videoSettings, setVideoSettings] = useState({});
+   const [draggedIdx, setDraggedIdx] = useState(null);
+
+   const handleItemDragStart = (idx) => {
+      setDraggedIdx(idx);
+   };
+
+   const handleItemDragOver = (e) => {
+      e.preventDefault();
+   };
+
+   const handleItemDrop = (targetIdx) => {
+      if (draggedIdx === null || draggedIdx === targetIdx) return;
+      
+      const newPreviews = [...previews];
+      const [draggedItem] = newPreviews.splice(draggedIdx, 1);
+      newPreviews.splice(targetIdx, 0, draggedItem);
+      
+      setPreviews(newPreviews);
+      // Sync the 'images' state (which only contains new files)
+      const newFiles = newPreviews.filter(p => !p.isExisting).map(p => p.file);
+      setImages(newFiles);
+      setDraggedIdx(null);
+   };
 
    useEffect(() => {
       const params = new URLSearchParams(window.location.search);
@@ -112,8 +137,12 @@ export default function SellPage() {
                if (data.images) {
                   setPreviews(data.images.map(img => ({
                      url: img.startsWith('http') ? img : `${API_BASE_URL}/uploads/${img}`,
-                     type: img.match(/\.(mp4|mov|webm|quicktime)$/i) ? 'video' : 'image'
+                     path: img,
+                     type: img.match(/\.(mp4|mov|webm|quicktime|avi|mkv)$/i) ? 'video' : 'image',
+                     isExisting: true,
+                     muted: data.video_settings && data.video_settings[img] ? data.video_settings[img].muted : false
                   })));
+                  if (data.video_settings) setVideoSettings(data.video_settings);
                }
             });
       }
@@ -206,23 +235,68 @@ export default function SellPage() {
       }));
    };
 
-    const handleMediaChange = (e) => {
-       const files = Array.from(e.target.files);
-        if (images.length + files.length > 20) {
-           alert("Max 20 files allowed");
-           return;
-        }
+    const handleFiles = (files) => {
+       if (previews.length + files.length > 20) {
+          alert("Max 20 files allowed");
+          return;
+       }
        const newPreviews = files.map(f => ({
           url: URL.createObjectURL(f),
-          type: f.type.startsWith('video') ? 'video' : 'image'
+          type: f.type.startsWith('video') ? 'video' : 'image',
+          isExisting: false,
+          file: f,
+          muted: false
        }));
-       setImages([...images, ...files]);
-       setPreviews([...previews, ...newPreviews]);
+       setImages(prev => [...prev, ...files]);
+       setPreviews(prev => [...prev, ...newPreviews]);
+    };
+
+    const handleMediaChange = (e) => {
+       const files = Array.from(e.target.files);
+       if (files.length > 0) handleFiles(files);
+    };
+
+    const handleDragEnter = (e) => {
+       e.preventDefault();
+       e.stopPropagation();
+       setIsDragging(true);
+    };
+    
+    const handleDragOver = (e) => {
+       e.preventDefault();
+       e.stopPropagation();
+       setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+       e.preventDefault();
+       e.stopPropagation();
+       setIsDragging(false);
+    };
+    
+    const handleDrop = (e) => {
+       e.preventDefault();
+       e.stopPropagation();
+       setIsDragging(false);
+       
+       const files = Array.from(e.dataTransfer.files);
+       if (files.length > 0) handleFiles(files);
+    };
+
+    const toggleMute = (idx) => {
+       setPreviews(prev => prev.map((item, i) => 
+          i === idx ? { ...item, muted: !item.muted } : item
+       ));
     };
 
     const removeMedia = (idx) => {
-       setImages(images.filter((_, i) => i !== idx));
-       setPreviews(previews.filter((_, i) => i !== idx));
+       const itemToRemove = previews[idx];
+       if (itemToRemove && !itemToRemove.isExisting) {
+          // If it's a new file, remove it from the images array too
+          const fileIdx = previews.slice(0, idx).filter(p => !p.isExisting).length;
+          setImages(prev => prev.filter((_, i) => i !== fileIdx));
+       }
+       setPreviews(prev => prev.filter((_, i) => i !== idx));
     };
 
     const startCamera = async () => {
@@ -366,8 +440,33 @@ export default function SellPage() {
 
          images.forEach(img => finalData.append("images", img));
 
+         // Send existing images to keep
+         const existingImages = previews.filter(p => p.isExisting).map(p => p.path);
+         finalData.append("existing_images", JSON.stringify(existingImages));
+
+         // Send the final desired order of all media
+         const mediaOrder = previews.map(p => p.isExisting ? p.path : p.file?.name);
+         finalData.append("media_order", JSON.stringify(mediaOrder));
+
+         // Send video settings
+         const videoSettingsMap = {};
+         previews.forEach(p => {
+            if (p.type === 'video' && p.muted) {
+               // If existing, use path. If new, use filename.
+               const key = p.isExisting ? p.path : (p.file?.name);
+               if (key) {
+                  videoSettingsMap[key] = { muted: true };
+               }
+            }
+         });
+         finalData.append("video_settings", JSON.stringify(videoSettingsMap));
+
          let res;
          if (editId) {
+            // If already approved, keep it approved
+            if (productStatus === 'approved' && type === 'pending') {
+               finalData.set("status", "approved");
+            }
             res = await updateProduct(editId, finalData);
          } else {
             res = await createProduct(finalData);
@@ -603,7 +702,13 @@ export default function SellPage() {
                   {step === 3 && (
                      <div className="animate-in fade-in duration-500 space-y-10">
                          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                            <div className="flex-1 p-10 bg-gray-50 border border-dashed border-gray-300 rounded-2xl text-center relative hover:bg-white hover:border-blue-400 transition-all group overflow-hidden">
+                            <div 
+                               className={`flex-1 p-10 rounded-2xl text-center relative hover:bg-white transition-all group overflow-hidden border border-dashed ${isDragging ? 'border-blue-600 bg-blue-50/50 scale-[1.02]' : 'bg-gray-50 border-gray-300'}`}
+                               onDragEnter={handleDragEnter}
+                               onDragOver={handleDragOver}
+                               onDragLeave={handleDragLeave}
+                               onDrop={handleDrop}
+                            >
                                <div className="space-y-4 transition-transform group-hover:scale-105 duration-300">
                                   <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-gray-100">
                                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -611,7 +716,7 @@ export default function SellPage() {
                                      </svg>
                                   </div>
                                   <div>
-                                     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Upload Gallery</h3>
+                                     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">{isDragging ? "Drop Files Now" : "Upload Gallery"}</h3>
                                      <p className="text-[10px] font-medium text-gray-400 mt-1 uppercase tracking-tight">Drag or Browse (Max 20)</p>
                                   </div>
                                </div>
@@ -713,20 +818,38 @@ export default function SellPage() {
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                            {previews.map((media, i) => (
-                              <div key={i} className="aspect-square bg-white rounded-xl border border-gray-100 overflow-hidden relative group shadow-sm">
+                              <div 
+                                 key={i} 
+                                 draggable
+                                 onDragStart={() => handleItemDragStart(i)}
+                                 onDragOver={handleItemDragOver}
+                                 onDrop={() => handleItemDrop(i)}
+                                 className={`aspect-square bg-white rounded-xl border overflow-hidden relative group shadow-sm cursor-move transition-all ${draggedIdx === i ? 'opacity-20 scale-95' : 'border-gray-100 hover:border-blue-400 hover:shadow-md'}`}
+                              >
                                  {media.type === 'video' ? (
                                     <div className="w-full h-full bg-gray-900 flex items-center justify-center">
                                        <svg className="w-10 h-10 text-white opacity-50" fill="currentColor" viewBox="0 0 20 20">
                                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                        </svg>
-                                       <video src={media.url} className="absolute inset-0 w-full h-full object-cover opacity-30" muted />
+                                       <video src={media.url} className="absolute inset-0 w-full h-full object-cover opacity-30" muted={media.muted} />
+                                       <button 
+                                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMute(i); }}
+                                          className={`absolute bottom-2 right-2 px-2 py-1 rounded text-[8px] font-black uppercase tracking-tighter transition-all z-20 ${media.muted ? 'bg-rose-500 text-white' : 'bg-white/80 text-gray-900 hover:bg-white'}`}
+                                       >
+                                          {media.muted ? "Muted" : "Mute Audio"}
+                                       </button>
                                     </div>
                                  ) : (
                                     <img src={media.url} className="w-full h-full object-cover" />
                                  )}
-                                 <button onClick={() => removeMedia(i)} className="absolute top-2 right-2 w-6 h-6 bg-white/90 backdrop-blur text-red-600 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity font-bold shadow-md">✕</button>
-                                 {i === 0 && <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-blue-600 text-[9px] font-bold text-white rounded uppercase shadow-sm">Main</div>}
-                                 <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/50 text-[8px] font-bold text-white rounded uppercase backdrop-blur-sm">{media.type}</div>
+                                 <button 
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeMedia(i); }} 
+                                    className="absolute top-2 right-2 w-6 h-6 bg-white/90 backdrop-blur text-red-600 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity font-bold shadow-md z-30"
+                                 >
+                                    ✕
+                                 </button>
+                                 {i === 0 && <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-blue-600 text-[9px] font-bold text-white rounded uppercase shadow-sm z-10">Main</div>}
+                                 <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/50 text-[8px] font-bold text-white rounded uppercase backdrop-blur-sm z-10">{media.type}</div>
                               </div>
                            ))}
                            {Array.from({ length: Math.max(0, 5 - previews.length) }).map((_, idx) => (
