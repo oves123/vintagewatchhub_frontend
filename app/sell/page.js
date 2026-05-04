@@ -48,7 +48,8 @@ export default function SellPage() {
       reserve_price: "",
       auction_duration: "3",
       shipping_fee: "",
-      shipping_type: "fixed"
+      shipping_type: "fixed",
+      shipping_scope: "LOCAL"
    });
 
    const [images, setImages] = useState([]);
@@ -130,7 +131,8 @@ export default function SellPage() {
                   reserve_price: data.reserve_price ? data.reserve_price.toString() : "",
                   auction_duration: data.auction_duration || "3",
                   shipping_fee: data.shipping_fee ? data.shipping_fee.toString() : "",
-                  shipping_type: data.shipping_type || "fixed"
+                  shipping_type: data.shipping_type || "fixed",
+                  shipping_scope: data.shipping_scope || "LOCAL"
                });
                if (data.status) setProductStatus(data.status);
                if (data.rejection_reason) setRejectionReason(data.rejection_reason);
@@ -1084,7 +1086,58 @@ export default function SellPage() {
                                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">How will this reach the buyer?</p>
                                </div>
 
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               {/* Scope Selection */}
+                               <div className="space-y-4">
+                                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Selling Scope (Legal Requirement)</p>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                     <label className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${formData.shipping_scope === 'LOCAL' ? 'border-blue-600 bg-blue-50/30' : 'border-gray-100 hover:border-gray-200'}`}>
+                                        <div className="flex items-start gap-3">
+                                           <div className="pt-0.5">
+                                              <input 
+                                                 type="radio" 
+                                                 name="shipping_scope" 
+                                                 value="LOCAL" 
+                                                 checked={formData.shipping_scope === 'LOCAL'} 
+                                                 onChange={handleInputChange}
+                                                 className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                              />
+                                           </div>
+                                           <div>
+                                              <span className="block text-sm font-black uppercase tracking-widest text-gray-900">Local State Only</span>
+                                              <span className="block text-[10px] text-gray-500 mt-1">Sell within your state (No GST required. PAN & Enrolment ID needed).</span>
+                                           </div>
+                                        </div>
+                                     </label>
+
+                                     <label className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${formData.shipping_scope === 'PAN_INDIA' ? 'border-blue-600 bg-blue-50/30' : 'border-gray-100 hover:border-gray-200'} ${(!currentUser || !currentUser.gst_number) ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}>
+                                        <div className="flex items-start gap-3">
+                                           <div className="pt-0.5">
+                                              <input 
+                                                 type="radio" 
+                                                 name="shipping_scope" 
+                                                 value="PAN_INDIA" 
+                                                 checked={formData.shipping_scope === 'PAN_INDIA'} 
+                                                 onChange={(e) => {
+                                                    if (!currentUser || !currentUser.gst_number) {
+                                                       alert("Indian Law requires a valid GST Number to ship goods across state borders. Please update your profile or select 'Local State Only'.");
+                                                       return;
+                                                    }
+                                                    handleInputChange(e);
+                                                 }}
+                                                 disabled={!currentUser || !currentUser.gst_number}
+                                                 className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                              />
+                                           </div>
+                                           <div>
+                                              <span className="block text-sm font-black uppercase tracking-widest text-gray-900">Pan-India (Global)</span>
+                                              <span className="block text-[10px] text-gray-500 mt-1">Sell anywhere in India. Requires verified GST Number.</span>
+                                           </div>
+                                        </div>
+                                     </label>
+                                  </div>
+                               </div>
+
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                                   {/* Fixed Fee Input */}
                                   <div className={`p-6 rounded-2xl border-2 transition-all flex flex-col gap-4 ${formData.shipping_type === 'fixed' ? 'border-gray-900 bg-gray-50/30' : 'border-gray-50 opacity-40 grayscale pointer-events-none'}`}>
                                      <div className="flex items-center gap-3">
