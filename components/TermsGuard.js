@@ -21,11 +21,11 @@ export default function TermsGuard({ children }) {
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
-          if (user && user.terms_accepted === false) {
-            router.push("/terms");
-          } else {
+          // if (user && user.terms_accepted === false) {
+          //   router.push("/terms");
+          // } else {
             setChecking(false);
-          }
+          // }
         } catch (e) {
           console.error("Failed to parse user from local storage:", e);
           setChecking(false);
