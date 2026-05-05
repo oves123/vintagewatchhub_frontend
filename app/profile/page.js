@@ -815,7 +815,7 @@ function ProfileContent() {
 
                    {/* Sub Tabs */}
                    <div className="flex gap-8 border-b border-gray-100 mb-10 overflow-x-auto no-scrollbar">
-                      {['active', 'shipped', 'delivered', 'completed', 'negotiations'].map(sub => (
+                      {['active', 'shipped', 'delivered', 'completed', 'cancelled', 'negotiations'].map(sub => (
                         <button 
                            key={sub}
                            onClick={() => setBuyingSubTab(sub)}
@@ -829,11 +829,13 @@ function ProfileContent() {
                                sub === 'active' ? ['ACCEPTED', 'PAID'].includes(d.status) : 
                                sub === 'shipped' ? d.status === 'SHIPPED' : 
                                sub === 'delivered' ? d.status === 'DELIVERED' : 
+                               sub === 'cancelled' ? d.status === 'CANCELLED' :
                                d.status === 'CONFIRMED'
                              )).length > 0 && `(${deals.filter(d => d.buyer_id == user.id && (
                                sub === 'active' ? ['ACCEPTED', 'PAID'].includes(d.status) : 
                                sub === 'shipped' ? d.status === 'SHIPPED' : 
                                sub === 'delivered' ? d.status === 'DELIVERED' : 
+                               sub === 'cancelled' ? d.status === 'CANCELLED' :
                                d.status === 'CONFIRMED'
                              )).length})`)
                            }
@@ -903,12 +905,14 @@ function ProfileContent() {
                           buyingSubTab === 'active' ? ['ACCEPTED', 'PAID', 'SHIPPED'].includes(d.status) : 
                           buyingSubTab === 'shipped' ? d.status === 'SHIPPED' : 
                           buyingSubTab === 'delivered' ? d.status === 'DELIVERED' : 
+                          buyingSubTab === 'cancelled' ? d.status === 'CANCELLED' :
                           d.status === 'CONFIRMED'
                         )).length > 0 ? (
                           deals.filter(d => d.buyer_id == user.id && (
                             buyingSubTab === 'active' ? ['ACCEPTED', 'PAID', 'SHIPPED'].includes(d.status) : 
                             buyingSubTab === 'shipped' ? d.status === 'SHIPPED' : 
                             buyingSubTab === 'delivered' ? d.status === 'DELIVERED' : 
+                            buyingSubTab === 'cancelled' ? d.status === 'CANCELLED' :
                             d.status === 'CONFIRMED'
                           )).map(deal => (
                             <div key={deal.id} className="border border-gray-100 rounded-2xl p-6 bg-white hover:shadow-xl hover:shadow-gray-100 transition-all flex flex-col md:flex-row gap-8 items-center">
@@ -1089,7 +1093,7 @@ function ProfileContent() {
 
                      {/* Sub Tabs */}
                      <div className="flex gap-8 border-b border-gray-100 mb-10 overflow-x-auto no-scrollbar">
-                        {['inventory', 'deals', 'negotiations'].map(sub => (
+                        {['inventory', 'deals', 'negotiations', 'cancelled'].map(sub => (
                           <button 
                              key={sub}
                              onClick={() => setSellingSubTab(sub)}
@@ -1097,6 +1101,7 @@ function ProfileContent() {
                           >
                              {sub === 'inventory' ? `Inventory (${activity.listings?.length || 0})` : 
                               sub === 'deals' ? `Active Deals${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length > 0 ? ` (${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length})` : ''}` :
+                              sub === 'cancelled' ? `Cancelled${deals.filter(d => d.seller_id == user?.id && d.status === 'CANCELLED').length > 0 ? ` (${deals.filter(d => d.seller_id == user?.id && d.status === 'CANCELLED').length})` : ''}` :
                               `Negotiations${sellerNegotiations.length > 0 ? ` (${sellerNegotiations.length})` : ''}`}
                           </button>
                         ))}
@@ -1481,12 +1486,59 @@ function ProfileContent() {
                                     <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No pending offers received</p>
                                  </div>
                                )}
-                            </div>
-                          )}
+                             </div>
+                           )}
 
+                           {/* Seller Cancelled Deals */}
+                           {sellingSubTab === 'cancelled' && (
+                              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                 {deals.filter(d => d.seller_id == user?.id && d.status === 'CANCELLED').length > 0 ? (
+                                   deals.filter(d => d.seller_id == user?.id && d.status === 'CANCELLED').map(deal => (
+                                     <div key={deal.id} className="bg-white border border-rose-100 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 opacity-75 grayscale-[0.5]">
+                                        <div className="w-full md:w-48 aspect-square rounded-2xl bg-gray-50 flex-shrink-0 relative overflow-hidden">
+                                           <img src={deal.images?.[0] ? getImg(deal.images) : '/placeholder.png'} className="w-full h-full object-contain" alt="product" />
+                                           <div className="absolute top-4 left-4">
+                                              <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-rose-500 text-white shadow-sm">
+                                                 CANCELLED
+                                              </span>
+                                           </div>
+                                        </div>
+
+                                        <div className="flex-grow flex flex-col justify-between py-1">
+                                           <div className="space-y-4">
+                                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                 <div>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Deal #D-{deal.id}</p>
+                                                    <h3 className="text-xl font-bold text-gray-950 uppercase tracking-tight leading-none">{deal.product_title}</h3>
+                                                 </div>
+                                                 <div className="text-right">
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Voided Amount</p>
+                                                    <p className="text-2xl font-black text-gray-400 leading-none line-through">₹{parseFloat(deal.amount || 0).toLocaleString()}</p>
+                                                 </div>
+                                              </div>
+
+                                              <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl">
+                                                 <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Cancellation Reason</p>
+                                                 <p className="text-[11px] font-bold text-rose-800 leading-tight">{deal.cancel_reason || 'Transaction terminated by either party or administrator.'}</p>
+                                                 <p className="text-[9px] font-medium text-rose-400 uppercase mt-2 italic">Buyer: {deal.buyer_name}</p>
+                                              </div>
+                                           </div>
+                                        </div>
+                                     </div>
+                                   ))
+                                 ) : (
+                                     <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-sm border-dashed">
+                                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                           <XCircle className="w-8 h-8 text-gray-200" />
+                                        </div>
+                                        <p className="text-[11px] font-black text-gray-300 uppercase tracking-[0.3em]">No Cancelled Deals</p>
+                                     </div>
+                                 )}
+                              </div>
+                           )}
+                        </div>
                       </div>
-                   </div>
-                )}
+                   )}
                {/* Feedback Received Tab */}
                {activeTab === "feedback" && (
                   <div className="animate-in fade-in slide-in-from-left-4 duration-500">
