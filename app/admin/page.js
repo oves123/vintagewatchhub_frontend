@@ -10,7 +10,8 @@ import AdminSidebar from "../../components/AdminSidebar";
 import Overview from "./components/Overview";
 import UserTab from "./components/UserTab";
 import ProductTab from "./components/ProductTab";
-import { OrdersTab, ChatsTab, ReportsTab, EscrowTab, AuctionsTab, BidsTab } from "./components/OtherTabs";
+import { OrdersTab, ChatsTab, ReportsTab, EscrowTab, AuctionsTab, BidsTab, FinancialAuditTab } from "./components/OtherTabs";
+import { getAdminFinancialLedger } from "../../services/api";
 import SettingsTab from "./components/SettingsTab";
 
 const TAB_LABELS = {
@@ -23,6 +24,7 @@ const TAB_LABELS = {
   bids: "Global Bid History",
   reports: "Reports & Complaints",
   chats: "Chats & Messages",
+  financials: "Financial Audit",
   settings: "Platform Protocol",
 };
 
@@ -43,6 +45,14 @@ function AdminPageContent() {
   const [bids, setBids] = useState([]);
   const [chats, setChats] = useState([]);
   const [reports, setReports] = useState([]);
+  const [adminLedger, setAdminLedger] = useState([]);
+  const [adminLedgerSummary, setAdminLedgerSummary] = useState(null);
+  const [adminLedgerFilters, setAdminLedgerFilters] = useState({
+    startDate: "",
+    endDate: "",
+    status: "ALL",
+    search: ""
+  });
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tabLoading, setTabLoading] = useState(false);
@@ -139,6 +149,7 @@ function AdminPageContent() {
     if (activeTab === "auctions" && auctions.length === 0) fetchAuctions();
     if (activeTab === "bids" && bids.length === 0) fetchBids();
     if (activeTab === "reports" && reports.length === 0) fetchReports();
+    if (activeTab === "financials" && adminLedger.length === 0) fetchAdminLedger();
   }, [activeTab]);
 
   const fetchStats = async () => {
@@ -246,6 +257,63 @@ function AdminPageContent() {
       setReports(Array.isArray(d) ? d : []);
     } catch { showToast("Failed to load reports", "error"); }
     finally { setTabLoading(false); }
+  };
+
+  const fetchAdminLedger = async () => {
+    setTabLoading(true);
+    try {
+      const data = await getAdminFinancialLedger(adminLedgerFilters);
+      setAdminLedger(data.ledger || []);
+      setAdminLedgerSummary(data.summary || null);
+    } catch {
+      showToast("Failed to load financial ledger", "error");
+    } finally {
+      setTabLoading(false);
+    }
+  };
+
+  const downloadAdminLedgerCSV = () => {
+    if (adminLedger.length === 0) {
+      showToast("No data to export", "error");
+      return;
+    }
+
+    const headers = [
+      "Deal ID", "Date", "Status", "Product", "Buyer", "Seller", 
+      "Base Amount", "Shipping", "Platform Fee", "Platform GST", 
+      "Total Buyer Paid", "Seller Payout"
+    ];
+
+    const rows = adminLedger.map(row => [
+      row.id,
+      new Date(row.created_at).toLocaleDateString(),
+      row.status,
+      row.product_title,
+      row.buyer_name,
+      row.seller_name,
+      row.amount,
+      row.shipping_fee,
+      row.total_platform_fee,
+      row.platform_gst_amount,
+      row.total_buyer_cost,
+      row.seller_payout
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.map(field => `"${field}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `WatchCollectorHUB_Global_Audit_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Audit Report Downloaded");
   };
 
   const fetchCategories = async () => {
@@ -578,6 +646,19 @@ function AdminPageContent() {
 
           {activeTab === "chats" && (
             <ChatsTab chats={chats} tabLoading={tabLoading} onOpenHistory={openChatHistory}/>
+          )}
+
+          {activeTab === "financials" && (
+            <FinancialAuditTab 
+              ledger={adminLedger}
+              summary={adminLedgerSummary}
+              loading={tabLoading}
+              onFilter={fetchAdminLedger}
+              onDownload={downloadAdminLedgerCSV}
+              filters={adminLedgerFilters}
+              setFilters={setAdminLedgerFilters}
+              API_BASE_URL={API_BASE_URL}
+            />
           )}
 
           {activeTab === "settings" && <SettingsTab />}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { 
   LayoutDashboard, Users, Package, LogOut,
   ChevronRight, ShieldCheck, Menu, X, ShoppingCart,
-  MessageSquare, CreditCard, Settings, Gavel
+  MessageSquare, CreditCard, Settings, Gavel, BarChart3
 } from "lucide-react";
 
 function WCHLogo() {
@@ -39,6 +39,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, adminUser, onLog
     { id: "bids",      label: "Bid History",       icon: Gavel            },
     { id: "reports",   label: "Reports",          icon: ShieldCheck      },
     { id: "chats",     label: "Chats & Messages", icon: MessageSquare    },
+    { id: "financials", label: "Financial Audit", icon: BarChart3       },
     { id: "settings",  label: "Platform Protocol", icon: Settings         },
   ];
 

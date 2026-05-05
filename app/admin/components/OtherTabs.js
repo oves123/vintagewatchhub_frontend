@@ -1,6 +1,205 @@
 "use client";
 import { useState } from "react";
-import { Search, RefreshCw, Eye, CheckCircle, XCircle, Image, Gavel } from "lucide-react";
+import { Search, RefreshCw, Eye, CheckCircle, XCircle, Image, Gavel, TrendingUp, PieChart, Download, Filter, ArrowRight, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+
+export function FinancialAuditTab({ ledger, summary, loading, onFilter, onDownload, filters, setFilters, API_BASE_URL }) {
+  return (
+    <div className="space-y-8">
+      {/* Summary Row */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { label: "GMV (Gross Volume)", value: summary?.gross_merchandise_value, icon: TrendingUp, color: "bg-black text-white" },
+          { label: "Platform Revenue", value: summary?.platform_revenue, icon: PieChart, color: "bg-blue-600 text-white" },
+          { label: "GST Collected", value: summary?.gst_collected, icon: CheckCircle, color: "bg-emerald-600 text-white" },
+          { label: "Shipping Volume", value: summary?.shipping_handled, icon: Image, color: "bg-amber-500 text-white" }
+        ].map((item, idx) => (
+          <div key={idx} className={`${item.color} p-5 rounded-[2rem] shadow-xl relative overflow-hidden group`}>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10 blur-xl group-hover:scale-150 transition-transform"></div>
+            <div className="flex justify-between items-start mb-4">
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <item.icon size={16} />
+              </div>
+              <span className="text-[7px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full">Global Audit</span>
+            </div>
+            <p className="text-[9px] font-bold opacity-70 uppercase tracking-widest">{item.label}</p>
+            <h3 className="text-xl font-black mt-1">₹{parseFloat(item.value || 0).toLocaleString()}</h3>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter Bar */}
+      <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex-1 min-w-[250px] relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+            <input 
+              type="text" 
+              placeholder="Search by Product, Buyer, Seller, or Deal ID..."
+              value={filters.search}
+              onChange={(e) => setFilters({...filters, search: e.target.value})}
+              onKeyDown={(e) => e.key === 'Enter' && onFilter()}
+              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-transparent rounded-2xl text-[11px] font-bold outline-none focus:bg-white focus:ring-2 ring-blue-50 transition-all"
+            />
+          </div>
+          
+          <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-2xl">
+            <Filter className="w-3.5 h-3.5 text-gray-400" />
+            <select 
+              value={filters.status}
+              onChange={(e) => setFilters({...filters, status: e.target.value})}
+              className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer"
+            >
+              <option value="ALL">All States</option>
+              <option value="PAID">Paid</option>
+              <option value="SHIPPED">Shipped</option>
+              <option value="DELIVERED">Delivered</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-50">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Start</span>
+              <input 
+                type="date" 
+                value={filters.startDate}
+                onChange={(e) => setFilters({...filters, startDate: e.target.value})}
+                className="bg-gray-50 border-none text-[10px] font-bold px-3 py-2 rounded-xl outline-none focus:ring-2 ring-blue-50"
+              />
+            </div>
+            <ArrowRight className="w-3 h-3 text-gray-300" />
+            <div className="flex items-center gap-2">
+              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">End</span>
+              <input 
+                type="date" 
+                value={filters.endDate}
+                onChange={(e) => setFilters({...filters, endDate: e.target.value})}
+                className="bg-gray-50 border-none text-[10px] font-bold px-3 py-2 rounded-xl outline-none focus:ring-2 ring-blue-50"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={onDownload}
+              className="flex items-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-100 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all"
+            >
+              <Download className="w-4 h-4" />
+              Export Audit CSV
+            </button>
+            <button 
+              onClick={onFilter}
+              className="bg-black text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all shadow-lg shadow-gray-200"
+            >
+              Apply Audit Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Ledger Table */}
+      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="flex justify-center py-20"><RefreshCw className="animate-spin text-black" size={24}/></div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-100">
+                  {["Deal/Product", "Buyer/Seller", "Breakdown", "Net Flows", "Status", "Timestamp"].map(h => (
+                    <th key={h} className="text-left px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {ledger.length === 0 && (
+                  <tr><td colSpan={6} className="text-center py-20 text-[11px] font-bold text-gray-300 uppercase tracking-[0.3em]">No Audit Logs Matched</td></tr>
+                )}
+                {ledger.map(row => (
+                  <tr key={row.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
+                          <img src={row.product_image?.startsWith('http') ? row.product_image : `${API_BASE_URL}/uploads/${JSON.parse(row.product_image || '[]')[0]}`} className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-black text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">{row.product_title}</p>
+                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">#D-{row.id}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-2">
+                         <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-blue-50 rounded-full flex items-center justify-center"><ArrowDownLeft size={8} className="text-blue-600"/></div>
+                            <div className="flex flex-col">
+                               <span className="text-[10px] font-bold text-gray-700 leading-none">{row.buyer_name}</span>
+                               <span className="text-[7px] text-gray-400 font-medium uppercase mt-0.5">Buyer</span>
+                            </div>
+                         </div>
+                         <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-emerald-50 rounded-full flex items-center justify-center"><ArrowUpRight size={8} className="text-emerald-600"/></div>
+                            <div className="flex flex-col">
+                               <span className="text-[10px] font-bold text-gray-700 leading-none">{row.seller_name}</span>
+                               <span className="text-[7px] text-gray-400 font-medium uppercase mt-0.5">Seller</span>
+                            </div>
+                         </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <div className="flex justify-between gap-4">
+                          <span className="text-[9px] font-bold text-gray-400 uppercase">Base Price</span>
+                          <span className="text-[9px] font-black text-gray-900">₹{parseFloat(row.amount).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-[9px] font-bold text-gray-400 uppercase">Comm (Excl GST)</span>
+                          <span className="text-[9px] font-black text-rose-500">₹{parseFloat(row.commission_amount || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-[9px] font-bold text-gray-400 uppercase">Platform GST</span>
+                          <span className="text-[9px] font-black text-rose-400">₹{parseFloat(row.platform_gst_amount || 0).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                           <span className="text-[8px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded uppercase">Paid</span>
+                           <span className="text-[11px] font-black text-gray-900">₹{parseFloat(row.total_buyer_cost).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <span className="text-[8px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded uppercase">Payout</span>
+                           <span className="text-[11px] font-black text-emerald-600">₹{parseFloat(row.seller_payout).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${
+                        row.status === 'CONFIRMED' ? 'bg-black text-white' :
+                        row.status === 'CANCELLED' ? 'bg-gray-100 text-gray-400' :
+                        'bg-blue-50 text-blue-600 border border-blue-100'
+                      }`}>
+                        {row.status === 'CONFIRMED' ? 'AUDITED' : row.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-[10px] font-bold text-gray-900 leading-none">{new Date(row.created_at).toLocaleDateString()}</p>
+                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-1">{new Date(row.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function OrdersTab({ orders, tabLoading, onResolve, API_BASE_URL }) {
   const [search, setSearch] = useState("");

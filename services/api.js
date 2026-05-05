@@ -547,4 +547,16 @@ export const respondToOffer = async (offerId, status, counter_amount = null) => 
     body: JSON.stringify({ status, counter_amount })
   });
   return res.json();
-};
+};
+
+export const getAdminFinancialLedger = async (filters = {}) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+  const query = new URLSearchParams(filters).toString();
+  const res = await fetch(`${API_URL}/admin/financial-ledger?${query}`, {
+    headers: {
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    }
+  });
+  return res.json();
+};
+
