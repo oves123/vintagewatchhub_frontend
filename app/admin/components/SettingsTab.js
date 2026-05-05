@@ -1,43 +1,51 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getTerms, updatePlatformSetting } from "../../../services/api";
-import { Save, AlertCircle, CheckCircle2 } from "lucide-react";
+import { getAdminSettings, updatePlatformSetting } from "../../../services/api";
+import { Save, AlertCircle, CheckCircle2, Percent, Receipt } from "lucide-react";
 
 export default function SettingsTab() {
-  const [terms, setTerms] = useState("");
+  const [settings, setSettings] = useState({
+    terms_and_conditions: "",
+    seller_commission_rate: "5",
+    buyer_commission_rate: "0"
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
 
-  useEffect(() => {
-    fetchTerms();
-  }, []);
-
-  const fetchTerms = async () => {
+  const fetchSettings = async () => {
     setLoading(true);
     try {
-      const data = await getTerms();
-      setTerms(data.terms_and_conditions || "");
+      const data = await getAdminSettings();
+      setSettings(prev => ({
+        ...prev,
+        ...data
+      }));
     } catch (err) {
-      console.error("Failed to fetch terms:", err);
+      console.error("Failed to fetch settings:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
   const handleSave = async () => {
     setSaving(true);
     setMessage(null);
     try {
-      const res = await updatePlatformSetting("terms_and_conditions", terms);
-      if (res.message) {
-        setMessage({ text: "Protocol updated successfully", type: "success" });
-      } else {
-        setMessage({ text: res.error || "Failed to update protocol", type: "error" });
-      }
+      const updates = [
+        updatePlatformSetting("terms_and_conditions", settings.terms_and_conditions),
+        updatePlatformSetting("seller_commission_rate", settings.seller_commission_rate),
+        updatePlatformSetting("buyer_commission_rate", settings.buyer_commission_rate)
+      ];
+      await Promise.all(updates);
+      setMessage({ text: "Settings updated successfully", type: "success" });
     } catch (err) {
-      console.error("Failed to update terms:", err);
+      console.error("Failed to update settings:", err);
       setMessage({ text: "System error during update", type: "error" });
     } finally {
       setSaving(false);
@@ -65,7 +73,7 @@ export default function SettingsTab() {
           className="flex items-center gap-2 px-8 py-3 bg-[#1e3a5f] text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
         >
           <Save size={14} />
-          {saving ? "Deploying..." : "Save Protocol"}
+          {saving ? "Deploying..." : "Save Settings"}
         </button>
       </div>
 
@@ -83,8 +91,8 @@ export default function SettingsTab() {
                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Protocol Editor (Markdown Supported)</span>
             </div>
             <textarea
-              value={terms}
-              onChange={(e) => setTerms(e.target.value)}
+              value={settings.terms_and_conditions}
+              onChange={(e) => setSettings({...settings, terms_and_conditions: e.target.value})}
               className="flex-1 p-8 focus:outline-none text-gray-700 font-medium leading-relaxed resize-none custom-scrollbar"
               placeholder="Define platform terms and conditions..."
             />
@@ -93,13 +101,48 @@ export default function SettingsTab() {
 
         <div className="xl:col-span-4 space-y-6">
           <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-             <h3 className="text-xs font-black text-gray-900 uppercase tracking-tight mb-4">Subscription Integration</h3>
-             <p className="text-[11px] text-gray-500 font-medium leading-relaxed mb-6">
-                Ensure the **Subscription Model** is explicitly mentioned in the protocols. Users cannot proceed past the registration stage without verifying their acceptance of these terms.
-             </p>
-             <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 border-dashed">
-                <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">Status Reminder</p>
-                <p className="text-[11px] font-medium text-gray-700">Any changes deployed here are immediately live for all new users.</p>
+             <h3 className="text-xs font-black text-gray-900 uppercase tracking-tight mb-4 flex items-center gap-2">
+               <Receipt size={16} className="text-blue-600" />
+               Financial Settings
+             </h3>
+             <div className="space-y-4">
+               <div>
+                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Seller Commission Rate (%)</label>
+                 <div className="relative">
+                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                     <Percent size={14} className="text-gray-400" />
+                   </div>
+                   <input
+                     type="number"
+                     min="0"
+                     max="100"
+                     step="0.1"
+                     value={settings.seller_commission_rate}
+                     onChange={(e) => setSettings({...settings, seller_commission_rate: e.target.value})}
+                     className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm font-medium"
+                   />
+                 </div>
+                 <p className="text-[10px] text-gray-500 mt-1">Deducted from the seller's final payout.</p>
+               </div>
+               
+               <div>
+                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Buyer Commission Rate (%)</label>
+                 <div className="relative">
+                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                     <Percent size={14} className="text-gray-400" />
+                   </div>
+                   <input
+                     type="number"
+                     min="0"
+                     max="100"
+                     step="0.1"
+                     value={settings.buyer_commission_rate}
+                     onChange={(e) => setSettings({...settings, buyer_commission_rate: e.target.value})}
+                     className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm font-medium"
+                   />
+                 </div>
+                 <p className="text-[10px] text-gray-500 mt-1">Added to the buyer's checkout total.</p>
+               </div>
              </div>
           </div>
 

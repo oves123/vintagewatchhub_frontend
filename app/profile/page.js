@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import Navbar from "../../components/Navbar";
-import { getUserProfile, updateUserProfile, getUserActivity, API_BASE_URL, API_URL, getSellerReviews, createReview, markOrderShipped, markOrderDelivered, confirmOrderReceived, confirmOrderSale, cancelDeal, disputeDeal, getUserDeals, markOrderPaid } from "../../services/api";
+import { getUserProfile, updateUserProfile, getUserActivity, API_BASE_URL, API_URL, getSellerReviews, createReview, markOrderShipped, markOrderDelivered, confirmOrderReceived, confirmOrderSale, cancelDeal, disputeDeal, getUserDeals, markOrderPaid, createRazorpayOrder, verifyRazorpayPayment, getUserReports, getUserLedger } from "../../services/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { X, Camera, CheckCircle, FileText, ExternalLink, Send, Edit2 } from "lucide-react";
+import { X, Camera, CheckCircle, FileText, ExternalLink, Send, Edit2, PieChart, TrendingUp, Calendar, Search, Sliders, ArrowUpRight, ArrowDownLeft, Filter, ArrowRight, Download } from "lucide-react";
 
 function ProfileContent() {
   const [user, setUser] = useState(null);
@@ -31,6 +31,18 @@ function ProfileContent() {
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [toast, setToast] = useState(null); 
   const [counterForm, setCounterForm] = useState({ offerId: null, amount: "" });
+  const [financialReports, setFinancialReports] = useState({ year: new Date().getFullYear(), monthly: [], totals: { total_sales: 0, total_spent: 0, total_items_sold: 0, total_items_bought: 0 } });
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [ledger, setLedger] = useState([]);
+  const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [ledgerFilters, setLedgerFilters] = useState({ 
+    status: 'ALL', 
+    role: 'all', 
+    search: '', 
+    year: new Date().getFullYear(),
+    startDate: '',
+    endDate: ''
+  });
   const router = useRouter();
 
   // Grouped Negotiations Logic - Show only the latest offer per product
@@ -200,6 +212,86 @@ function ProfileContent() {
     }
   };
 
+  const loadFinancialReports = async (year = financialReports.year) => {
+    if (!user) return;
+    setReportsLoading(true);
+    try {
+      const data = await getUserReports(user.id, year);
+      setFinancialReports(data);
+    } catch (err) {
+      console.error("Failed to load financial reports:", err);
+      showToast("Could not load financial records.", "error");
+    } finally {
+      setReportsLoading(false);
+    }
+  };
+
+  const loadLedger = async () => {
+    if (!user) return;
+    setLedgerLoading(true);
+    try {
+      const data = await getUserLedger(user.id, ledgerFilters);
+      setLedger(data);
+    } catch (err) {
+      console.error("Failed to load ledger:", err);
+    } finally {
+      setLedgerLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "analytics") {
+      loadFinancialReports();
+      loadLedger();
+    }
+  }, [activeTab, user?.id, ledgerFilters.status, ledgerFilters.role, ledgerFilters.year]);
+
+  const downloadLedgerCSV = () => {
+    if (ledger.length === 0) {
+      showToast("No data available to download.", "error");
+      return;
+    }
+
+    const headers = [
+      "Date", "Product", "ID", "Role", "Counterparty", "Status", 
+      "Base Amount (₹)", "Shipping (₹)", "Platform Fee (₹)", "Tax (₹)", "Final Amount (₹)"
+    ];
+
+    const rows = ledger.map(deal => {
+      const isBuyer = deal.buyer_id === user.id;
+      const role = isBuyer ? "Acquisition" : "Liquidation";
+      const counterparty = isBuyer ? deal.seller_name : deal.buyer_name;
+      const tax = isBuyer ? (parseFloat(deal.buyer_commission_amount || 0) * 0.18) : (parseFloat(deal.commission_amount || 0) * 0.18);
+      const fee = isBuyer ? deal.buyer_commission_amount : deal.total_platform_fee;
+      const final = isBuyer ? deal.total_buyer_cost : deal.seller_payout;
+
+      return [
+        new Date(deal.created_at).toLocaleDateString(),
+        deal.product_title.replace(/,/g, ""),
+        deal.id,
+        role,
+        counterparty,
+        deal.status,
+        deal.amount,
+        deal.shipping_fee || 0,
+        fee || 0,
+        tax || 0,
+        final
+      ].join(",");
+    });
+
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Marketplace_Report_${new Date().toLocaleDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Audit report downloaded successfully.");
+  };
+
   const handleSaveTracking = async (orderId) => {
     if (!trackingForm.tracking_number.trim()) {
       showToast("Please enter a tracking number.", "error");
@@ -307,27 +399,63 @@ function ProfileContent() {
     }
   };
 
-  const handleMarkAsPaid = async () => {
-    if (!paymentForm.method) {
-      showToast("Please specify payment method.", "error");
-      return;
-    }
-    
-    setIsSubmittingPayment(true);
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const handlePayWithRazorpay = async (deal) => {
     try {
-      const res = await markOrderPaid(paymentForm.dealId, user.id, paymentForm.method, paymentForm.receipt);
-      if (res.deal) {
-        showToast("Payment marks as SENT. Seller has been notified.");
-        setIsPaymentModalOpen(false);
-        setEditingTrackingId(null);
-        await loadActivity();
-      } else {
-        showToast(res.message || "Failed to mark as paid.", "error");
+      const order = await createRazorpayOrder(deal.id);
+      
+      if (order.error) {
+        showToast(order.error, "error");
+        return;
       }
+
+      const options = {
+        key: order.key_id,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Watch Auction Marketplace",
+        description: `Payment for ${order.deal_title}`,
+        order_id: order.order_id,
+        handler: async function (response) {
+          const verifyData = {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            deal_id: deal.id
+          };
+          
+          const verification = await verifyRazorpayPayment(verifyData);
+          if (verification.status === "success") {
+            showToast("Payment Successful! Deal secured.", "success");
+            loadActivity();
+          } else {
+            showToast("Payment verification failed. Please contact support.", "error");
+          }
+        },
+        prefill: {
+          name: profile?.name || "",
+          email: user?.email || "",
+          contact: profile?.phone || ""
+        },
+        theme: {
+          color: "#2563eb"
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
-      showToast("Error updating payment status.", "error");
-    } finally {
-      setIsSubmittingPayment(false);
+      console.error("Razorpay error:", err);
+      showToast("Could not initiate Razorpay. Please try again.", "error");
     }
   };
 
@@ -467,6 +595,7 @@ function ProfileContent() {
     { id: "personal", label: "My Profile" },
     { id: "buying", label: "Buyer Hub" },
     { id: "selling", label: "Seller Hub" },
+    { id: "analytics", label: "Financials" },
     { id: "feedback", label: "Feedback" },
     { id: "security", label: "Security" }
   ];
@@ -847,37 +976,6 @@ function ProfileContent() {
                                       </div>
                                    )}
 
-                                  {deal.payment_status === 'PENDING' && deal.status === 'ACCEPTED' && deal.seller_payment_info && (
-                                     <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                        <p className="text-[9px] font-bold text-gray-950 uppercase tracking-widest mb-3">Seller Payment Details:</p>
-                                        <div className="grid grid-cols-2 gap-4">
-                                           {deal.seller_payment_info.upi && (
-                                              <div>
-                                                 <p className="text-[8px] font-black text-gray-400 uppercase">UPI ID</p>
-                                                 <p className="text-[10px] font-bold">{deal.seller_payment_info.upi}</p>
-                                              </div>
-                                           )}
-                                           {deal.seller_payment_info.bank_name && (
-                                              <div>
-                                                 <p className="text-[8px] font-black text-gray-400 uppercase">Bank</p>
-                                                 <p className="text-[10px] font-bold">{deal.seller_payment_info.bank_name}</p>
-                                              </div>
-                                           )}
-                                           {deal.seller_payment_info.account_number && (
-                                              <div>
-                                                 <p className="text-[8px] font-black text-gray-400 uppercase">A/C No</p>
-                                                 <p className="text-[10px] font-bold">{deal.seller_payment_info.account_number}</p>
-                                              </div>
-                                           )}
-                                           {deal.seller_payment_info.ifsc && (
-                                              <div>
-                                                 <p className="text-[8px] font-black text-gray-400 uppercase">IFSC</p>
-                                                 <p className="text-[10px] font-bold uppercase">{deal.seller_payment_info.ifsc}</p>
-                                              </div>
-                                           )}
-                                        </div>
-                                     </div>
-                                  )}
                                </div>
 
                                <div className="flex flex-col gap-3 min-w-[180px]">
@@ -909,14 +1007,14 @@ function ProfileContent() {
                                   
                                   {((deal.status === 'ACCEPTED') || (deal.status === 'PAID' && new Date(deal.expires_at) < new Date())) && !deal.shipped_at && (
                                      <div className="flex flex-col gap-2">
-                                        {deal.payment_status === 'PENDING' && (
-                                           <button 
-                                              onClick={() =>  { setPaymentForm({ ...paymentForm, dealId: deal.id }); setIsPaymentModalOpen(true); }}
-                                              className="w-full py-3 bg-black text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 shadow-lg shadow-gray-100 transition"
-                                           >
-                                              I Have Paid
-                                           </button>
-                                        )}
+                                         {deal.payment_status === 'PENDING' && (
+                                            <button 
+                                               onClick={() => handlePayWithRazorpay(deal)}
+                                               className="w-full py-3 bg-blue-600 text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition"
+                                            >
+                                               Pay Online (Razorpay)
+                                            </button>
+                                         )}
                                         <button 
                                            onClick={() => handleCancelDeal(deal.id)}
                                            className="w-full py-2 border border-gray-100 text-gray-400 rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-gray-50 transition"
@@ -1436,6 +1534,253 @@ function ProfileContent() {
                )}
 
 
+                 {/* Financials / Analytics Tab */}
+                {activeTab === "analytics" && (
+                   <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                      <div className="mb-12 flex justify-between items-end">
+                         <div>
+                            <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Financial Performance</h2>
+                            <p className="text-xs text-gray-400 mt-2 font-medium">Detailed audit logs and granular fee breakdowns.</p>
+                         </div>
+                         <div className="flex gap-2">
+                            <button 
+                               onClick={() => setLedgerFilters({...ledgerFilters, role: 'all'})}
+                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'all' ? 'bg-black text-white' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                            >
+                               Global
+                            </button>
+                            <button 
+                               onClick={() => setLedgerFilters({...ledgerFilters, role: 'seller'})}
+                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'seller' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                            >
+                               Sales
+                            </button>
+                            <button 
+                               onClick={() => setLedgerFilters({...ledgerFilters, role: 'buyer'})}
+                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'buyer' ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                            >
+                               Purchases
+                            </button>
+                         </div>
+                      </div>
+
+                      {reportsLoading ? (
+                        <div className="py-20 flex flex-col items-center gap-4">
+                           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
+                           <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Compiling Records...</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-12">
+                           {/* Summary Grid */}
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="p-8 bg-black rounded-[2.5rem] text-white shadow-2xl shadow-gray-200 relative overflow-hidden group">
+                                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
+                                 <div className="flex justify-between items-start mb-6">
+                                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                                       <TrendingUp className="w-5 h-5 text-emerald-400" />
+                                    </div>
+                                    <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30">Liquidated Assets</span>
+                                 </div>
+                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Total Sales Volume</p>
+                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">₹{parseFloat(financialReports.totals.total_sales || 0).toLocaleString()}</h3>
+                                 <p className="text-[9px] font-medium text-gray-500 mt-4 uppercase tracking-wider">{financialReports.totals.total_items_sold} Orders Successfully Audited</p>
+                              </div>
+
+                              <div className="p-8 bg-blue-600 rounded-[2.5rem] text-white shadow-2xl shadow-blue-100 relative overflow-hidden group">
+                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-white/20 transition-all"></div>
+                                 <div className="flex justify-between items-start mb-6">
+                                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                                       <PieChart className="w-5 h-5 text-white" />
+                                    </div>
+                                    <span className="text-[8px] font-black uppercase tracking-widest bg-white/20 text-white px-3 py-1 rounded-full border border-white/30">Acquired Inventory</span>
+                                 </div>
+                                 <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.2em]">Total Acquisition Cost</p>
+                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">₹{parseFloat(financialReports.totals.total_spent || 0).toLocaleString()}</h3>
+                                 <p className="text-[9px] font-medium text-blue-200 mt-4 uppercase tracking-wider">{financialReports.totals.total_items_bought} Products in Vault</p>
+                              </div>
+                           </div>
+
+                           {/* Filter Bar */}
+                           <div className="bg-gray-50/50 p-8 rounded-[2.5rem] border border-gray-100 space-y-6">
+                              <div className="flex flex-wrap items-center gap-6">
+                                 <div className="flex-1 min-w-[250px] relative">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                                    <input 
+                                       type="text" 
+                                       placeholder="Search by product title or ID..."
+                                       value={ledgerFilters.search}
+                                       onChange={(e) => setLedgerFilters({...ledgerFilters, search: e.target.value})}
+                                       onKeyDown={(e) => e.key === 'Enter' && loadLedger()}
+                                       className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl text-[11px] font-bold outline-none focus:ring-2 ring-blue-50 transition-all"
+                                    />
+                                 </div>
+                                 
+                                 <div className="flex items-center gap-3">
+                                    <Filter className="w-4 h-4 text-gray-400" />
+                                    <select 
+                                       value={ledgerFilters.status}
+                                       onChange={(e) => setLedgerFilters({...ledgerFilters, status: e.target.value})}
+                                       className="bg-white border border-gray-100 text-[10px] font-black uppercase tracking-widest px-4 py-3 rounded-xl outline-none cursor-pointer"
+                                    >
+                                       <option value="ALL">All States</option>
+                                       <option value="PAID">Paid</option>
+                                       <option value="SHIPPED">Shipped</option>
+                                       <option value="DELIVERED">Delivered</option>
+                                       <option value="CONFIRMED">Confirmed</option>
+                                       <option value="CANCELLED">Cancelled</option>
+                                    </select>
+                                 </div>
+                              </div>
+
+                              <div className="flex flex-wrap items-center justify-between gap-6 pt-4 border-t border-gray-100">
+                                 <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                       <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">From</span>
+                                       <input 
+                                          type="date" 
+                                          value={ledgerFilters.startDate}
+                                          onChange={(e) => setLedgerFilters({...ledgerFilters, startDate: e.target.value})}
+                                          className="bg-white border border-gray-100 text-[10px] font-bold px-3 py-2 rounded-lg outline-none focus:ring-2 ring-blue-50"
+                                       />
+                                    </div>
+                                    <ArrowRight className="w-3 h-3 text-gray-300" />
+                                    <div className="flex items-center gap-2">
+                                       <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">To</span>
+                                       <input 
+                                          type="date" 
+                                          value={ledgerFilters.endDate}
+                                          onChange={(e) => setLedgerFilters({...ledgerFilters, endDate: e.target.value})}
+                                          className="bg-white border border-gray-100 text-[10px] font-bold px-3 py-2 rounded-lg outline-none focus:ring-2 ring-blue-50"
+                                       />
+                                    </div>
+                                 </div>
+
+                                 <div className="flex items-center gap-4">
+                                    <button 
+                                       onClick={() => {
+                                          setLedgerFilters({ status: 'ALL', role: 'all', search: '', year: new Date().getFullYear(), startDate: '', endDate: '' });
+                                          loadLedger();
+                                       }}
+                                       className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-gray-900 transition-colors"
+                                    >
+                                       Reset
+                                    </button>
+                                    <button 
+                                       onClick={downloadLedgerCSV}
+                                       className="flex items-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-100 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all"
+                                    >
+                                       <Download className="w-4 h-4" />
+                                       Download Report
+                                    </button>
+                                    <button 
+                                       onClick={loadLedger}
+                                       className="bg-gray-900 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200"
+                                    >
+                                       Apply
+                                    </button>
+                                 </div>
+                              </div>
+                           </div>
+
+                           {/* Ledger Table */}
+                           <div className="space-y-6">
+                              <div className="flex justify-between items-center px-4">
+                                 <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900">Detailed Transaction Ledger</h4>
+                                 <p className="text-[9px] font-bold text-gray-400 uppercase">{ledger.length} Record(s) Found</p>
+                              </div>
+
+                              {ledgerLoading ? (
+                                <div className="py-20 flex justify-center">
+                                   <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 animate-spin rounded-full"></div>
+                                </div>
+                              ) : ledger.length > 0 ? (
+                                <div className="space-y-4">
+                                   {ledger.map((deal) => {
+                                      const isBuyer = deal.buyer_id === user.id;
+                                      return (
+                                         <div key={deal.id} className="bg-white border border-gray-100 rounded-3xl p-6 hover:shadow-xl hover:shadow-gray-100/50 transition-all group">
+                                            <div className="flex flex-col lg:flex-row gap-8">
+                                               {/* Product Info */}
+                                               <div className="flex gap-5 flex-1">
+                                                  <div className="w-20 h-20 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0">
+                                                     <img src={deal.product_image ? (deal.product_image.startsWith('http') ? deal.product_image : `${API_BASE_URL}/uploads/${deal.product_image}`) : "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=200&auto=format&fit=crop"} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                  </div>
+                                                  <div className="flex flex-col justify-between py-1">
+                                                     <div>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                           {isBuyer ? <ArrowDownLeft className="w-3 h-3 text-blue-600" /> : <ArrowUpRight className="w-3 h-3 text-emerald-600" />}
+                                                           <span className={`text-[8px] font-black uppercase tracking-widest ${isBuyer ? 'text-blue-600' : 'text-emerald-600'}`}>{isBuyer ? 'Acquisition' : 'Liquidation'}</span>
+                                                        </div>
+                                                        <h5 className="text-[13px] font-black text-gray-900 uppercase tracking-tight line-clamp-1">{deal.product_title}</h5>
+                                                     </div>
+                                                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                                        {new Date(deal.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • ID: {deal.id}
+                                                     </p>
+                                                  </div>
+                                               </div>
+
+                                               {/* Counterparty & Status */}
+                                               <div className="flex flex-wrap lg:flex-nowrap gap-8 items-center">
+                                                  <div className="min-w-[140px]">
+                                                     <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{isBuyer ? 'Seller Node' : 'Buyer Node'}</p>
+                                                     <p className="text-[11px] font-bold text-gray-900 uppercase">{isBuyer ? deal.seller_name : deal.buyer_name}</p>
+                                                  </div>
+                                                  <div className="min-w-[100px]">
+                                                     <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">State</p>
+                                                     <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${deal.status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : deal.status === 'CANCELLED' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
+                                                        {deal.status}
+                                                     </span>
+                                                  </div>
+                                                  
+                                                  {/* Financial Breakdown */}
+                                                  <div className="bg-gray-50/50 px-6 py-4 rounded-2xl border border-gray-100 min-w-[200px]">
+                                                     <div className="flex justify-between items-center mb-2">
+                                                        <span className="text-[9px] font-bold text-gray-400 uppercase">Base Amount</span>
+                                                        <span className="text-[10px] font-black text-gray-900">₹{parseFloat(deal.amount).toLocaleString()}</span>
+                                                     </div>
+                                                     <div className="flex justify-between items-center mb-2">
+                                                        <span className="text-[9px] font-bold text-gray-400 uppercase">Shipping</span>
+                                                        <span className="text-[10px] font-black text-gray-900">+₹{parseFloat(deal.shipping_fee || 0).toLocaleString()}</span>
+                                                     </div>
+                                                     {isBuyer ? (
+                                                        <div className="flex justify-between items-center mb-3">
+                                                           <span className="text-[9px] font-bold text-gray-400 uppercase">Service Fee + GST</span>
+                                                           <span className="text-[10px] font-black text-gray-900">+₹{(parseFloat(deal.buyer_commission_amount || 0) + (parseFloat(deal.buyer_commission_amount || 0) * 0.18)).toLocaleString()}</span>
+                                                        </div>
+                                                     ) : (
+                                                        <div className="flex justify-between items-center mb-3 text-rose-500">
+                                                           <span className="text-[9px] font-bold uppercase">Platform Fee</span>
+                                                           <span className="text-[10px] font-black">-₹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</span>
+                                                        </div>
+                                                     )}
+                                                     <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
+                                                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{isBuyer ? 'Total Paid' : 'Net Payout'}</span>
+                                                        <span className={`text-[12px] font-black ${isBuyer ? 'text-blue-600' : 'text-emerald-600'}`}>
+                                                           ₹{isBuyer ? parseFloat(deal.total_buyer_cost).toLocaleString() : parseFloat(deal.seller_payout).toLocaleString()}
+                                                        </span>
+                                                     </div>
+                                                  </div>
+                                               </div>
+                                            </div>
+                                         </div>
+                                      );
+                                   })}
+                                </div>
+                              ) : (
+                                <div className="py-20 text-center bg-gray-50/30 border-2 border-dashed border-gray-100 rounded-[2.5rem]">
+                                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-50">
+                                      <Search className="w-6 h-6 text-gray-200" />
+                                   </div>
+                                   <p className="text-[11px] font-black text-gray-300 uppercase tracking-[0.2em]">Zero Matching Records</p>
+                                   <p className="text-[9px] font-bold text-gray-400 uppercase mt-2">Adjust your filters to audit other nodes.</p>
+                                </div>
+                              )}
+                           </div>
+                        </div>
+                      )}
+                   </div>
+                )}
+
                 {/* Security Tab */}
                {activeTab === "security" && (
                   <div className="animate-in fade-in slide-in-from-left-4 duration-500">
@@ -1540,87 +1885,6 @@ function ProfileContent() {
                     >
                        {isSubmittingReview ? 'Logging...' : 'Submit Records'}
                     </button>
-                 </div>
-              </div>
-           </div>
-        </div>
-      )}
-      {/* Payment Confirmation Modal */}
-      {isPaymentModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-6">
-           <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-300">
-              <div className="p-10">
-                 <div className="flex justify-between items-center mb-8">
-                    <div>
-                      <h3 className="text-xl font-bold uppercase tracking-tight">Confirm Payment Submission</h3>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Uploading receipt helps verify your acquisition records faster.</p>
-                    </div>
-                    <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 hover:bg-gray-50 rounded-full transition-colors"><X className="w-5 h-5 text-gray-400" /></button>
-                 </div>
-
-                 <div className="space-y-8">
-                    <div className="space-y-4">
-                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Payment Channel</label>
-                       <select 
-                          value={paymentForm.method}
-                          onChange={(e) => setPaymentForm({...paymentForm, method: e.target.value})}
-                          className="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl outline-none focus:border-blue-600 focus:bg-white transition-all text-sm font-bold"
-                       >
-                          <option value="UPI">UPI Transfer</option>
-                          <option value="Bank Transfer">Direct Bank Transfer</option>
-                          <option value="Cash" hidden>Cash / Other</option>
-                       </select>
-                    </div>
-
-                    <div className="space-y-4">
-                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Transaction Artifact (Screenshot/Receipt)</label>
-                       <div className="relative group">
-                          <input 
-                              type="file" 
-                              accept="image/*"
-                              onChange={(e) => setPaymentForm({...paymentForm, receipt: e.target.files[0]})}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                          />
-                          <div className="border-2 border-dashed border-gray-100 rounded-2xl p-8 text-center group-hover:border-blue-200 transition-colors">
-                             {paymentForm.receipt ? (
-                               <div className="flex items-center justify-center gap-3">
-                                  <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
-                                     <CheckCircle className="w-5 h-5 text-emerald-500" />
-                                  </div>
-                                  <span className="text-xs font-bold text-gray-900 truncate max-w-[200px]">{paymentForm.receipt.name}</span>
-                               </div>
-                             ) : (
-                               <>
-                                 <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                                    <Camera className="w-6 h-6 text-gray-300" />
-                                 </div>
-                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Click to upload transfer confirmation</p>
-                               </>
-                             )}
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 pt-4">
-                       <button 
-                          onClick={() => setIsPaymentModalOpen(false)}
-                          className="py-4 border border-gray-100 rounded-xl text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-all"
-                       >
-                          Abort
-                       </button>
-                       <button 
-                          onClick={handleMarkAsPaid}
-                          disabled={isSubmittingPayment}
-                          className="py-4 bg-black text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                       >
-                          {isSubmittingPayment ? (
-                            <>
-                              <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></div>
-                              <span>Authenticating...</span>
-                            </>
-                          ) : 'Authorize Payment Mark'}
-                       </button>
-                    </div>
                  </div>
               </div>
            </div>

@@ -13,6 +13,7 @@ export default function CheckoutPage({ params: paramsPromise }) {
   const router = useRouter();
   const [product, setProduct] = useState(null);
   const [user, setUser] = useState(null);
+  const [platformSettings, setPlatformSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSecuring, setIsSecuring] = useState(false);
 
@@ -24,19 +25,26 @@ export default function CheckoutPage({ params: paramsPromise }) {
       router.push("/login?redirect=/products/" + id);
     }
 
-    const fetchProduct = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`${API_URL}/products/${id}`);
-        const data = await res.json();
-        setProduct(data);
+        const [productRes, settingsRes] = await Promise.all([
+          fetch(`${API_URL}/products/${id}`),
+          fetch(`${API_URL}/user/terms`)
+        ]);
+        
+        const productData = await productRes.json();
+        const settingsData = await settingsRes.json();
+        
+        setProduct(productData);
+        setPlatformSettings(settingsData);
       } catch (err) {
-        console.error("Error fetching product:", err);
+        console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProduct();
+    fetchData();
   }, [id, router]);
 
   const handleConfirmPurchase = async () => {
@@ -73,7 +81,9 @@ export default function CheckoutPage({ params: paramsPromise }) {
 
   const itemPrice = parseFloat(product.buy_it_now_price || product.price);
   const shippingFee = product.shipping_type === 'fixed' ? parseFloat(product.shipping_fee || 0) : 0;
-  const totalAmount = itemPrice + shippingFee;
+  const buyerCommissionRate = parseFloat(platformSettings?.buyer_commission_rate || 0);
+  const buyerCommissionFee = itemPrice * (buyerCommissionRate / 100);
+  const totalAmount = itemPrice + shippingFee + buyerCommissionFee;
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] text-[#1a1a1a] font-sans pb-20">
@@ -173,6 +183,13 @@ export default function CheckoutPage({ params: paramsPromise }) {
                           <Info className="w-3 h-3 text-gray-300" />
                        </div>
                        <p className="text-base font-bold text-gray-900">{shippingFee > 0 ? `₹${shippingFee.toLocaleString()}` : 'FREE'}</p>
+                    </div>
+                    <div className="flex justify-between items-center">
+                       <div className="flex items-center gap-1.5">
+                          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Buyer Premium ({buyerCommissionRate}%)</p>
+                          <Info className="w-3 h-3 text-gray-300" />
+                       </div>
+                       <p className="text-base font-bold text-gray-900">₹{buyerCommissionFee.toLocaleString()}</p>
                     </div>
                     <div className="flex justify-between items-center">
                        <div className="flex items-center gap-1.5">

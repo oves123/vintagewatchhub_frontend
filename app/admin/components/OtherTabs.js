@@ -62,6 +62,8 @@ export function OrdersTab({ orders, tabLoading, onResolve, API_BASE_URL }) {
                                {o.payment_status||'PENDING'}
                             </span>
                             {o.payment_method && <span className="text-[7px] font-bold text-gray-400 uppercase truncate">via {o.payment_method}</span>}
+                            {o.razorpay_payment_id && <span className="text-[7px] font-black text-blue-600 truncate" title={o.razorpay_payment_id}>RPAY: {o.razorpay_payment_id}</span>}
+                            {o.razorpay_order_id && <span className="text-[7px] font-bold text-gray-400 truncate" title={o.razorpay_order_id}>ORD: {o.razorpay_order_id}</span>}
                          </div>
                       </td>
                       <td className="px-4 py-3">

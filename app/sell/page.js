@@ -864,10 +864,10 @@ export default function SellPage() {
                         <div className="pt-8 flex justify-between items-center">
                            <button onClick={prevStep} className="text-[12px] font-semibold text-gray-400 hover:text-gray-900 transition-colors">Back</button>
                            <div className="flex flex-col items-end gap-2 text-right">
-                              <p className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">At least one video is required</p>
+                              {!previews.some(p => p.type === 'video') && <p className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">At least one video is required</p>}
                               <button
                                  onClick={handleMediaContinue}
-                                 disabled={images.length === 0}
+                                 disabled={previews.length === 0 || !previews.some(p => p.type === 'video')}
                                  className="bg-blue-600 text-white px-10 py-4 rounded-lg font-bold text-[13px] uppercase tracking-wider hover:bg-blue-700 transition-all disabled:opacity-20 shadow-lg shadow-blue-100"
                               >
                                  Continue

@@ -132,6 +132,27 @@ export const getUserActivity = async (id) => {
   return res.json();
 };
 
+export const getUserReports = async (id, year) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/user/reports/${id}?year=${year || ""}`, {
+    headers: {
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    }
+  });
+  return res.json();
+};
+
+export const getUserLedger = async (id, filters = {}) => {
+  const token = localStorage.getItem("token");
+  const query = new URLSearchParams(filters).toString();
+  const res = await fetch(`${API_URL}/user/ledger/${id}?${query}`, {
+    headers: {
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    }
+  });
+  return res.json();
+};
+
 // Watch Vault
 export const getWatchVault = async (userId) => {
   const res = await fetch(`${API_URL}/user/vault/${userId}`);
@@ -438,6 +459,42 @@ export const confirmDirectDeal = async (chat_id, seller_id, final_price) => {
 // Platform Settings & Terms
 export const getTerms = async () => {
   const res = await fetch(`${API_URL}/user/terms`);
+  return res.json();
+};
+
+export const getAdminSettings = async () => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/admin/settings`, {
+    headers: {
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    }
+  });
+  return res.json();
+};
+
+export const createRazorpayOrder = async (dealId) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/payment/create-order`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ deal_id: dealId })
+  });
+  return res.json();
+};
+
+export const verifyRazorpayPayment = async (paymentData) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/payment/verify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(paymentData)
+  });
   return res.json();
 };
 

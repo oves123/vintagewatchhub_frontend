@@ -52,6 +52,8 @@ export default function ProductPage({ params }) {
   // Buy Now Modal State
   const [showBuyNowModal, setShowBuyNowModal] = useState(false);
   const [isSecuring, setIsSecuring] = useState(false);
+  
+  const [platformSettings, setPlatformSettings] = useState(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -153,16 +155,21 @@ export default function ProductPage({ params }) {
 
     const url = `${API_URL}/products/${id}${viewerId ? `?viewerId=${viewerId}` : ''}`;
 
-    fetch(url)
-      .then((res) => {
+    Promise.all([
+      fetch(url).then(res => {
         if (res.status === 404) throw new Error("404");
         return res.json();
-      })
-      .then((data) => setProduct(data))
-      .catch(err => {
-        if (err.message === "404") setNotFound(true);
-        console.error(err);
-      });
+      }),
+      fetch(`${API_URL}/user/terms`).then(res => res.json())
+    ])
+    .then(([productData, settingsData]) => {
+      setProduct(productData);
+      setPlatformSettings(settingsData);
+    })
+    .catch(err => {
+      if (err.message === "404") setNotFound(true);
+      console.error(err);
+    });
   }, [id]);
 
 
@@ -698,7 +705,10 @@ export default function ProductPage({ params }) {
                                    ) : (
                                       <>
                                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                                         <span>Buy It Now - ₹{(parseFloat(product.buy_it_now_price || product.price) + (product.shipping_type === 'fixed' ? parseFloat(product.shipping_fee || 0) : 0)).toLocaleString()}</span>
+                                         <div className="flex flex-col items-start">
+                                            <span>Buy It Now - ₹{(parseFloat(product.buy_it_now_price || product.price) + (product.shipping_type === 'fixed' ? parseFloat(product.shipping_fee || 0) : 0)).toLocaleString()}</span>
+                                            {platformSettings?.buyer_commission_rate > 0 && <span className="text-[8px] opacity-80 normal-case tracking-normal leading-none mt-1">+ {platformSettings.buyer_commission_rate}% buyer premium</span>}
+                                         </div>
                                       </>
                                    )}
                                 </button>
@@ -1397,17 +1407,23 @@ export default function ProductPage({ params }) {
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Shipping Fee</p>
                                 <p className="text-sm font-bold text-gray-900">{product.shipping_type === 'fixed' ? `₹${parseFloat(product.shipping_fee || 0).toLocaleString()}` : 'FREE'}</p>
                              </div>
-                             <div className="flex justify-between items-center">
+                             <div className="flex justify-between items-center mb-4">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Authentication</p>
                                 <p className="text-[9px] font-black text-emerald-600 uppercase">Included</p>
                              </div>
+                             {platformSettings?.buyer_commission_rate > 0 && (
+                                <div className="flex justify-between items-center mb-4">
+                                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Buyer Premium ({platformSettings.buyer_commission_rate}%)</p>
+                                   <p className="text-sm font-bold text-gray-900">₹{(parseFloat(product.buy_it_now_price || product.price) * (parseFloat(platformSettings.buyer_commission_rate) / 100)).toLocaleString()}</p>
+                                </div>
+                             )}
 
                              <div className="pt-6 border-t border-dashed border-gray-200 mt-6">
                                 <div className="flex justify-between items-end mb-8">
                                    <div>
                                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total cost</p>
                                    </div>
-                                   <p className="text-3xl font-black text-gray-950 tracking-tighter">₹{(parseFloat(product.buy_it_now_price || product.price) + (product.shipping_type === 'fixed' ? parseFloat(product.shipping_fee || 0) : 0)).toLocaleString()}</p>
+                                   <p className="text-3xl font-black text-gray-950 tracking-tighter">₹{(parseFloat(product.buy_it_now_price || product.price) + (product.shipping_type === 'fixed' ? parseFloat(product.shipping_fee || 0) : 0) + (platformSettings?.buyer_commission_rate ? parseFloat(product.buy_it_now_price || product.price) * (parseFloat(platformSettings.buyer_commission_rate) / 100) : 0)).toLocaleString()}</p>
                                 </div>
 
                                 <button 
