@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import { API_BASE_URL, API_URL } from "../services/api";
+import { useComparison } from "../context/ComparisonContext";
 
 export default function ProductCard({ product, horizontal = false }) {
+  const { comparedProducts, toggleCompare } = useComparison();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isOwner, setIsOwner] = useState(false);
 
   const images = useMemo(() => {
     let imgs = [];
@@ -50,6 +53,7 @@ export default function ProductCard({ product, horizontal = false }) {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
+        setIsOwner(parseInt(product.seller_id) === parseInt(parsedUser.id));
         fetch(`${API_URL}/watchlist/${parsedUser.id}`)
           .then(res => res.json())
           .then(data => {
@@ -245,6 +249,17 @@ export default function ProductCard({ product, horizontal = false }) {
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
         </button>
+
+        {/* Compare Toggle */}
+        <button 
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleCompare(product); }}
+          className={`absolute bottom-3 right-3 p-2 z-20 bg-white/95 backdrop-blur rounded-full transition shadow-md border ${comparedProducts.find(p => p.id === product.id) ? 'text-blue-600 border-blue-200 scale-110' : 'text-gray-300 border-gray-100 opacity-0 group-hover:opacity-100 hover:text-blue-500'}`}
+          title="Compare with other watches"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+        </button>
       </Link>
 
       <div className="p-5 flex-grow flex flex-col">
@@ -260,6 +275,18 @@ export default function ProductCard({ product, horizontal = false }) {
               <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
               Verified
             </span>
+          )}
+          {isOwner && (
+            <div className="flex items-center gap-3 ml-auto">
+               <span className="flex items-center gap-1 text-[9px] font-bold text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100" title="Total Views">
+                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  {product.view_count || 0}
+               </span>
+               <span className="flex items-center gap-1 text-[9px] font-bold text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100" title="Watchlist Count">
+                  <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                  {product.watchlist_count || 0}
+               </span>
+            </div>
           )}
         </div>
 

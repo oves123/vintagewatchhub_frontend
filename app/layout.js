@@ -12,6 +12,8 @@ export const metadata = {
 };
 
 import TermsGuard from "../components/TermsGuard";
+import { ComparisonProvider } from "../context/ComparisonContext";
+import ComparisonDrawer from "../components/ComparisonDrawer";
 
 export default function RootLayout({ children }) {
   return (
@@ -19,9 +21,12 @@ export default function RootLayout({ children }) {
       <body
         className={`${inter.variable} font-sans antialiased`}
       >
-        <TermsGuard>
-          {children}
-        </TermsGuard>
+        <ComparisonProvider>
+          <ComparisonDrawer />
+          <TermsGuard>
+            {children}
+          </TermsGuard>
+        </ComparisonProvider>
       </body>
     </html>
   );
