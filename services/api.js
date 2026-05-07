@@ -559,4 +559,16 @@ export const getAdminFinancialLedger = async (filters = {}) => {
   });
   return res.json();
 };
+
+export const processRefund = async (dealId) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/admin/deals/${dealId}/process-refund`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    }
+  });
+  return res.json();
+};
 

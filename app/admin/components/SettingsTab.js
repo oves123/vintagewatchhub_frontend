@@ -8,7 +8,8 @@ export default function SettingsTab() {
   const [settings, setSettings] = useState({
     terms_and_conditions: "",
     seller_commission_rate: "5",
-    buyer_commission_rate: "0"
+    buyer_commission_rate: "0",
+    gst_rate: "18"
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,7 +41,8 @@ export default function SettingsTab() {
       const updates = [
         updatePlatformSetting("terms_and_conditions", settings.terms_and_conditions),
         updatePlatformSetting("seller_commission_rate", settings.seller_commission_rate),
-        updatePlatformSetting("buyer_commission_rate", settings.buyer_commission_rate)
+        updatePlatformSetting("buyer_commission_rate", settings.buyer_commission_rate),
+        updatePlatformSetting("gst_rate", settings.gst_rate)
       ];
       await Promise.all(updates);
       setMessage({ text: "Settings updated successfully", type: "success" });
@@ -142,6 +144,25 @@ export default function SettingsTab() {
                    />
                  </div>
                  <p className="text-[10px] text-gray-500 mt-1">Added to the buyer's checkout total.</p>
+               </div>
+
+               <div>
+                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">GST Rate (%)</label>
+                 <div className="relative">
+                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                     <Percent size={14} className="text-gray-400" />
+                   </div>
+                   <input
+                     type="number"
+                     min="0"
+                     max="100"
+                     step="0.1"
+                     value={settings.gst_rate}
+                     onChange={(e) => setSettings({...settings, gst_rate: e.target.value})}
+                     className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm font-medium"
+                   />
+                 </div>
+                 <p className="text-[10px] text-gray-500 mt-1">Global GST applied to platform commissions.</p>
                </div>
              </div>
           </div>
