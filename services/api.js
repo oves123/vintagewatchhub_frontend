@@ -298,15 +298,20 @@ export const confirmOrderReceived = async (dealId, buyerId) => {
   return res.json();
 };
 
-export const confirmOrderSale = async (dealId, buyerId) => {
+export const confirmOrderSale = async (dealId, buyerId, unboxingVideo = null) => {
   const token = localStorage.getItem("token");
+  const formData = new FormData();
+  formData.append("buyer_id", buyerId);
+  if (unboxingVideo) {
+    formData.append("unboxing_video", unboxingVideo);
+  }
+
   const res = await fetch(`${API_URL}/orders/${dealId}/confirm-sale`, {
     method: "PATCH",
     headers: {
-      "Content-Type": "application/json",
       ...(token ? { "Authorization": `Bearer ${token}` } : {})
     },
-    body: JSON.stringify({ buyer_id: buyerId })
+    body: formData
   });
   return res.json();
 };
