@@ -114,7 +114,10 @@ export const getBrands = async () => {
 
 // User Profile & Activity
 export const getUserProfile = async (id) => {
-  const res = await fetch(`${API_URL}/user/profile/${id}`);
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const res = await fetch(`${API_URL}/user/profile/${id}`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
   return res.json();
 };
 
@@ -128,7 +131,10 @@ export const updateUserProfile = async (id, data) => {
 };
 
 export const getUserActivity = async (id) => {
-  const res = await fetch(`${API_URL}/user/activity/${id}`);
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const res = await fetch(`${API_URL}/user/activity/${id}`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
   return res.json();
 };
 
@@ -369,20 +375,14 @@ export const markOrderReturned = async (dealId, sellerId, reason) => {
       "Content-Type": "application/json",
       ...(token ? { "Authorization": `Bearer ${token}` } : {})
     },
-    body: JSON.stringify({ seller_id: seller_id, reason })
+    body: JSON.stringify({ seller_id: sellerId, reason }) // fixed: was referencing undefined `seller_id`
   });
   return res.json();
 };
 
-export const getOfferHistory = async (offerId) => {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${API_URL}/offers/${offerId}/history`, {
-    headers: {
-      ...(token ? { "Authorization": `Bearer ${token}` } : {})
-    }
-  });
-  return res.json();
-};
+// NOTE: getOfferHistory route does not exist on the backend — removed to avoid 404 crashes
+// export const getOfferHistory = async (offerId) => { ... }
+
 
 export const getUserDeals = async (userId) => {
   const token = localStorage.getItem("token");
@@ -573,6 +573,21 @@ export const processRefund = async (dealId) => {
       "Content-Type": "application/json",
       ...(token ? { "Authorization": `Bearer ${token}` } : {})
     }
+  });
+  return res.json();
+};
+
+// Upload dispute evidence files
+export const uploadEvidence = async (dealId, files) => {
+  const token = localStorage.getItem("token");
+  const formData = new FormData();
+  files.forEach(file => formData.append('evidence', file));
+  const res = await fetch(`${API_URL}/orders/${dealId}/upload-evidence`, {
+    method: "POST",
+    headers: {
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    },
+    body: formData
   });
   return res.json();
 };
