@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import Navbar from "../../components/Navbar";
@@ -254,7 +254,7 @@ function ProfileContent() {
 
     const headers = [
       "Date", "Product", "ID", "Role", "Counterparty", "Status", 
-      "Base Amount (₹)", "Shipping (₹)", "Platform Fee (₹)", "Tax (₹)", "Final Amount (₹)"
+      "Base Amount (â‚¹)", "Shipping (â‚¹)", "Platform Fee (â‚¹)", "Tax (â‚¹)", "Final Amount (â‚¹)"
     ];
 
     const rows = ledger.map(deal => {
@@ -865,7 +865,7 @@ function ProfileContent() {
                                      <div>
                                         <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">{offer.status === 'countered' ? 'Seller Counter Price' : 'Your bid'}</p>
                                         <p className={`text-md font-black ${offer.status === 'countered' ? 'text-blue-600' : 'text-gray-950'}`}>
-                                           ₹{parseFloat(offer.status === 'countered' ? offer.counter_amount : offer.amount).toLocaleString()}
+                                           â‚¹{parseFloat(offer.status === 'countered' ? offer.counter_amount : offer.amount).toLocaleString()}
                                         </p>
                                      </div>
                                      <div className="flex flex-col items-end gap-2 w-full mt-4">
@@ -882,7 +882,7 @@ function ProfileContent() {
                                               {counterForm.offerId === offer.id && (
                                                  <div className="flex gap-2 w-full mt-1">
                                                     <div className="flex items-center flex-1 border border-gray-200 rounded-lg px-3 py-2 bg-white">
-                                                       <span className="text-[10px] font-black text-gray-400 mr-1">₹</span>
+                                                       <span className="text-[10px] font-black text-gray-400 mr-1">â‚¹</span>
                                                        <input
                                                           type="number"
                                                           placeholder="Your counter"
@@ -903,7 +903,7 @@ function ProfileContent() {
                                         {offer.status === 'buyer_countered' && (
                                            <div className="w-full mt-2 py-2 bg-blue-50 rounded-lg text-center">
                                               <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Awaiting Seller Response</p>
-                                              <p className="text-[8px] text-blue-400 font-bold mt-0.5">Your counter of ₹{parseFloat(offer.counter_amount).toLocaleString()} was sent</p>
+                                              <p className="text-[8px] text-blue-400 font-bold mt-0.5">Your counter of â‚¹{parseFloat(offer.counter_amount).toLocaleString()} was sent</p>
                                            </div>
                                         )}
                                         {offer.chat_id && (
@@ -955,7 +955,7 @@ function ProfileContent() {
                                         ['CANCELLED', 'REFUND_PENDING'].includes(deal.status) ? 'bg-rose-500 text-white' : 'bg-blue-500 text-white'
                                       }`}>
                                          {
-                                          deal.status === 'PAID' ? '✓ Payment Verified' : 
+                                          deal.status === 'PAID' ? 'âœ“ Payment Verified' : 
                                           deal.status === 'SHIPPED' ? 'SHIPPED' :
                                           deal.status === 'DELIVERED' ? 'IN 48H INSPECTION' :
                                           deal.status === 'CONFIRMED' ? 'COMPLETED' :
@@ -968,16 +968,50 @@ function ProfileContent() {
                                        <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest ml-auto">PAID via {deal.payment_method}</span>
                                      )}
                                   </div>
+                                   {/* Animated Deal Progress Stepper */}
+                                   {!['CANCELLED','REFUND_PENDING','EXPIRED','RETURNED'].includes(deal.status) && (() => {
+                                     const steps = [
+                                       { key: 'ACCEPTED', icon: '🤝', label: 'Deal' },
+                                       { key: 'PAID', icon: '💳', label: 'Paid' },
+                                       { key: 'SHIPPED', icon: '📦', label: 'Shipped' },
+                                       { key: 'DELIVERED', icon: '🏡', label: 'Delivered' },
+                                       { key: 'CONFIRMED', icon: '✅', label: 'Done' },
+                                     ];
+                                     const order = ['ACCEPTED','PAID','SHIPPED','DELIVERED','CONFIRMED'];
+                                     const currentIdx = order.indexOf(deal.status);
+                                     return (
+                                       <div className="flex items-center mb-3 mt-2 w-full overflow-hidden">
+                                         <style>{`.step-pulse{animation:spulse 1.5s ease-in-out infinite}@keyframes spulse{0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,.5)}70%{box-shadow:0 0 0 6px rgba(59,130,246,0)}}`}</style>
+                                         {steps.map((s, i) => {
+                                           const done = i < currentIdx;
+                                           const active = i === currentIdx;
+                                           return (
+                                             <div key={s.key} className="flex items-center flex-1 min-w-0">
+                                               <div className="flex flex-col items-center shrink-0">
+                                                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] transition-all ${done ? 'bg-emerald-500 text-white shadow-md' : active ? 'bg-blue-600 text-white step-pulse' : 'bg-gray-100 text-gray-400'}`}>
+                                                   {done ? '✓' : s.icon}
+                                                 </div>
+                                                 <span className={`text-[7px] font-black uppercase tracking-widest mt-1 ${active ? 'text-blue-600' : done ? 'text-emerald-600' : 'text-gray-300'}`}>{s.label}</span>
+                                               </div>
+                                               {i < steps.length - 1 && (
+                                                 <div className={`h-0.5 flex-1 mx-1 mb-4 rounded-full transition-all ${done ? 'bg-emerald-400' : 'bg-gray-100'}`} />
+                                               )}
+                                             </div>
+                                           );
+                                         })}
+                                       </div>
+                                     );
+                                   })()}
                                   <h4 className="text-sm font-bold uppercase tracking-tight mb-2">{deal.title}</h4>
                                   <div className="flex flex-col gap-1 mb-4">
                                      <div className="flex items-baseline gap-2">
-                                        <span className="text-lg font-black text-gray-950">₹{(parseFloat(deal.amount || 0) + parseFloat(deal.shipping_fee || 0)).toLocaleString()}</span>
+                                        <span className="text-lg font-black text-gray-950">â‚¹{(parseFloat(deal.amount || 0) + parseFloat(deal.shipping_fee || 0)).toLocaleString()}</span>
                                         <span className="text-[9px] font-bold text-gray-400 uppercase">Total Paid</span>
                                      </div>
                                      <div className="flex items-center gap-3">
-                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Item: ₹{parseFloat(deal.amount).toLocaleString()}</p>
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Item: â‚¹{parseFloat(deal.amount).toLocaleString()}</p>
                                         {parseFloat(deal.shipping_fee || 0) > 0 && (
-                                           <p className="text-[9px] font-bold text-blue-600 uppercase tracking-tight">Shipping: ₹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
+                                           <p className="text-[9px] font-bold text-blue-600 uppercase tracking-tight">Shipping: â‚¹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
                                         )}
                                         <p className="text-[9px] font-medium text-gray-400 uppercase ml-auto">Seller: {deal.seller_name}</p>
                                      </div>
@@ -1167,7 +1201,7 @@ function ProfileContent() {
                                      )}
 
                                      <div className="flex justify-between items-center">
-                                        <span className="text-sm font-black text-gray-950">₹{parseFloat(item.price).toLocaleString()}</span>
+                                        <span className="text-sm font-black text-gray-950">â‚¹{parseFloat(item.price).toLocaleString()}</span>
                                         <div className="flex gap-1">
                                            <button onClick={() => router.push(`/sell?edit=${item.id}`)} className="p-1.5 hover:text-blue-600 transition-colors"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
                                            <button onClick={() => handleDeleteProduct(item.id)} className="p-1.5 hover:text-rose-600 transition-colors"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
@@ -1214,13 +1248,13 @@ function ProfileContent() {
                                                </div>
                                                <div className="text-right">
                                                   <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Your Payout</p>
-                                                  <p className="text-2xl font-black text-gray-950 leading-none">₹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
+                                                  <p className="text-2xl font-black text-gray-950 leading-none">â‚¹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
                                                   <div className="flex flex-col items-end mt-2">
-                                                     <p className="text-[8px] font-bold text-gray-400 uppercase">Sale: ₹{parseFloat(deal.amount).toLocaleString()}</p>
+                                                     <p className="text-[8px] font-bold text-gray-400 uppercase">Sale: â‚¹{parseFloat(deal.amount).toLocaleString()}</p>
                                                      {parseFloat(deal.shipping_fee || 0) > 0 && (
-                                                        <p className="text-[8px] font-bold text-blue-600 uppercase">Shipping: +₹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
+                                                        <p className="text-[8px] font-bold text-blue-600 uppercase">Shipping: +â‚¹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
                                                      )}
-                                                     <p className="text-[8px] font-bold text-rose-500 uppercase">Fee: -₹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</p>
+                                                     <p className="text-[8px] font-bold text-rose-500 uppercase">Fee: -â‚¹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</p>
                                                   </div>
                                                </div>
                                             </div>
@@ -1282,7 +1316,7 @@ function ProfileContent() {
                                                       <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center"><Send className="w-4 h-4 text-white" /></div>
                                                       <div>
                                                          <p className="text-[11px] font-black text-gray-900 uppercase">In Transit</p>
-                                                         <p className="text-[10px] text-blue-600 font-bold uppercase mt-1 tracking-widest">{deal.courier_name} · {deal.tracking_number}</p>
+                                                         <p className="text-[10px] text-blue-600 font-bold uppercase mt-1 tracking-widest">{deal.courier_name} Â· {deal.tracking_number}</p>
                                                       </div>
                                                    </div>
                                                 )}
@@ -1303,7 +1337,7 @@ function ProfileContent() {
                                                                {deal.payout_status || 'PENDING'}
                                                             </span>
                                                          </div>
-                                                         <p className="text-sm font-black text-gray-950">₹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
+                                                         <p className="text-sm font-black text-gray-950">â‚¹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
                                                          {deal.payout_released_at && (
                                                             <p className="text-[7px] text-gray-400 mt-1 font-bold uppercase tracking-tight">Released on {new Date(deal.payout_released_at).toLocaleDateString()}</p>
                                                          )}
@@ -1454,7 +1488,7 @@ function ProfileContent() {
                                             </div>
                                             <div className="text-right">
                                                <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">{offer.status === 'buyer_countered' ? 'Buyer Counter Price' : 'Offered Price'}</p>
-                                               <p className="text-xl font-black text-blue-600">₹{parseFloat(offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount).toLocaleString()}</p>
+                                               <p className="text-xl font-black text-blue-600">â‚¹{parseFloat(offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount).toLocaleString()}</p>
                                             </div>
                                          </div>
                                          
@@ -1476,7 +1510,7 @@ function ProfileContent() {
                                                 <>
                                                    {counterForm.offerId === offer.id ? (
                                                       <div className="flex items-center gap-2">
-                                                         <span className="text-sm font-bold text-gray-500">₹</span>
+                                                         <span className="text-sm font-bold text-gray-500">â‚¹</span>
                                                          <input 
                                                             type="number" 
                                                             value={counterForm.amount} 
@@ -1540,7 +1574,7 @@ function ProfileContent() {
                                                  </div>
                                                  <div className="text-right">
                                                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Voided Amount</p>
-                                                    <p className="text-2xl font-black text-gray-400 leading-none line-through">₹{parseFloat(deal.amount || 0).toLocaleString()}</p>
+                                                    <p className="text-2xl font-black text-gray-400 leading-none line-through">â‚¹{parseFloat(deal.amount || 0).toLocaleString()}</p>
                                                  </div>
                                               </div>
 
@@ -1661,7 +1695,7 @@ function ProfileContent() {
                                     <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30">Liquidated Assets</span>
                                  </div>
                                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Total Sales Volume</p>
-                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">₹{parseFloat(financialReports.totals.total_sales || 0).toLocaleString()}</h3>
+                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">â‚¹{parseFloat(financialReports.totals.total_sales || 0).toLocaleString()}</h3>
                                  <p className="text-[9px] font-medium text-gray-500 mt-4 uppercase tracking-wider">{financialReports.totals.total_items_sold} Orders Successfully Audited</p>
                               </div>
 
@@ -1674,7 +1708,7 @@ function ProfileContent() {
                                     <span className="text-[8px] font-black uppercase tracking-widest bg-white/20 text-white px-3 py-1 rounded-full border border-white/30">Acquired Inventory</span>
                                  </div>
                                  <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.2em]">Total Acquisition Cost</p>
-                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">₹{parseFloat(financialReports.totals.total_spent || 0).toLocaleString()}</h3>
+                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">â‚¹{parseFloat(financialReports.totals.total_spent || 0).toLocaleString()}</h3>
                                  <p className="text-[9px] font-medium text-blue-200 mt-4 uppercase tracking-wider">{financialReports.totals.total_items_bought} Products in Vault</p>
                               </div>
                            </div>
@@ -1793,7 +1827,7 @@ function ProfileContent() {
                                                         <h5 className="text-[13px] font-black text-gray-900 uppercase tracking-tight line-clamp-1">{deal.product_title}</h5>
                                                      </div>
                                                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                                                        {new Date(deal.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • ID: {deal.id}
+                                                        {new Date(deal.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} â€¢ ID: {deal.id}
                                                      </p>
                                                   </div>
                                                </div>
@@ -1815,27 +1849,27 @@ function ProfileContent() {
                                                   <div className="bg-gray-50/50 px-6 py-4 rounded-2xl border border-gray-100 min-w-[200px]">
                                                      <div className="flex justify-between items-center mb-2">
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase">Base Amount</span>
-                                                        <span className="text-[10px] font-black text-gray-900">₹{parseFloat(deal.amount).toLocaleString()}</span>
+                                                        <span className="text-[10px] font-black text-gray-900">â‚¹{parseFloat(deal.amount).toLocaleString()}</span>
                                                      </div>
                                                      <div className="flex justify-between items-center mb-2">
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase">Shipping</span>
-                                                        <span className="text-[10px] font-black text-gray-900">+₹{parseFloat(deal.shipping_fee || 0).toLocaleString()}</span>
+                                                        <span className="text-[10px] font-black text-gray-900">+â‚¹{parseFloat(deal.shipping_fee || 0).toLocaleString()}</span>
                                                      </div>
                                                      {isBuyer ? (
                                                         <div className="flex justify-between items-center mb-3">
                                                            <span className="text-[9px] font-bold text-gray-400 uppercase">Service Fee + GST</span>
-                                                           <span className="text-[10px] font-black text-gray-900">+₹{(parseFloat(deal.buyer_commission_amount || 0) + (parseFloat(deal.buyer_commission_amount || 0) * 0.18)).toLocaleString()}</span>
+                                                           <span className="text-[10px] font-black text-gray-900">+â‚¹{(parseFloat(deal.buyer_commission_amount || 0) + (parseFloat(deal.buyer_commission_amount || 0) * 0.18)).toLocaleString()}</span>
                                                         </div>
                                                      ) : (
                                                         <div className="flex justify-between items-center mb-3 text-rose-500">
                                                            <span className="text-[9px] font-bold uppercase">Platform Fee</span>
-                                                           <span className="text-[10px] font-black">-₹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</span>
+                                                           <span className="text-[10px] font-black">-â‚¹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</span>
                                                         </div>
                                                      )}
                                                      <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
                                                         <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{isBuyer ? 'Total Paid' : 'Net Payout'}</span>
                                                         <span className={`text-[12px] font-black ${isBuyer ? 'text-blue-600' : 'text-emerald-600'}`}>
-                                                           ₹{isBuyer ? parseFloat(deal.total_buyer_cost).toLocaleString() : parseFloat(deal.seller_payout).toLocaleString()}
+                                                           â‚¹{isBuyer ? parseFloat(deal.total_buyer_cost).toLocaleString() : parseFloat(deal.seller_payout).toLocaleString()}
                                                         </span>
                                                      </div>
                                                   </div>
@@ -1872,7 +1906,7 @@ function ProfileContent() {
                         <div className="p-8 border border-gray-100 rounded-2xl flex justify-between items-center bg-gray-50/20">
                            <div>
                               <p className="text-sm font-bold text-gray-900 uppercase tracking-tight">Current Session</p>
-                              <p className="text-[10px] text-gray-400 mt-1 uppercase font-medium">Windows Chrome • IP: 152.16.x.x • Active Now</p>
+                              <p className="text-[10px] text-gray-400 mt-1 uppercase font-medium">Windows Chrome â€¢ IP: 152.16.x.x â€¢ Active Now</p>
                            </div>
                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-sm shadow-emerald-200"></span>
                         </div>
@@ -1892,7 +1926,7 @@ function ProfileContent() {
       {paymentReceiptModal && (
         <div className="fixed inset-0 z-[1100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPaymentReceiptModal(null)}>
           <div className="relative max-w-2xl w-full" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setPaymentReceiptModal(null)} className="absolute -top-10 right-0 text-white/60 hover:text-white text-[10px] font-black uppercase tracking-widest">Close ✕</button>
+            <button onClick={() => setPaymentReceiptModal(null)} className="absolute -top-10 right-0 text-white/60 hover:text-white text-[10px] font-black uppercase tracking-widest">Close âœ•</button>
             <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
                 <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">

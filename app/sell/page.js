@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Navbar from "../../components/Navbar";
@@ -13,7 +13,13 @@ export default function SellPage() {
    const [categories, setCategories] = useState([]);
    const [loading, setLoading] = useState(false);
    const [initLoading, setInitLoading] = useState(true);
-   const [showSuccess, setShowSuccess] = useState({ show: false, message: "" });
+   const [showSuccess, setShowSuccess] = useState({ show: false, message: "", type: "pending", autoApproved: false });
+   const [toast, setToast] = useState(null);
+
+   const showToast = (message, type = 'success') => {
+      setToast({ message, type });
+      setTimeout(() => setToast(null), 4500);
+   };
    const [productStatus, setProductStatus] = useState(null);
    const [rejectionReason, setRejectionReason] = useState(null);
    const [showOnboarding, setShowOnboarding] = useState(false);
@@ -219,7 +225,7 @@ export default function SellPage() {
            ].filter(Boolean).length;
 
            if (selectedOptions > 2) {
-              alert("You can choose a maximum of 2 listing options (e.g., Buy It Now + Best Offer).");
+              showToast("Max 2 listing options allowed (e.g., Buy Now + Best Offer).", 'error');
               return;
            }
            setFormData(prev => ({ ...prev, [name]: checked }));
@@ -246,7 +252,7 @@ export default function SellPage() {
 
     const handleFiles = (files) => {
        if (previews.length + files.length > 20) {
-          alert("Max 20 files allowed");
+          showToast("Maximum 20 media files allowed.", 'error');
           return;
        }
        const newPreviews = files.map(f => ({
@@ -321,7 +327,7 @@ export default function SellPage() {
           setCameraStream(stream);
           setShowCamera(true);
        } catch (err) {
-          alert("Camera access denied or NOT available.");
+          showToast("Camera access denied or not available on this device.", 'error');
           console.error(err);
        }
     };
@@ -482,17 +488,16 @@ export default function SellPage() {
          }
 
          if (res.product || res.message === "Product updated successfully" || res.message === "Listing successfully created") {
-            const msg = type === 'draft' ? "Listing saved as draft!" : (editId ? "Listing updated successfully!" : "Product successfully listed");
-            setShowSuccess({ show: true, message: msg });
-            setTimeout(() => {
-               router.push("/");
-            }, 2500);
+            const autoApproved = res.product?.status === 'approved' && type !== 'draft';
+            const msg = type === 'draft' ? "Saved as Draft!" : (editId ? "Listing Updated!" : "Watch Listed!");
+            setShowSuccess({ show: true, message: msg, type, autoApproved });
+            setTimeout(() => { router.push("/"); }, 3200);
          } else {
-            alert(res.message || "Failed to process listing.");
+            showToast(res.message || "Failed to process listing.", 'error');
          }
       } catch (err) {
          console.error(err);
-         alert("System error during listing.");
+         showToast("System error during listing. Please try again.", 'error');
       } finally {
          setLoading(false);
       }
@@ -500,7 +505,7 @@ export default function SellPage() {
 
    const handleMediaContinue = () => {
       if (!previews.some(p => p.type === 'video')) {
-         alert("At least one video is mandatory to proceed with the listing. Please upload a video in the gallery.");
+         showToast("At least one video is mandatory before continuing. Please upload a video.", 'error');
          return;
       }
       nextStep();
@@ -529,16 +534,51 @@ export default function SellPage() {
             onComplete={handleOnboardingComplete} 
          />
          {showSuccess.show && (
-            <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-white/95 backdrop-blur-sm animate-in fade-in duration-500">
-               <div className="flex flex-col items-center">
-                  <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-emerald-100 animate-in zoom-in duration-500">
-                     <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                     </svg>
-                  </div>
-                  <h2 className="text-3xl md:text-5xl font-black text-gray-900 uppercase tracking-tight mb-4 animate-in slide-in-from-bottom-4 duration-500 delay-150 text-center">{showSuccess.message}</h2>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest animate-in fade-in duration-500 delay-300">Redirecting to Main Page...</p>
+            <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-white/96 backdrop-blur-md">
+               <style>{`
+                 @keyframes cfpop{0%{transform:scale(0) translateY(0);opacity:0}60%{opacity:1}100%{transform:scale(1.2) translateY(-30px);opacity:0}}
+                 @keyframes ringpulse{0%,100%{transform:scale(1);opacity:.35}50%{transform:scale(1.5);opacity:0}}
+                 .cf{animation:cfpop 1.2s ease-out forwards}
+                 .rp{animation:ringpulse 2s ease-in-out infinite}
+                 .rp2{animation:ringpulse 2s ease-in-out .7s infinite}
+               `}</style>
+               <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                 {[{t:'12%',l:'8%',c:'#3b82f6',d:'.0s'},{t:'18%',l:'88%',c:'#10b981',d:'.1s'},{t:'72%',l:'6%',c:'#f59e0b',d:'.2s'},{t:'78%',l:'92%',c:'#6366f1',d:'.3s'},{t:'8%',l:'48%',c:'#ec4899',d:'.15s'},{t:'88%',l:'50%',c:'#3b82f6',d:'.25s'},{t:'45%',l:'3%',c:'#10b981',d:'.35s'},{t:'42%',l:'97%',c:'#f59e0b',d:'.05s'},{t:'30%',l:'20%',c:'#6366f1',d:'.4s'},{t:'60%',l:'75%',c:'#ec4899',d:'.45s'}].map((d,i)=>(
+                   <div key={i} className="cf absolute w-4 h-4 rounded-full" style={{top:d.t,left:d.l,background:d.c,animationDelay:d.d}}/>
+                 ))}
                </div>
+               <div className="flex flex-col items-center text-center px-8">
+                 <div className="relative mb-8 flex items-center justify-center">
+                   <div className="rp absolute w-36 h-36 rounded-full" style={{background: showSuccess.autoApproved ? '#fbbf24' : '#10b981', opacity: .2}}/>
+                   <div className="rp2 absolute w-44 h-44 rounded-full" style={{background: showSuccess.autoApproved ? '#f59e0b' : '#6ee7b7', opacity: .15}}/>
+                   <div className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center text-4xl shadow-2xl ${
+                     showSuccess.type === 'draft' ? 'bg-gradient-to-br from-slate-400 to-slate-600 shadow-gray-200'
+                     : showSuccess.autoApproved ? 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-amber-200'
+                     : 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-emerald-200'
+                   }`}>
+                     {showSuccess.type === 'draft' ? 'ðŸ“‚' : showSuccess.autoApproved ? 'âš¡' : 'ðŸŽ‰'}
+                   </div>
+                 </div>
+                 <h2 className="text-4xl md:text-5xl font-black text-gray-900 uppercase tracking-tight mb-4 animate-in slide-in-from-bottom-4 duration-500">{showSuccess.message}</h2>
+                 {showSuccess.autoApproved ? (
+                   <div className="px-5 py-2.5 bg-amber-50 border border-amber-100 rounded-2xl mb-5">
+                     <p className="text-[11px] font-bold text-amber-600 uppercase tracking-widest">âœ¨ Auto-Approved â€” Live on marketplace now</p>
+                   </div>
+                 ) : showSuccess.type === 'pending' && (
+                   <div className="px-5 py-2.5 bg-blue-50 border border-blue-100 rounded-2xl mb-5">
+                     <p className="text-[11px] font-bold text-blue-600 uppercase tracking-widest">ðŸ” Under Review â€” Admin verifies within 24 hrs</p>
+                   </div>
+                 )}
+                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.4em]">Redirecting to marketplace...</p>
+               </div>
+            </div>
+         )}
+         {toast && (
+            <div className={`fixed bottom-6 right-6 z-[4000] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl text-white text-[11px] font-black uppercase tracking-widest animate-in slide-in-from-bottom-4 duration-300 max-w-sm ${
+               toast.type === 'error' ? 'bg-rose-500 shadow-rose-200' : 'bg-emerald-500 shadow-emerald-200'
+            }`}>
+               <span className="text-base shrink-0">{toast.type === 'error' ? 'âš ï¸' : 'âœ“'}</span>
+               <span className="leading-tight normal-case font-bold text-[12px] tracking-normal">{toast.message}</span>
             </div>
          )}
          <Navbar />
@@ -574,7 +614,7 @@ export default function SellPage() {
                   ].map((s) => (
                      <div key={s.n} className={`flex flex-col items-center gap-2 transition-all ${step === s.n ? 'scale-100' : 'opacity-40'}`}>
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs transition-all ${step === s.n ? 'bg-blue-600 text-white shadow-md' : (step > s.n ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400')}`}>
-                           {step > s.n ? "✓" : s.n}
+                           {step > s.n ? "âœ“" : s.n}
                         </div>
                         <span className={`text-[10px] font-semibold uppercase tracking-wider ${step === s.n ? 'text-blue-600' : 'text-gray-500'}`}>{s.t}</span>
                      </div>
@@ -855,7 +895,7 @@ export default function SellPage() {
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeMedia(i); }} 
                                     className="absolute top-2 right-2 w-6 h-6 bg-white/90 backdrop-blur text-red-600 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity font-bold shadow-md z-30"
                                  >
-                                    ✕
+                                    âœ•
                                  </button>
                                  {i === 0 && <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-blue-600 text-[9px] font-bold text-white rounded uppercase shadow-sm z-10">Main</div>}
                                  <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/50 text-[8px] font-bold text-white rounded uppercase backdrop-blur-sm z-10">{media.type}</div>
@@ -996,7 +1036,7 @@ export default function SellPage() {
                                       </div>
                                       {formData.allow_buy_now && (
                                          <div className="space-y-2 animate-in fade-in zoom-in-95 duration-200">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Fixed Price (₹)</p>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Fixed Price (â‚¹)</p>
                                             <input 
                                                type="text" 
                                                name="buy_it_now_price" 
@@ -1024,7 +1064,7 @@ export default function SellPage() {
                                       {formData.allow_auction && (
                                          <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
                                             <div>
-                                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Starting Bid (₹)</p>
+                                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Starting Bid (â‚¹)</p>
                                                <input 
                                                   type="text" 
                                                   name="starting_bid" 
@@ -1035,7 +1075,7 @@ export default function SellPage() {
                                                />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reserve Price (₹) - Optional</p>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reserve Price (â‚¹) - Optional</p>
                                                 <input 
                                                    type="text" 
                                                    name="reserve_price" 
@@ -1126,7 +1166,7 @@ export default function SellPage() {
                                                  checked={formData.shipping_scope === 'PAN_INDIA'} 
                                                  onChange={(e) => {
                                                     if (!currentUser || !currentUser.gst_number) {
-                                                       alert("Indian Law requires a valid GST Number to ship goods across state borders. Please update your profile or select 'Local State Only'.");
+                                                       showToast("GST Number required for Pan-India shipping. Please update your profile.", 'error');
                                                        return;
                                                     }
                                                     handleInputChange(e);
@@ -1154,7 +1194,7 @@ export default function SellPage() {
                                         <span className="text-[11px] font-black uppercase tracking-widest text-gray-900">Fixed Fee</span>
                                      </div>
                                      <div className="relative">
-                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-xl font-black text-gray-300">₹</span>
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-xl font-black text-gray-300">â‚¹</span>
                                         <input
                                            type="text"
                                            name="shipping_fee"
@@ -1324,7 +1364,7 @@ export default function SellPage() {
                                     <div>
                                       <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Live Valuation</p>
                                        <div className="flex flex-col gap-1">
-                                          <span className="text-4xl md:text-5xl font-bold text-gray-950 tracking-tight">₹{parseFloat(formData.allow_buy_now ? formData.buy_it_now_price : (formData.allow_auction ? formData.starting_bid : 0)).toLocaleString()}</span>
+                                          <span className="text-4xl md:text-5xl font-bold text-gray-950 tracking-tight">â‚¹{parseFloat(formData.allow_buy_now ? formData.buy_it_now_price : (formData.allow_auction ? formData.starting_bid : 0)).toLocaleString()}</span>
                                           <div className="flex items-center gap-1.5 mt-1">
                                              <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                                              <span className="text-[11px] font-black uppercase tracking-widest text-gray-500">
@@ -1333,7 +1373,7 @@ export default function SellPage() {
                                                 ) : formData.shipping_type === 'contact' ? (
                                                     <span className="text-blue-600">Contact for Quote</span>
                                                 ) : (
-                                                   <>+ ₹{parseFloat(formData.shipping_fee || 0).toLocaleString()} Shipping</>
+                                                   <>+ â‚¹{parseFloat(formData.shipping_fee || 0).toLocaleString()} Shipping</>
                                                 )}
                                              </span>
                                           </div>

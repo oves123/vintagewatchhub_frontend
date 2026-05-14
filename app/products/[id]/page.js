@@ -53,6 +53,15 @@ export default function ProductPage({ params }) {
   const [showBuyNowModal, setShowBuyNowModal] = useState(false);
   const [isSecuring, setIsSecuring] = useState(false);
   
+  // UX State
+  const [toast, setToast] = useState(null);
+  const [showDealSecured, setShowDealSecured] = useState(false);
+  
+  const showToast = (message, type = 'success', duration = 4500) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), duration);
+  };
+  
   const [platformSettings, setPlatformSettings] = useState(null);
 
   useEffect(() => {
@@ -303,11 +312,11 @@ export default function ProductPage({ params }) {
        return;
     }
     if (!offerAmount || isNaN(offerAmount) || parseFloat(offerAmount) <= 0) {
-       alert("Please enter a valid offer amount.");
+       showToast("Please enter a valid offer amount.", "error");
        return;
     }
     if (parseFloat(offerAmount) >= parseFloat(product.price)) {
-       alert("Your offer must be less than the listed price. To buy at full price, use the Buy Now button.");
+       showToast("Your offer must be less than the listed price. To buy at full price, use the Buy Now button.", "error", 6000);
        return;
     }
     setOfferSending(true);
@@ -330,12 +339,12 @@ export default function ProductPage({ params }) {
        if (res.ok) {
           setShowOfferModal(false);
           setOfferAmount("");
-          alert(`Offer of ₹${parseFloat(offerAmount).toLocaleString()} sent! ${data.remaining || ''} ${data.remaining !== undefined ? 'offer(s) remaining.' : ''}`);
+          showToast(`Offer of ₹${parseFloat(offerAmount).toLocaleString()} sent! ${data.remaining || ''} ${data.remaining !== undefined ? 'offer(s) remaining.' : ''}`, 'success');
        } else {
-          alert(data.message || "Failed to send offer");
+          showToast(data.message || "Failed to send offer", "error");
        }
     } catch (err) {
-       alert("Error sending offer. Please try again.");
+       showToast("Error sending offer. Please try again.", "error");
     } finally {
        setOfferSending(false);
     }
@@ -352,14 +361,14 @@ export default function ProductPage({ params }) {
        return;
     }
     if (!bidAmount || isNaN(bidAmount) || parseFloat(bidAmount) <= 0) {
-      alert("Please enter a valid bid amount.");
+      showToast("Please enter a valid bid amount.", "error");
       return;
     }
     
     // We skip frontend highest-bid validation to avoid rejecting valid bids if the local state is stale.
     // The backend will enforce the minimum increment and return an error if invalid.
     if (parseFloat(bidAmount) < parseFloat(product.starting_bid)) {
-       alert(`Your bid must be at least the starting bid of ₹${parseFloat(product.starting_bid).toLocaleString()}`);
+       showToast(`Your bid must be at least the starting bid of ₹${parseFloat(product.starting_bid).toLocaleString()}`, "error");
        return;
     }
 
@@ -392,16 +401,21 @@ export default function ProductPage({ params }) {
            setProduct(prev => ({ ...prev, auction_end: productData.auction_end, current_bid: productData.current_bid }));
         }
 
-        alert(data.isExtended ? "Bid placed! Auction time has been extended." : "Bid placed successfully!");
+        // Show bid success toast
+        setToast({ 
+          type: 'bid_success', 
+          message: data.isExtended ? "Bid Placed! Auction Extended." : "You're now the highest bidder! ⚡"
+        });
+        setTimeout(() => setToast(null), 4500);
       } else {
-        alert(data.message || "Failed to place bid");
+        showToast(data.message || "Failed to place bid", "error");
         // Re-fetch bid history in case of outbid error
         const historyRes = await fetch(`${API_URL}/bids/history/${id}`);
         const historyData = await historyRes.json();
         if (Array.isArray(historyData)) setBidHistory(historyData);
       }
     } catch (err) {
-      alert("Error placing bid. Please try again.");
+      showToast("Error placing bid. Please try again.", "error");
     } finally {
       setBidSending(false);
     }
@@ -437,13 +451,16 @@ export default function ProductPage({ params }) {
       });
       const data = await res.json();
       if (res.ok) {
-        alert("Deal Secured! Redirecting to your deals to complete payment.");
-        router.push("/profile?tab=buying");
+        setShowBuyNowModal(false);
+        setShowDealSecured(true);
+        setTimeout(() => {
+           router.push("/profile?tab=buying");
+        }, 3000);
       } else {
-        alert(data.message || "Failed to initiate buy now.");
+        showToast(data.message || "Failed to initiate buy now.", "error");
       }
     } catch (err) {
-      alert("Error processing your request. Please try again.");
+      showToast("Error processing your request. Please try again.", "error");
     } finally {
       setIsSecuring(false);
     }
@@ -451,7 +468,7 @@ export default function ProductPage({ params }) {
 
   const handleReportSeller = async () => {
     if (!reportReason) {
-       alert("Please select a reason for reporting.");
+       showToast("Please select a reason for reporting.", "error");
        return;
     }
     setReportSending(true);
@@ -463,15 +480,15 @@ export default function ProductPage({ params }) {
           description: reportDescription
        });
        if (res.report) {
-          alert("Report submitted successfully.");
+          showToast("Report submitted successfully.");
           setShowReportModal(false);
           setReportReason("");
           setReportDescription("");
        } else {
-          alert(res.message || "Failed to submit report");
+          showToast(res.message || "Failed to submit report", "error");
        }
     } catch (err) {
-       alert("Error submitting report.");
+       showToast("Error submitting report.", "error");
     } finally {
        setReportSending(false);
     }
@@ -1460,6 +1477,68 @@ export default function ProductPage({ params }) {
                     </div>
                  </div>
               </div>
+           </div>
+        </div>
+      )}
+
+      {/* Global Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-[6000] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl text-white text-[11px] font-black uppercase tracking-widest animate-in slide-in-from-bottom-4 duration-300 max-w-sm ${
+           toast.type === 'error' ? 'bg-rose-500 shadow-rose-200' :
+           toast.type === 'bid_success' ? 'bg-[#D4AF37] shadow-amber-200' : 
+           'bg-emerald-500 shadow-emerald-200'
+        }`}>
+           {toast.type === 'bid_success' && (
+             <style>{`@keyframes pulse-ring{0%{transform:scale(0.8);opacity:0.5}100%{transform:scale(1.5);opacity:0}} .gold-pulse{animation:pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;}`}</style>
+           )}
+           <div className="relative shrink-0 flex items-center justify-center">
+             {toast.type === 'bid_success' && <div className="absolute inset-0 bg-white rounded-full gold-pulse" />}
+             <span className="text-base relative z-10">{toast.type === 'error' ? '⚠️' : toast.type === 'bid_success' ? '⚡' : '✓'}</span>
+           </div>
+           <span className="leading-tight normal-case font-bold text-[12px] tracking-normal">{toast.message}</span>
+        </div>
+      )}
+
+      {/* Full Screen Deal Secured Overlay */}
+      {showDealSecured && (
+        <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/90 backdrop-blur-lg">
+           <style>{`
+             @keyframes slideUpFade { 0% { transform: translateY(40px) scale(0.95); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+             @keyframes slideRight { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+             .deal-card { animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+             .shimmer { animation: slideRight 2s infinite; }
+           `}</style>
+           <div className="deal-card w-full max-w-md bg-white rounded-[2rem] overflow-hidden shadow-2xl relative">
+             <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[2rem]">
+               <div className="absolute top-0 left-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] shimmer z-10" />
+             </div>
+             <div className="bg-[#1e3a5f] p-8 text-center relative z-20">
+                <div className="w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-500/30">
+                   <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">Deal Secured!</h2>
+                <p className="text-blue-200 text-[11px] font-bold uppercase tracking-widest">Inventory locked for payment</p>
+             </div>
+             <div className="p-8 space-y-6 relative z-20 bg-white">
+                <div className="flex gap-4 items-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden shrink-0">
+                     {product?.images?.[0] ? <img src={product.images[0].startsWith('http') ? product.images[0] : `${API_BASE_URL}/uploads/${product.images[0]}`} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gray-200"/>}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest truncate">{product?.brand}</p>
+                     <p className="text-sm font-black text-gray-900 leading-tight truncate">{product?.title}</p>
+                  </div>
+                </div>
+                <div className="h-px bg-gray-100" />
+                <div className="flex items-center justify-between">
+                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Redirecting to checkout...</span>
+                   <div className="flex items-center gap-2">
+                     <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: "0ms"}}/>
+                     <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: "150ms"}}/>
+                     <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: "300ms"}}/>
+                   </div>
+                </div>
+             </div>
            </div>
         </div>
       )}
