@@ -61,11 +61,17 @@ export default function ProductPage({ params }) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
       if (parsedUser.id) {
-        fetch(`${API_URL}/user/profile/${parsedUser.id}`)
+        const token = localStorage.getItem("token");
+        fetch(`${API_URL}/user/profile/${parsedUser.id}`, {
+          headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
+        })
           .then(res => res.json())
           .then(data => {
-             setUser(data);
-             localStorage.setItem("user", JSON.stringify({...parsedUser, ...data}));
+             // Only update state if we got a valid user back (not an error object)
+             if (data && data.id) {
+               setUser(data);
+               localStorage.setItem("user", JSON.stringify({...parsedUser, ...data}));
+             }
           })
           .catch(console.error);
       }

@@ -122,9 +122,13 @@ export const getUserProfile = async (id) => {
 };
 
 export const updateUserProfile = async (id, data) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const res = await fetch(`${API_URL}/user/profile/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    },
     body: JSON.stringify(data)
   });
   return res.json();
