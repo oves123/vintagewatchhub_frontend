@@ -356,13 +356,9 @@ export default function ProductPage({ params }) {
       return;
     }
     
-    const currentHighest = bidHistory[0]?.bid_amount;
-    if (currentHighest) {
-       if (parseFloat(bidAmount) <= parseFloat(currentHighest)) {
-         alert(`Your bid must be higher than the current highest bid of ₹${parseFloat(currentHighest).toLocaleString()}`);
-         return;
-       }
-    } else if (parseFloat(bidAmount) < parseFloat(product.starting_bid)) {
+    // We skip frontend highest-bid validation to avoid rejecting valid bids if the local state is stale.
+    // The backend will enforce the minimum increment and return an error if invalid.
+    if (parseFloat(bidAmount) < parseFloat(product.starting_bid)) {
        alert(`Your bid must be at least the starting bid of ₹${parseFloat(product.starting_bid).toLocaleString()}`);
        return;
     }
@@ -385,13 +381,24 @@ export default function ProductPage({ params }) {
       if (res.ok) {
         setShowBidModal(false);
         setBidAmount("");
-        // Refresh bid history
+        // Refresh bid history and product data to catch anti-snipe extensions
         const historyRes = await fetch(`${API_URL}/bids/history/${id}`);
         const historyData = await historyRes.json();
         if (Array.isArray(historyData)) setBidHistory(historyData);
-        alert("Bid placed successfully!");
+        
+        const productRes = await fetch(`${API_URL}/products/${id}`);
+        if (productRes.ok) {
+           const productData = await productRes.json();
+           setProduct(prev => ({ ...prev, auction_end: productData.auction_end, current_bid: productData.current_bid }));
+        }
+
+        alert(data.isExtended ? "Bid placed! Auction time has been extended." : "Bid placed successfully!");
       } else {
         alert(data.message || "Failed to place bid");
+        // Re-fetch bid history in case of outbid error
+        const historyRes = await fetch(`${API_URL}/bids/history/${id}`);
+        const historyData = await historyRes.json();
+        if (Array.isArray(historyData)) setBidHistory(historyData);
       }
     } catch (err) {
       alert("Error placing bid. Please try again.");
@@ -698,7 +705,7 @@ export default function ProductPage({ params }) {
                            </Link>
                         ) : (
                            <>
-                              {product.allow_buy_now && (
+                              {product.allow_buy_now && bidHistory.length === 0 && (
                                 <button 
                                   onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow}
                                   className={`w-full h-14 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-3 group ${product.shipping_type === 'contact' ? 'bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 shadow-blue-50' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100'}`}
