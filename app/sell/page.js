@@ -506,8 +506,8 @@ export default function SellPage() {
       nextStep();
    };
 
-   const nextStep = () => setStep(s => s + 1);
-   const prevStep = () => setStep(s => s - 1);
+   const nextStep = () => { setStep(s => s + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+   const prevStep = () => { setStep(s => s - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
    const handleOnboardingComplete = (updatedUser) => {
       setCurrentUser(updatedUser);
