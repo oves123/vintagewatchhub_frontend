@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { API_URL, getTotalUnreadCount, getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "../services/api";
 import socket from "../services/socket";
+import { useTheme } from "../context/ThemeContext";
 
 // Inline SVG Logo Component
 function WCHLogo({ className = "", onClick }) {
@@ -19,8 +20,8 @@ function WCHLogo({ className = "", onClick }) {
         <path d="M10 6 L12 3 L14 5 L16 2 L18 5 L20 3 L22 6 Z" fill="#b8860b"/>
         <circle cx="16" cy="18" r="1.5" fill="#1e3a5f"/>
       </svg>
-      <span className="font-bold tracking-tight text-gray-950 text-[16px] sm:text-[18px] leading-none">
-        Watch<span className="text-[#1e3a5f]">Collector</span><span className="text-[#b8860b] font-black">HUB</span>
+      <span className="font-serif font-black tracking-widest text-foreground text-[16px] sm:text-[18px] leading-none">
+        Watch<span className="text-primary italic font-light">Collector</span><span className="text-gold">HUB</span>
       </span>
     </Link>
   );
@@ -40,6 +41,7 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchRef = useRef(null);
+  const { theme, toggleTheme } = useTheme();
 
   // Scroll shadow effect
   useEffect(() => {
@@ -199,9 +201,9 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`bg-white sticky top-0 z-[100] border-b border-gray-100 transition-shadow duration-300 ${scrolled ? 'shadow-md' : ''}`}>
+      <header className={`bg-surface dark:bg-[#050505] sticky top-0 z-[100] border-b border-border dark:border-neutral-800 transition-shadow duration-300 ${scrolled ? 'shadow-md dark:shadow-neutral-900' : ''}`}>
         {/* Top Utility Bar */}
-        <div className="hidden md:flex bg-[#1e3a5f] text-white text-[11px] font-medium">
+        <div className="hidden md:flex bg-primary dark:bg-[#003620] text-white text-[11px] font-medium">
           <div className="max-w-[1300px] w-full mx-auto px-4 py-1.5 flex justify-between items-center">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-[#b8860b] rounded-full animate-pulse"></span>
@@ -209,19 +211,19 @@ export default function Navbar() {
                 <span>Welcome back, <strong>{user.name}</strong></span>
               ) : (
                 <span>
-                  <Link href="/login" className="underline hover:text-[#b8860b]">Sign in</Link>
+                  <Link href="/login" className="underline hover:text-gold">Sign in</Link>
                   {" "}or{" "}
-                  <Link href="/register" className="underline hover:text-[#b8860b]">Register</Link>
+                  <Link href="/register" className="underline hover:text-gold">Register</Link>
                 </span>
               )}
             </div>
             <div className="flex items-center gap-5">
-              <span className="opacity-60">Authentic · Verified · Trusted</span>
+              <span className="opacity-60">Authentic Â· Verified Â· Trusted</span>
               {user && (
-                <button onClick={handleLogout} className="hover:text-[#b8860b] transition-colors">Logout</button>
+                <button onClick={handleLogout} className="hover:text-gold transition-colors">Logout</button>
               )}
               {user?.role === "admin" && (
-                <Link href="/admin" className="text-[#b8860b] font-bold">Admin Panel</Link>
+                <Link href="/admin" className="text-gold font-bold">Admin Panel</Link>
               )}
             </div>
           </div>
@@ -232,38 +234,45 @@ export default function Navbar() {
           <WCHLogo />
 
           {/* Desktop Search */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center border border-gray-200 rounded-xl overflow-hidden h-11 focus-within:border-[#1e3a5f] focus-within:ring-2 focus-within:ring-blue-50 bg-gray-50 max-w-2xl">
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center border border-border rounded-none overflow-hidden h-11 focus-within:border-[#1e3a5f] focus-within:ring-2 focus-within:ring-blue-50 bg-background max-w-2xl">
             <div className="flex-1 flex items-center px-4">
-              <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 ref={searchRef}
                 type="text"
                 placeholder="Search watches, brands, models..."
-                className="w-full px-3 bg-transparent outline-none text-[13px] font-medium text-gray-700 placeholder:text-gray-400"
+                className="w-full px-3 bg-transparent outline-none text-[13px] font-medium text-muted placeholder:text-muted"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <button type="submit" className="bg-[#1e3a5f] hover:bg-[#2e538a] text-white px-6 h-full font-bold text-xs uppercase tracking-wider transition-colors">
+            <button type="submit" className="bg-primary hover:bg-[#2e538a] text-white px-6 h-full font-bold text-xs uppercase tracking-wider transition-colors">
               Search
             </button>
           </form>
 
           {/* Desktop Right Nav */}
           <nav className="hidden md:flex items-center gap-1">
-            <Link href="/sell" onClick={(e) => requireAuth(e, '/sell')} className="px-3 py-2 text-[12px] font-semibold text-gray-600 hover:text-[#1e3a5f] hover:bg-gray-50 rounded-lg transition-all whitespace-nowrap">
+            <button onClick={toggleTheme} className="p-2 text-muted dark:text-muted hover:text-primary dark:hover:text-primary-light hover:bg-background dark:hover:bg-neutral-800 rounded-none transition-all" aria-label="Toggle Theme">
+              {theme === "dark" ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+              )}
+            </button>
+            <Link href="/sell" onClick={(e) => requireAuth(e, '/sell')} className="px-3 py-2 text-[12px] font-semibold text-muted dark:text-muted hover:text-primary dark:hover:text-primary-light hover:bg-background dark:hover:bg-neutral-800 rounded-none transition-all whitespace-nowrap">
               Sell
             </Link>
-            <Link href="/profile" className="px-3 py-2 text-[12px] font-semibold text-gray-600 hover:text-[#1e3a5f] hover:bg-gray-50 rounded-lg transition-all">
+            <Link href="/profile" className="px-3 py-2 text-[12px] font-semibold text-muted hover:text-primary hover:bg-background rounded-none transition-all">
               Profile
             </Link>
             {user && (
               <div className="relative">
                 <button 
                   onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className={`p-2 rounded-lg transition-all relative ${notificationsOpen ? 'bg-gray-100 text-[#1e3a5f]' : 'text-gray-600 hover:text-[#1e3a5f] hover:bg-gray-50'}`}
+                  className={`p-2 rounded-none transition-all relative ${notificationsOpen ? 'bg-background text-primary' : 'text-muted hover:text-primary hover:bg-background'}`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -276,22 +285,22 @@ export default function Navbar() {
                 {notificationsOpen && (
                   <>
                     <div className="fixed inset-0 z-[110]" onClick={() => setNotificationsOpen(false)}></div>
-                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[120] overflow-hidden slide-in-top">
-                      <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-                        <h3 className="font-bold text-gray-900 text-sm">Notifications</h3>
+                    <div className="absolute right-0 mt-2 w-80 bg-surface rounded-none shadow-2xl border border-border z-[120] overflow-hidden slide-in-top">
+                      <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-background/50">
+                        <h3 className="font-bold text-foreground text-sm">Notifications</h3>
                         {unreadNotificationsCount > 0 && (
-                          <button onClick={handleMarkAllRead} className="text-[11px] font-bold text-[#1e3a5f] hover:underline">Mark all read</button>
+                          <button onClick={handleMarkAllRead} className="text-[11px] font-bold text-primary hover:underline">Mark all read</button>
                         )}
                       </div>
                       <div className="max-h-[400px] overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="p-8 text-center">
-                            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                              <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="w-12 h-12 bg-background rounded-full flex items-center justify-center mx-auto mb-3">
+                              <svg className="w-6 h-6 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                               </svg>
                             </div>
-                            <p className="text-gray-400 text-xs font-medium">No notifications yet</p>
+                            <p className="text-muted text-xs font-medium">No notifications yet</p>
                           </div>
                         ) : (
                           notifications.map((n) => (
@@ -302,14 +311,14 @@ export default function Navbar() {
                                 if (n.link) router.push(n.link);
                                 setNotificationsOpen(false);
                               }}
-                              className={`p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors relative ${!n.is_read ? 'bg-blue-50/30' : ''}`}
+                              className={`p-4 border-b border-gray-50 hover:bg-background cursor-pointer transition-colors relative ${!n.is_read ? 'bg-blue-50/30' : ''}`}
                             >
                               <div className="flex gap-3">
-                                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-[#1e3a5f]' : 'bg-transparent'}`}></div>
+                                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-primary' : 'bg-transparent'}`}></div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-gray-900 text-xs mb-0.5">{n.title}</p>
-                                  <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{n.message}</p>
-                                  <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-wider">
+                                  <p className="font-bold text-foreground text-xs mb-0.5">{n.title}</p>
+                                  <p className="text-muted text-[11px] leading-relaxed line-clamp-2">{n.message}</p>
+                                  <p className="text-[10px] text-muted mt-1 uppercase font-bold tracking-wider">
                                     {new Date(n.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                                   </p>
                                 </div>
@@ -318,7 +327,7 @@ export default function Navbar() {
                           ))
                         )}
                       </div>
-                      <Link href="/profile" onClick={() => setNotificationsOpen(false)} className="block p-3 text-center text-[11px] font-bold text-gray-500 hover:text-[#1e3a5f] bg-gray-50/30 border-t border-gray-50">
+                      <Link href="/profile" onClick={() => setNotificationsOpen(false)} className="block p-3 text-center text-[11px] font-bold text-muted hover:text-primary bg-background/30 border-t border-gray-50">
                         View All Activity
                       </Link>
                     </div>
@@ -327,15 +336,15 @@ export default function Navbar() {
               </div>
             )}
             {user && (
-              <Link href="/messages" className="px-3 py-2 text-[12px] font-semibold text-gray-600 hover:text-[#1e3a5f] hover:bg-gray-50 rounded-lg transition-all flex items-center gap-1.5">
+              <Link href="/messages" className="px-3 py-2 text-[12px] font-semibold text-muted hover:text-primary hover:bg-background rounded-none transition-all flex items-center gap-1.5">
                 Messages
                 {unreadMessagesCount > 0 && (
-                  <span className="bg-[#1e3a5f] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
+                  <span className="bg-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
                 )}
               </Link>
             )}
             {/* Watchlist Icon */}
-            <Link href="/watchlist" onClick={(e) => requireAuth(e, '/watchlist')} className="relative p-2 text-gray-600 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
+            <Link href="/watchlist" onClick={(e) => requireAuth(e, '/watchlist')} className="relative p-2 text-muted hover:text-rose-500 hover:bg-rose-50 rounded-none transition-all">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
@@ -349,7 +358,14 @@ export default function Navbar() {
 
           {/* Mobile Right: Watchlist + Hamburger */}
           <div className="flex md:hidden items-center gap-1.5 sm:gap-2 ml-auto">
-            <Link href="/watchlist" className="relative p-1.5 sm:p-2 text-gray-700">
+            <button onClick={toggleTheme} className="p-1.5 sm:p-2 text-muted dark:text-muted">
+              {theme === "dark" ? (
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+              ) : (
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+              )}
+            </button>
+            <Link href="/watchlist" className="relative p-1.5 sm:p-2 text-muted dark:text-muted">
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
@@ -358,18 +374,18 @@ export default function Navbar() {
               )}
             </Link>
             {user && (
-              <Link href="/messages" className="relative p-1.5 sm:p-2 text-gray-700">
+              <Link href="/messages" className="relative p-1.5 sm:p-2 text-muted">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
                 {unreadMessagesCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 bg-[#1e3a5f] text-white text-[8px] font-black px-1 py-0.5 rounded-full min-w-[14px] text-center">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
+                  <span className="absolute top-0.5 right-0.5 bg-primary text-white text-[8px] font-black px-1 py-0.5 rounded-full min-w-[14px] text-center">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
                 )}
               </Link>
             )}
             <button
               onClick={() => setMobileOpen(true)}
-              className="p-1.5 sm:p-2 text-gray-700 hover:bg-gray-100 rounded-lg ml-1"
+              className="p-1.5 sm:p-2 text-muted hover:bg-background rounded-none ml-1"
               aria-label="Open menu"
             >
               <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -381,16 +397,16 @@ export default function Navbar() {
         </div>
 
         {/* Categories Bar (Desktop) */}
-        <div className="hidden md:flex border-t border-gray-100 bg-white">
+        <div className="hidden md:flex border-t border-border dark:border-neutral-800 bg-surface dark:bg-[#050505]">
           <div className="max-w-[1300px] w-full mx-auto px-4 flex items-center gap-1 overflow-x-auto scrollbar-hide py-1">
             {categories.map((cat) => (
               <Link
                 key={cat.href}
                 href={cat.href}
-                className={`whitespace-nowrap px-4 py-2 text-[11px] font-semibold uppercase tracking-wider rounded-lg transition-all ${
+                className={`whitespace-nowrap px-4 py-2 text-[11px] font-semibold uppercase tracking-wider rounded-none transition-all ${
                   pathname === cat.href || (cat.href !== "/" && pathname.startsWith(cat.href.split("?")[0]))
-                    ? 'text-[#1e3a5f] bg-blue-50'
-                    : 'text-gray-500 hover:text-[#1e3a5f] hover:bg-gray-50'
+                    ? 'text-primary bg-blue-50'
+                    : 'text-muted hover:text-primary hover:bg-background'
                 }`}
               >
                 {cat.label}
@@ -404,11 +420,11 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="fixed inset-0 z-[200] md:hidden">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="absolute right-0 top-0 bottom-0 w-4/5 max-w-xs bg-white shadow-2xl flex flex-col slide-in-right">
+          <div className="absolute right-0 top-0 bottom-0 w-4/5 max-w-xs bg-surface shadow-2xl flex flex-col slide-in-right">
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+            <div className="flex items-center justify-between p-5 border-b border-border">
               <WCHLogo onClick={() => setMobileOpen(false)} />
-              <button onClick={() => setMobileOpen(false)} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full">
+              <button onClick={() => setMobileOpen(false)} className="p-2 text-muted hover:text-foreground hover:bg-background rounded-full">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -416,10 +432,10 @@ export default function Navbar() {
             </div>
 
             {/* Search */}
-            <div className="p-4 border-b border-gray-100">
-              <form onSubmit={handleSearch} className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+            <div className="p-4 border-b border-border">
+              <form onSubmit={handleSearch} className="flex items-center border border-border rounded-none overflow-hidden bg-background">
                 <div className="flex-1 flex items-center px-3">
-                  <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input
@@ -430,7 +446,7 @@ export default function Navbar() {
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
-                <button type="submit" className="bg-[#1e3a5f] text-white px-4 py-3">
+                <button type="submit" className="bg-primary text-white px-4 py-3">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -445,62 +461,62 @@ export default function Navbar() {
                   key={cat.href}
                   href={cat.href}
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all"
+                  className="flex items-center px-4 py-3 text-[13px] font-semibold text-muted hover:text-primary hover:bg-blue-50 rounded-none transition-all"
                 >
                   {cat.label}
                 </Link>
               ))}
 
-              <div className="border-t border-gray-100 my-3 pt-3 space-y-1">
-                <Link href="/sell" onClick={(e) => { setMobileOpen(false); requireAuth(e, '/sell'); }} className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
-                  🏷️ Sell a Watch
+              <div className="border-t border-border my-3 pt-3 space-y-1">
+                <Link href="/sell" onClick={(e) => { setMobileOpen(false); requireAuth(e, '/sell'); }} className="flex items-center px-4 py-3 text-[13px] font-semibold text-muted hover:text-primary hover:bg-blue-50 rounded-none transition-all">
+                  ðŸ·ï¸ Sell a Watch
                 </Link>
-                <Link href="/messages" onClick={() => setMobileOpen(false)} className="flex items-center justify-between px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
-                  <span>💬 Messages</span>
+                <Link href="/messages" onClick={() => setMobileOpen(false)} className="flex items-center justify-between px-4 py-3 text-[13px] font-semibold text-muted hover:text-primary hover:bg-blue-50 rounded-none transition-all">
+                  <span>ðŸ’¬ Messages</span>
                   {unreadMessagesCount > 0 && (
-                    <span className="bg-[#1e3a5f] text-white text-[10px] font-black px-2 py-0.5 rounded-full">{unreadMessagesCount}</span>
+                    <span className="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full">{unreadMessagesCount}</span>
                   )}
                 </Link>
-                <Link href="/watchlist" onClick={(e) => { setMobileOpen(false); requireAuth(e, '/watchlist'); }} className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
-                  ❤️ Watchlist
+                <Link href="/watchlist" onClick={(e) => { setMobileOpen(false); requireAuth(e, '/watchlist'); }} className="flex items-center px-4 py-3 text-[13px] font-semibold text-muted hover:text-primary hover:bg-blue-50 rounded-none transition-all">
+                  â¤ï¸ Watchlist
                 </Link>
-                <Link href="/profile" onClick={() => setMobileOpen(false)} className="flex items-center px-4 py-3 text-[13px] font-semibold text-gray-700 hover:text-[#1e3a5f] hover:bg-blue-50 rounded-xl transition-all">
-                  👤 My Profile
+                <Link href="/profile" onClick={() => setMobileOpen(false)} className="flex items-center px-4 py-3 text-[13px] font-semibold text-muted hover:text-primary hover:bg-blue-50 rounded-none transition-all">
+                  ðŸ‘¤ My Profile
                 </Link>
                 {user?.role === "admin" && (
-                  <Link href="/admin" onClick={() => setMobileOpen(false)} className="flex items-center px-4 py-3 text-[13px] font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
-                    🔧 Admin Panel
+                  <Link href="/admin" onClick={() => setMobileOpen(false)} className="flex items-center px-4 py-3 text-[13px] font-semibold text-rose-600 hover:bg-rose-50 rounded-none transition-all">
+                    ðŸ”§ Admin Panel
                   </Link>
                 )}
               </div>
             </nav>
 
             {/* Auth Footer */}
-            <div className="p-4 border-t border-gray-100 safe-bottom">
+            <div className="p-4 border-t border-border safe-bottom">
               {user ? (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 rounded-xl">
-                    <div className="w-9 h-9 bg-[#1e3a5f] text-white rounded-full flex items-center justify-center font-black text-sm">
+                  <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 rounded-none">
+                    <div className="w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center font-black text-sm">
                       {user.name?.[0]?.toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-[13px] font-bold text-gray-900">{user.name}</p>
-                      <p className="text-[11px] text-gray-500">{user.email}</p>
+                      <p className="text-[13px] font-bold text-foreground">{user.name}</p>
+                      <p className="text-[11px] text-muted">{user.email}</p>
                     </div>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full py-3 text-center text-sm font-bold text-rose-600 border border-rose-200 rounded-xl hover:bg-rose-50 transition-colors"
+                    className="w-full py-3 text-center text-sm font-bold text-rose-600 border border-rose-200 rounded-none hover:bg-rose-50 transition-colors"
                   >
                     Sign Out
                   </button>
                 </div>
               ) : (
                 <div className="flex gap-3">
-                  <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1 py-3 text-center text-sm font-bold text-[#1e3a5f] border border-[#1e3a5f] rounded-xl hover:bg-blue-50">
+                  <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1 py-3 text-center text-sm font-bold text-primary border border-[#1e3a5f] rounded-none hover:bg-blue-50">
                     Sign In
                   </Link>
-                  <Link href="/register" onClick={() => setMobileOpen(false)} className="flex-1 py-3 text-center text-sm font-bold text-white bg-[#1e3a5f] rounded-xl hover:bg-[#2e538a]">
+                  <Link href="/register" onClick={() => setMobileOpen(false)} className="flex-1 py-3 text-center text-sm font-bold text-white bg-primary rounded-none hover:bg-[#2e538a]">
                     Register
                   </Link>
                 </div>
@@ -514,19 +530,19 @@ export default function Navbar() {
       {lastNotification && (
         <div
           onClick={() => { router.push('/messages'); setLastNotification(null); }}
-          className="fixed bottom-6 right-4 sm:right-6 bg-gray-900 text-white p-4 rounded-2xl shadow-2xl z-[300] cursor-pointer slide-in-right flex items-center gap-3 max-w-[320px] border border-gray-800"
+          className="fixed bottom-6 right-4 sm:right-6 bg-foreground text-white p-4 rounded-none shadow-2xl z-[300] cursor-pointer slide-in-right flex items-center gap-3 max-w-[320px] border border-gray-800"
         >
-          <div className="w-10 h-10 bg-[#1e3a5f] rounded-full flex items-center justify-center font-black text-sm shrink-0">
+          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center font-black text-sm shrink-0">
             {lastNotification.sender[0]?.toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#b8860b] mb-0.5">New Message</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-gold mb-0.5">New Message</p>
             <p className="text-sm font-bold truncate">{lastNotification.sender}</p>
-            <p className="text-xs text-gray-400 truncate">{lastNotification.text}</p>
+            <p className="text-xs text-muted truncate">{lastNotification.text}</p>
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); setLastNotification(null); }}
-            className="text-gray-500 hover:text-white shrink-0 p-1"
+            className="text-muted hover:text-white shrink-0 p-1"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />

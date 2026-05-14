@@ -6,9 +6,9 @@ export default function StatCard({ title, value, trend, color = "slate", onDetai
   const isPositive = trend?.startsWith("+");
   
   return (
-    <div className="bg-white p-7 rounded-3xl border border-slate-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-slate-200/50 hover:border-slate-200 font-sans group relative overflow-hidden">
+    <div className="bg-surface p-7 rounded-3xl border border-slate-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-slate-200/50 hover:border-slate-200 font-sans group relative overflow-hidden">
       {/* Decorative Background Element */}
-      <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-[0.03] group-hover:scale-125 transition-transform duration-700 ${color === 'blue' ? 'bg-blue-600' : 'bg-slate-900'}`}></div>
+      <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-[0.03] group-hover:scale-125 transition-transform duration-700 ${color === 'blue' ? 'bg-primary' : 'bg-slate-900'}`}></div>
       
       <div className="flex flex-col gap-6 relative z-10">
         <div className="flex items-start justify-between">
@@ -36,7 +36,7 @@ export default function StatCard({ title, value, trend, color = "slate", onDetai
         <div className="space-y-3">
             <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100/50">
               <div 
-                className={`h-full transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1) w-[75%] ${color === 'blue' ? 'bg-blue-600 shadow-lg shadow-blue-200' : 'bg-slate-900 shadow-lg shadow-slate-300'}`}
+                className={`h-full transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1) w-[75%] ${color === 'blue' ? 'bg-primary shadow-lg shadow-blue-200' : 'bg-slate-900 shadow-lg shadow-slate-300'}`}
               ></div>
             </div>
             

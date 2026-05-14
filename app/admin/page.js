@@ -461,12 +461,12 @@ function AdminPageContent() {
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
         <div className="flex flex-col items-center gap-5">
           <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-4 border-gray-100"/>
+            <div className="absolute inset-0 rounded-full border-4 border-border"/>
             <div className="absolute inset-0 rounded-full border-4 border-[#1e3a5f] border-t-transparent animate-spin"/>
           </div>
           <div className="text-center">
-            <p className="text-[13px] font-black text-gray-900">WatchCollectorHUB</p>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Loading Admin Panel...</p>
+            <p className="text-[13px] font-black text-foreground">WatchCollectorHUB</p>
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Loading Admin Panel...</p>
           </div>
         </div>
       </div>
@@ -474,7 +474,7 @@ function AdminPageContent() {
   }
 
   return (
-    <div className="flex bg-[#f8fafc] min-h-screen text-gray-900 font-sans antialiased">
+    <div className="flex bg-[#f8fafc] min-h-screen text-foreground font-sans antialiased">
       <AdminSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -487,20 +487,20 @@ function AdminPageContent() {
 
       <div className="flex-grow lg:ml-64 min-w-0">
         {/* Header */}
-        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-6 py-4">
+        <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-gray-50 rounded-xl text-gray-700 hover:bg-gray-100 transition-all">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-background rounded-none text-muted hover:bg-background transition-all">
               <Menu size={20}/>
             </button>
             <nav className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest">
-              <span className="text-gray-400">Admin</span>
-              <ChevronRight size={10} className="text-gray-300"/>
-              <span className="text-[#1e3a5f]">{TAB_LABELS[activeTab] || activeTab}</span>
+              <span className="text-muted">Admin</span>
+              <ChevronRight size={10} className="text-muted"/>
+              <span className="text-primary">{TAB_LABELS[activeTab] || activeTab}</span>
             </nav>
           </div>
           <div className="flex items-center gap-3">
             {stats?.pendingVerifications > 0 && (
-              <button onClick={() => setActiveTab("products")} className="hidden sm:flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all">
+              <button onClick={() => setActiveTab("products")} className="hidden sm:flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"/>
                 {stats.pendingVerifications} Pending
               </button>
@@ -510,10 +510,10 @@ function AdminPageContent() {
             <div className="relative">
               <button 
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className={`p-2.5 rounded-xl border transition-all relative ${
+                className={`p-2.5 rounded-none border transition-all relative ${
                   notificationsOpen 
-                    ? 'bg-[#1e3a5f] text-white border-[#1e3a5f]' 
-                    : 'bg-white text-gray-400 border-gray-100 hover:border-gray-200 hover:text-gray-600'
+                    ? 'bg-primary text-white border-[#1e3a5f]' 
+                    : 'bg-surface text-muted border-border hover:border-border hover:text-muted'
                 }`}
               >
                 <Bell size={18}/>
@@ -525,20 +525,20 @@ function AdminPageContent() {
               {notificationsOpen && (
                 <>
                   <div className="fixed inset-0 z-[110]" onClick={() => setNotificationsOpen(false)}></div>
-                  <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[120] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-                      <h3 className="font-black text-gray-900 text-[10px] uppercase tracking-widest">Notifications</h3>
+                  <div className="absolute right-0 mt-3 w-80 bg-surface rounded-none shadow-2xl border border-border z-[120] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-background/50">
+                      <h3 className="font-black text-foreground text-[10px] uppercase tracking-widest">Notifications</h3>
                       {unreadNotificationsCount > 0 && (
-                        <button onClick={handleMarkAllRead} className="text-[10px] font-black text-[#1e3a5f] hover:underline uppercase tracking-tight">Mark all read</button>
+                        <button onClick={handleMarkAllRead} className="text-[10px] font-black text-primary hover:underline uppercase tracking-tight">Mark all read</button>
                       )}
                     </div>
                     <div className="max-h-[400px] overflow-y-auto">
                       {notifications.length === 0 ? (
                         <div className="p-10 text-center">
-                          <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <div className="w-12 h-12 bg-background rounded-full flex items-center justify-center mx-auto mb-3">
                             <Bell className="text-gray-200" size={20}/>
                           </div>
-                          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">No Alerts</p>
+                          <p className="text-muted text-[10px] font-black uppercase tracking-widest">No Alerts</p>
                         </div>
                       ) : (
                         notifications.map((n) => (
@@ -549,14 +549,14 @@ function AdminPageContent() {
                               if (n.link) setActiveTab(n.link.startsWith('/admin/') ? n.link.replace('/admin/', '') : n.link);
                               setNotificationsOpen(false);
                             }}
-                            className={`p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors relative ${!n.is_read ? 'bg-blue-50/30' : ''}`}
+                            className={`p-4 border-b border-gray-50 hover:bg-background cursor-pointer transition-colors relative ${!n.is_read ? 'bg-blue-50/30' : ''}`}
                           >
                             <div className="flex gap-3">
-                              <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-[#1e3a5f]' : 'bg-transparent'}`}></div>
+                              <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-primary' : 'bg-transparent'}`}></div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-black text-gray-900 text-[11px] mb-1 uppercase tracking-tight">{n.title}</p>
-                                <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2 font-medium">{n.message}</p>
-                                <p className="text-[9px] text-gray-400 mt-2 uppercase font-black tracking-widest">
+                                <p className="font-black text-foreground text-[11px] mb-1 uppercase tracking-tight">{n.title}</p>
+                                <p className="text-muted text-[11px] leading-relaxed line-clamp-2 font-medium">{n.message}</p>
+                                <p className="text-[9px] text-muted mt-2 uppercase font-black tracking-widest">
                                   {new Date(n.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                                 </p>
                               </div>
@@ -570,7 +570,7 @@ function AdminPageContent() {
               )}
             </div>
 
-            <button onClick={refreshAll} className="flex items-center gap-2 px-3 py-2.5 bg-[#1e3a5f] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#2e538a] transition-all">
+            <button onClick={refreshAll} className="flex items-center gap-2 px-3 py-2.5 bg-primary text-white rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-[#2e538a] transition-all">
               <RefreshCw size={13}/>
               <span className="hidden sm:inline">Refresh</span>
             </button>
@@ -580,8 +580,8 @@ function AdminPageContent() {
         {/* Content */}
         <main className="p-6 lg:p-8 max-w-[1400px] mx-auto">
           <div className="mb-6">
-            <h1 className="text-2xl font-black text-gray-900">{TAB_LABELS[activeTab]}</h1>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">WatchCollectorHUB Admin Panel · Full Access</p>
+            <h1 className="text-2xl font-black text-foreground">{TAB_LABELS[activeTab]}</h1>
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">WatchCollectorHUB Admin Panel Â· Full Access</p>
           </div>
 
           {activeTab === "overview" && (
@@ -667,8 +667,8 @@ function AdminPageContent() {
 
       {/* Toast */}
       {toast && (
-        <div className={`fixed bottom-8 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-[11px] font-black uppercase tracking-widest animate-in slide-in-from-right-10 duration-300 ${
-          toast.type === "error" ? "bg-white border-2 border-rose-500 text-rose-600" : "bg-[#1e3a5f] text-white"
+        <div className={`fixed bottom-8 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-none shadow-2xl text-[11px] font-black uppercase tracking-widest animate-in slide-in-from-right-10 duration-300 ${
+          toast.type === "error" ? "bg-surface border-2 border-rose-500 text-rose-600" : "bg-primary text-white"
         }`}>
           <div className={`w-2 h-2 rounded-full ${toast.type === "error" ? "bg-rose-500" : "bg-[#b8860b]"} animate-pulse`}/>
           {toast.message}
@@ -679,48 +679,48 @@ function AdminPageContent() {
       {selectedChat && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedChat(null)}/>
-          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="bg-[#1e3a5f] p-6 text-white flex justify-between items-center">
+          <div className="relative w-full max-w-2xl bg-surface rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-primary p-6 text-white flex justify-between items-center">
               <div>
                 <h3 className="text-sm font-black uppercase tracking-widest">Audit Conversation #{selectedChat.id}</h3>
                 <p className="text-[10px] font-bold text-white/60 uppercase mt-0.5">{selectedChat.product_title}</p>
               </div>
-              <button onClick={() => setSelectedChat(null)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+              <button onClick={() => setSelectedChat(null)} className="p-2 hover:bg-surface/10 rounded-none transition-colors">
                 <X size={20}/>
               </button>
             </div>
-            <div className="p-6 h-[450px] overflow-y-auto bg-gray-50/50 space-y-4">
+            <div className="p-6 h-[450px] overflow-y-auto bg-background/50 space-y-4">
               {historyLoading ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3">
-                  <RefreshCw className="animate-spin text-[#1e3a5f]" size={24}/>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Loading secure logs...</p>
+                  <RefreshCw className="animate-spin text-primary" size={24}/>
+                  <p className="text-[10px] font-black text-muted uppercase tracking-widest">Loading secure logs...</p>
                 </div>
               ) : chatMessages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-[11px] font-black text-gray-300 uppercase tracking-widest">No messages in this audit log</p>
+                  <p className="text-[11px] font-black text-muted uppercase tracking-widest">No messages in this audit log</p>
                 </div>
               ) : (
                 chatMessages.map((m, i) => (
                   <div key={m.id || i} className={`flex flex-col ${m.sender_id === selectedChat.buyer_id ? "items-start" : "items-end"}`}>
-                     <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 px-1">
+                     <span className="text-[9px] font-black text-muted uppercase tracking-widest mb-1.5 px-1">
                         {m.sender_name || (m.sender_id === selectedChat.buyer_id ? "Buyer" : "Seller")}
                      </span>
-                     <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-[12px] font-semibold leading-relaxed shadow-sm ${
+                     <div className={`max-w-[85%] px-4 py-3 rounded-none text-[12px] font-semibold leading-relaxed shadow-sm ${
                         m.sender_id === selectedChat.buyer_id 
-                        ? "bg-white text-gray-800 border-l-4 border-[#1e3a5f]" 
-                        : "bg-[#1e3a5f] text-white border-r-4 border-[#b8860b]"
+                        ? "bg-surface text-foreground border-l-4 border-[#1e3a5f]" 
+                        : "bg-primary text-white border-r-4 border-[#b8860b]"
                      }`}>
                         {m.message}
                      </div>
-                     <span className="text-[9px] font-bold text-gray-300 mt-1.5 px-1 uppercase tracking-tight">
+                     <span className="text-[9px] font-bold text-muted mt-1.5 px-1 uppercase tracking-tight">
                         {new Date(m.created_at).toLocaleString()}
                      </span>
                   </div>
                 ))
               )}
             </div>
-            <div className="p-4 bg-white border-t border-gray-100 flex justify-end">
-              <button onClick={() => setSelectedChat(null)} className="px-6 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all">
+            <div className="p-4 bg-surface border-t border-border flex justify-end">
+              <button onClick={() => setSelectedChat(null)} className="px-6 py-2.5 bg-background text-muted rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all">
                 Close Audit
               </button>
             </div>
@@ -737,12 +737,12 @@ export default function AdminPage() {
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
         <div className="flex flex-col items-center gap-5">
           <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-4 border-gray-100"/>
+            <div className="absolute inset-0 rounded-full border-4 border-border"/>
             <div className="absolute inset-0 rounded-full border-4 border-[#1e3a5f] border-t-transparent animate-spin"/>
           </div>
           <div className="text-center">
-            <p className="text-[13px] font-black text-gray-900">WatchCollectorHUB</p>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Initializing Admin Panel...</p>
+            <p className="text-[13px] font-black text-foreground">WatchCollectorHUB</p>
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Initializing Admin Panel...</p>
           </div>
         </div>
       </div>

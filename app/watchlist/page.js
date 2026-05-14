@@ -85,28 +85,28 @@ export default function WatchlistPage() {
   };
 
   return (
-    <div className="bg-[#fafafa] min-h-screen flex flex-col">
+    <div className="bg-background min-h-screen flex flex-col">
       <Navbar />
 
       <main className="max-w-[1300px] mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Watchlist</h1>
+        <h1 className="text-3xl font-serif font-bold tracking-wide text-foreground mb-8">My Watchlist</h1>
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : watchlist.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 text-center border border-gray-200">
+          <div className="bg-surface rounded-none p-12 text-center border border-border">
             <div className="max-w-md mx-auto">
-               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <div className="w-20 h-20 bg-background rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-10 h-10 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                </div>
-               <h2 className="text-xl font-bold text-gray-900 mb-2">Your watchlist is empty</h2>
-               <p className="text-gray-400 mt-2 font-black uppercase text-[10px] tracking-widest leading-loose">The world's most advanced watch collector dashboard.</p>
-               <p className="text-gray-600 mb-8">Items you're interested in will appear here. Start browsing and click the heart icon to save items.</p>
-               <Link href="/" className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition">
+               <h2 className="text-xl font-bold text-foreground mb-2">Your watchlist is empty</h2>
+               <p className="text-muted mt-2 font-black uppercase text-[10px] tracking-widest leading-loose">The world's most advanced watch collector dashboard.</p>
+               <p className="text-muted mb-8">Items you're interested in will appear here. Start browsing and click the heart icon to save items.</p>
+               <Link href="/" className="bg-primary text-white px-8 py-3 rounded-none font-bold hover:bg-blue-700 transition">
                   Browse Marketplace
                </Link>
             </div>
@@ -114,10 +114,10 @@ export default function WatchlistPage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {watchlist.map((item, idx) => (
-              <div key={`${item.product_id}-${idx}`} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow group relative">
+              <div key={`${item.product_id}-${idx}`} className="bg-surface rounded-none border border-border overflow-hidden hover:shadow-lg transition-shadow group relative">
                 <button 
                   onClick={() => removeFromWatchlist(item.product_id)}
-                  className="absolute top-2 right-2 z-10 p-2 bg-white rounded-full shadow-sm text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition"
+                  className="absolute top-2 right-2 z-10 p-2 bg-surface rounded-full shadow-sm text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition"
                   title="Remove from watchlist"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -126,7 +126,7 @@ export default function WatchlistPage() {
                 </button>
                 
                 <Link href={`/products/${item.product_id}`}>
-                  <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center relative overflow-hidden">
+                  <div className="aspect-[4/3] bg-background flex items-center justify-center relative overflow-hidden">
                     <img
                       src={getThumbnail(item)}
                       alt={item.title}
@@ -143,21 +143,21 @@ export default function WatchlistPage() {
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <Link href={`/products/${item.product_id}`} className="flex-grow">
-                      <h3 className="font-bold text-gray-900 line-clamp-2 hover:text-blue-600 leading-tight">
+                      <h3 className="font-bold text-foreground line-clamp-2 hover:text-primary leading-tight">
                         {item.title}
                       </h3>
                     </Link>
                   </div>
                   
                   <div className="flex items-baseline gap-1 mt-2">
-                    <span className="text-lg font-black text-gray-900">₹{item.price.toLocaleString()}</span>
+                    <span className="text-lg font-black text-foreground">â‚¹{item.price.toLocaleString()}</span>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                     <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                  <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                     <span className="text-[10px] text-muted font-bold uppercase tracking-wider">
                         {item.product_type === 'auction' ? formatTimeLeft(item.auction_end) : "Fixed Price"}
                      </span>
-                     <Link href={`/products/${item.product_id}`} className="text-xs font-bold text-blue-600 hover:underline">
+                     <Link href={`/products/${item.product_id}`} className="text-xs font-bold text-primary hover:underline">
                         View Item
                      </Link>
                   </div>

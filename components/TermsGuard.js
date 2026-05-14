@@ -42,8 +42,8 @@ export default function TermsGuard({ children }) {
   // If we show children immediately, there might be a flicker before redirect
   if (checking && !["/terms", "/login", "/register"].includes(pathname)) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-pulse text-blue-600 font-bold uppercase tracking-widest text-[10px]">Verifying Protocol...</div>
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="animate-pulse text-primary font-bold uppercase tracking-widest text-[10px]">Verifying Protocol...</div>
       </div>
     );
   }

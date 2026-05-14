@@ -61,17 +61,17 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="bg-[#f7f7f7] min-h-screen pb-20">
+    <div className="bg-background min-h-screen pb-20">
       <Navbar />
 
       <main className="max-w-[1300px] mx-auto px-4 py-12">
         <header className="mb-12">
-           <h1 className="text-4xl font-black text-gray-900 uppercase tracking-tighter italic">Collector <span className="text-blue-600">HUB.</span></h1>
-           <p className="text-gray-400 mt-2 font-black uppercase text-[10px] tracking-widest leading-loose">The world's most advanced watch collector dashboard.</p>
+           <h1 className="text-4xl font-black text-foreground uppercase tracking-tighter italic">Collector <span className="text-primary">HUB.</span></h1>
+           <p className="text-muted mt-2 font-black uppercase text-[10px] tracking-widest leading-loose">The world's most advanced watch collector dashboard.</p>
         </header>
 
         {/* Tab Navigation */}
-        <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-gray-100 mb-10 overflow-x-auto no-scrollbar">
+        <div className="flex bg-surface p-2 rounded-none shadow-sm border border-border mb-10 overflow-x-auto no-scrollbar">
           {[
             { id: "watchlist", label: "Vault Watchlist", count: watchlist.length },
             { id: "purchases", label: "Acquisitions", count: orders.length },
@@ -80,15 +80,15 @@ export default function DashboardPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-3 whitespace-nowrap ${
+              className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest rounded-none transition-all flex items-center gap-3 whitespace-nowrap ${
                 activeTab === tab.id
-                  ? "bg-blue-600 text-white shadow-xl shadow-blue-100"
-                  : "text-gray-400 hover:text-gray-900"
+                  ? "bg-primary text-white shadow-xl shadow-blue-100"
+                  : "text-muted hover:text-foreground"
               }`}
             >
               {tab.label}
               {tab.count > 0 && (
-                <span className={`px-2 py-0.5 rounded-md text-[8px] ${activeTab === tab.id ? "bg-white text-blue-600" : "bg-gray-100 text-gray-400"}`}>
+                <span className={`px-2 py-0.5 rounded-md text-[8px] ${activeTab === tab.id ? "bg-surface text-primary" : "bg-background text-muted"}`}>
                   {tab.count}
                 </span>
               )}
@@ -97,12 +97,12 @@ export default function DashboardPage() {
         </div>
 
         {loading ? (
-          <div className="bg-white rounded-[3rem] p-32 text-center border border-gray-100 shadow-sm flex flex-col items-center gap-6">
+          <div className="bg-surface rounded-[3rem] p-32 text-center border border-border shadow-sm flex flex-col items-center gap-6">
              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent shadow-xl"></div>
-             <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.5em]">Syncing Hub Data...</p>
+             <p className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Syncing Hub Data...</p>
           </div>
         ) : (
-          <section className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-200/50 overflow-hidden">
+          <section className="bg-surface rounded-[3rem] border border-border shadow-2xl shadow-gray-200/50 overflow-hidden">
 
             {activeTab === "watchlist" && (
               <div className="divide-y divide-gray-50">
@@ -159,7 +159,7 @@ export default function DashboardPage() {
                       price={p.price}
                       status={p.status || "Active"}
                       id={p.id}
-                      statusColor={p.status === 'draft' ? "text-gray-400" : "text-emerald-500"}
+                      statusColor={p.status === 'draft' ? "text-muted" : "text-emerald-500"}
                       label="Current Price"
                       isSelling={true}
                       onDelete={() => handleDelete(p.id)}
@@ -181,35 +181,35 @@ function DashboardItem({ title, image, price, status, id, statusColor, label, is
     : "https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg";
   
   return (
-    <div className="p-8 flex items-center gap-10 hover:bg-gray-50/50 transition-all border-b border-gray-50 last:border-0">
-      <div className="w-24 h-24 md:w-32 md:h-32 bg-white rounded-[2rem] flex-shrink-0 flex items-center justify-center p-4 border border-gray-100 shadow-sm overflow-hidden">
+    <div className="p-8 flex items-center gap-10 hover:bg-background/50 transition-all border-b border-gray-50 last:border-0">
+      <div className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-[2rem] flex-shrink-0 flex items-center justify-center p-4 border border-border shadow-sm overflow-hidden">
         <img src={imageUrl} alt={title} className="w-full h-full object-contain mix-blend-multiply transition-transform hover:scale-110 duration-500" />
       </div>
       
       <div className="flex-grow flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div className="max-w-md">
           <p className={`text-[9px] font-black uppercase tracking-widest ${statusColor} mb-2`}>{status}</p>
-          <h3 className="text-xl font-black text-gray-900 tracking-tighter leading-tight hover:text-blue-600 transition-colors uppercase italic">
+          <h3 className="text-xl font-black text-foreground tracking-tighter leading-tight hover:text-primary transition-colors uppercase italic">
             {id ? <Link href={`/products/${id}`}>{title}</Link> : title}
           </h3>
-          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">{id ? `HUB-${id}` : "ORDER-BATCH"}</p>
+          <p className="text-[10px] text-muted font-bold uppercase tracking-widest mt-2">{id ? `HUB-${id}` : "ORDER-BATCH"}</p>
         </div>
 
         <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-6">
           <div className="text-right">
-            <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em] mb-1">{label}</p>
-            <p className="text-2xl font-black text-gray-900 tracking-tighter">₹{parseFloat(price).toLocaleString()}</p>
+            <p className="text-[9px] text-muted font-black uppercase tracking-[0.2em] mb-1">{label}</p>
+            <p className="text-2xl font-black text-foreground tracking-tighter">â‚¹{parseFloat(price).toLocaleString()}</p>
           </div>
           
           <div className="flex gap-2">
             {isSelling ? (
               <>
-                 <Link href={`/sell?edit=${id}`} className="bg-gray-900 text-white px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-600 transition shadow-lg shadow-gray-200">Edit Asset</Link>
-                 <button onClick={onDelete} className="bg-white border-2 border-gray-100 text-rose-500 px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:border-rose-200 transition">Purge</button>
+                 <Link href={`/sell?edit=${id}`} className="bg-foreground text-white px-6 py-2.5 rounded-none font-black text-[9px] uppercase tracking-widest hover:bg-primary transition shadow-lg shadow-gray-200">Edit Asset</Link>
+                 <button onClick={onDelete} className="bg-surface border-2 border-border text-rose-500 px-4 py-2.5 rounded-none font-black text-[9px] uppercase tracking-widest hover:border-rose-200 transition">Purge</button>
               </>
             ) : (
               id && (
-                <Link href={`/products/${id}`} className="bg-gray-900 text-white px-8 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-600 transition shadow-xl shadow-gray-200">Enter Vault</Link>
+                <Link href={`/products/${id}`} className="bg-foreground text-white px-8 py-3 rounded-none font-black text-[9px] uppercase tracking-widest hover:bg-primary transition shadow-xl shadow-gray-200">Enter Vault</Link>
               )
             )}
           </div>
@@ -222,9 +222,9 @@ function DashboardItem({ title, image, price, status, id, statusColor, label, is
 function EmptyState({ message }) {
   return (
     <div className="p-32 text-center space-y-6">
-      <div className="w-20 h-20 bg-gray-50 border border-gray-100 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner grayscale opacity-30">🧊</div>
-      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{message}</p>
-      <Link href="/" className="inline-block bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-50">Start Exploration</Link>
+      <div className="w-20 h-20 bg-background border border-border rounded-[2rem] flex items-center justify-center mx-auto shadow-inner grayscale opacity-30">ðŸ§Š</div>
+      <p className="text-[10px] font-black text-muted uppercase tracking-widest">{message}</p>
+      <Link href="/" className="inline-block bg-primary text-white px-8 py-3 rounded-none font-black text-[9px] uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-50">Start Exploration</Link>
     </div>
   );
 }

@@ -47,9 +47,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-[#fafafa] min-h-screen font-sans antialiased text-[#191919] flex flex-col">
+    <div className="bg-background min-h-screen font-sans antialiased text-foreground flex flex-col">
       {/* Header */}
-      <header className="px-5 py-4 bg-white border-b border-gray-100">
+      <header className="px-5 py-4 bg-surface border-b border-border">
         <Link href="/" className="flex items-center gap-2 w-fit">
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="16" cy="18" r="12" stroke="#1e3a5f" strokeWidth="2"/>
@@ -59,18 +59,18 @@ export default function LoginPage() {
             <path d="M10 6 L12 3 L14 5 L16 2 L18 5 L20 3 L22 6 Z" fill="#b8860b"/>
             <circle cx="16" cy="18" r="1.5" fill="#1e3a5f"/>
           </svg>
-          <span className="font-bold tracking-tight text-gray-950 text-[17px] leading-none">
-            Watch<span className="text-[#1e3a5f]">Collector</span><span className="text-[#b8860b] font-black">HUB</span>
+          <span className="font-bold tracking-tight text-foreground text-[17px] leading-none">
+            Watch<span className="text-primary">Collector</span><span className="text-gold font-black">HUB</span>
           </span>
         </Link>
       </header>
 
       <main className="flex-1 flex items-center justify-center px-5 py-10">
-        <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sm:p-10">
+        <div className="w-full max-w-[420px] bg-surface rounded-none shadow-sm border border-border p-8 sm:p-10">
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-black mb-1">Hello</h1>
             <p className="text-sm">
-              Sign in to The Hub or <Link href="/register" className="text-blue-600 hover:underline">create an account</Link>
+              Sign in to The Hub or <Link href="/register" className="text-primary hover:underline">create an account</Link>
             </p>
           </div>
 
@@ -86,7 +86,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
-                className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
+                className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
                 placeholder=" "
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -94,7 +94,7 @@ export default function LoginPage() {
               />
               <label 
                 htmlFor="email" 
-                className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
+                className="absolute text-muted duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-primary"
               >
                 Email
               </label>
@@ -104,7 +104,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 required
-                className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
+                className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
                 placeholder=" "
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -112,12 +112,12 @@ export default function LoginPage() {
               />
               <label 
                 htmlFor="password" 
-                className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
+                className="absolute text-muted duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-primary"
               >
                 Password
               </label>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 pt-4">
-                <Link href="/forgot-password" className="text-sm font-medium text-blue-600 hover:underline">
+                <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">
                   Forgot?
                 </Link>
               </div>
@@ -126,7 +126,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-blue-600 text-white rounded-full font-bold text-base hover:bg-blue-700 transition-colors shadow-sm active:scale-[0.99] disabled:opacity-50 mt-4"
+              className="w-full py-3.5 bg-primary text-white rounded-full font-bold text-base hover:bg-blue-700 transition-colors shadow-sm active:scale-[0.99] disabled:opacity-50 mt-4"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -134,8 +134,8 @@ export default function LoginPage() {
         </div>
       </main>
 
-      <footer className="py-8 border-t border-gray-100 text-center">
-        <p className="text-[11px] text-gray-400">© 2026 WatchCollectorHub Inc. All Rights Reserved.</p>
+      <footer className="py-8 border-t border-border text-center">
+        <p className="text-[11px] text-muted">Â© 2026 WatchCollectorHub Inc. All Rights Reserved.</p>
       </footer>
     </div>
   );

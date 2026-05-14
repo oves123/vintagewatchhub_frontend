@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import Navbar from "../../components/Navbar";
@@ -566,20 +566,20 @@ function ProfileContent() {
 
 
   if (loading) return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-surface">
       <Navbar />
       <main className="max-w-[1200px] mx-auto px-6 py-12 md:py-20 animate-pulse">
-        <div className="w-48 h-10 bg-gray-100 rounded mb-4" />
-        <div className="w-64 h-3 bg-gray-50 rounded mb-16" />
+        <div className="w-48 h-10 bg-background rounded mb-4" />
+        <div className="w-64 h-3 bg-background rounded mb-16" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           <aside className="lg:col-span-3 space-y-6">
-             {[1,2,3,4,5].map(i => <div key={i} className="w-32 h-4 bg-gray-100 rounded" />)}
+             {[1,2,3,4,5].map(i => <div key={i} className="w-32 h-4 bg-background rounded" />)}
           </aside>
           <div className="lg:col-span-9 space-y-12">
-             <div className="w-full h-64 bg-gray-50 rounded-xl" />
+             <div className="w-full h-64 bg-background rounded-none" />
              <div className="grid grid-cols-2 gap-8">
-                <div className="h-32 bg-gray-50 rounded-xl" />
-                <div className="h-32 bg-gray-50 rounded-xl" />
+                <div className="h-32 bg-background rounded-none" />
+                <div className="h-32 bg-background rounded-none" />
              </div>
           </div>
         </div>
@@ -597,7 +597,7 @@ function ProfileContent() {
   ];
 
   return (
-    <div className="bg-white min-h-screen pb-24 font-sans text-[#121212]">
+    <div className="bg-surface min-h-screen pb-24 font-sans text-[#121212]">
       <Navbar />
 
       {/* Toast Notification */}
@@ -614,7 +614,7 @@ function ProfileContent() {
         
         {/* Header - Minimalist */}
         <div className="mb-16 flex flex-col md:flex-row md:items-center gap-8">
-           <div className="w-24 h-24 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+           <div className="w-24 h-24 rounded-full bg-background border border-border flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
               {profile?.profile_image ? (
                 <img src={profile.profile_image} alt={profile.name} className="w-full h-full object-cover" />
               ) : (
@@ -622,8 +622,8 @@ function ProfileContent() {
               )}
            </div>
            <div>
-              <h1 className="text-4xl font-bold tracking-tight text-gray-900 uppercase">My Account</h1>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-3">
+              <h1 className="text-4xl font-serif font-bold tracking-wide tracking-tight text-foreground uppercase">My Account</h1>
+              <p className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mt-3">
                  Member ID: {profile?.id} / Status: {profile?.is_verified ? 'Verified Collector' : 'Standard'}
               </p>
            </div>
@@ -638,21 +638,21 @@ function ProfileContent() {
                    <button 
                       key={nav.id}
                       onClick={() => setActiveTab(nav.id)}
-                      className={`text-left text-[11px] font-bold uppercase tracking-[0.15em] transition-all pb-2 border-b w-fit ${activeTab === nav.id ? 'text-blue-600 border-blue-600' : 'text-gray-400 border-transparent hover:text-gray-950 hover:border-gray-200'}`}
+                      className={`text-left text-[11px] font-bold uppercase tracking-[0.15em] transition-all pb-2 border-b w-fit ${activeTab === nav.id ? 'text-primary border-blue-600' : 'text-muted border-transparent hover:text-foreground hover:border-border'}`}
                    >
                       {nav.label}
                    </button>
                 ))}
                 
-                <div className="mt-20 pt-8 border-t border-gray-100">
-                   <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest mb-4">Account Metadata</p>
+                <div className="mt-20 pt-8 border-t border-border">
+                   <p className="text-[9px] font-bold text-muted uppercase tracking-widest mb-4">Account Metadata</p>
                    <div className="space-y-3">
                       <div className="flex justify-between text-[10px] font-bold">
-                         <span className="text-gray-400 uppercase">Rating</span>
+                         <span className="text-muted uppercase">Rating</span>
                          <span>{parseFloat(profile?.rating || 0).toFixed(1)} / 5.0</span>
                       </div>
                       <div className="flex justify-between text-[10px] font-bold">
-                         <span className="text-gray-400 uppercase">Joined</span>
+                         <span className="text-muted uppercase">Joined</span>
                          <span>{profile?.joined_date ? new Date(profile.joined_date).getFullYear() : "2024"}</span>
                       </div>
                    </div>
@@ -667,67 +667,67 @@ function ProfileContent() {
              {activeTab === "personal" && (
                 <div className="animate-in fade-in slide-in-from-left-4 duration-500">
                    <div className="mb-12">
-                      <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Identity Details</h2>
-                      <p className="text-xs text-gray-400 mt-2 font-medium">Manage your personal collector identity and contact link.</p>
+                      <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Identity Details</h2>
+                      <p className="text-xs text-muted mt-2 font-medium">Manage your personal collector identity and contact link.</p>
                    </div>
 
                    <form onSubmit={(e) => { e.preventDefault(); handleProfileUpdate(); }} className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 max-w-4xl">
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Legal Name</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Legal Name</label>
                           <input 
                              type="text" value={profileForm.name}
                              onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
-                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
                           />
                       </div>
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mobile Link</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Mobile Link</label>
                           <input 
                              type="text" value={profileForm.phone}
                              onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
-                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
                           />
                       </div>
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">City</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">City</label>
                           <input 
                              type="text" value={profileForm.city}
                              onChange={(e) => setProfileForm({...profileForm, city: e.target.value})}
-                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
                           />
                       </div>
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">State</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">State</label>
                           <input 
                              type="text" value={profileForm.state}
                              onChange={(e) => setProfileForm({...profileForm, state: e.target.value})}
-                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
                           />
                       </div>
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pincode</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Pincode</label>
                           <input 
                              type="text" value={profileForm.pincode}
                              onChange={(e) => setProfileForm({...profileForm, pincode: e.target.value})}
-                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
                           />
                       </div>
                       <div className="md:col-span-2 space-y-4 pt-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Collector Biography</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Collector Biography</label>
                           <textarea 
                              rows="4" value={profileForm.bio}
                              onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
-                             className="w-full border border-gray-100 bg-gray-50/50 p-6 rounded-lg outline-none text-[13px] font-medium leading-relaxed focus:border-blue-600 focus:bg-white transition-all"
+                             className="w-full border border-border bg-background/50 p-6 rounded-none outline-none text-[13px] font-medium leading-relaxed focus:border-blue-600 focus:bg-surface transition-all"
                              placeholder="Briefly describe your watch collection interest..."
                           />
                       </div>
 
                       <div className="space-y-4 pt-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Seller Type</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Seller Type</label>
                           <select 
                              value={profileForm.seller_type}
                              onChange={(e) => setProfileForm({...profileForm, seller_type: e.target.value})}
-                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
                           >
                              <option value="individual">Individual</option>
                              <option value="business">Business</option>
@@ -735,56 +735,56 @@ function ProfileContent() {
                       </div>
 
                       <div className="space-y-4 pt-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">GST Number (Optional)</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">GST Number (Optional)</label>
                           <input 
                              type="text" value={profileForm.gst_number}
                              onChange={(e) => setProfileForm({...profileForm, gst_number: e.target.value})}
-                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
                              placeholder="e.g. 22AAAAA0000A1Z5"
                           />
                       </div>
 
-                      <div className="md:col-span-2 mt-12 mb-6 pt-12 border-t border-gray-100">
-                          <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Payment Information</h2>
-                          <p className="text-xs text-gray-400 mt-2 font-medium">Add payment methods to receive funds from buyers after a successful deal.</p>
+                      <div className="md:col-span-2 mt-12 mb-6 pt-12 border-t border-border">
+                          <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Payment Information</h2>
+                          <p className="text-xs text-muted mt-2 font-medium">Add payment methods to receive funds from buyers after a successful deal.</p>
                       </div>
 
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">UPI ID (e.g. name@bank)</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">UPI ID (e.g. name@bank)</label>
                           <input 
                              type="text" value={profileForm.payment_methods?.upi || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, upi: e.target.value }})}
-                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
                              placeholder="Enter UPI ID"
                           />
                       </div>
 
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Bank Name</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Bank Name</label>
                           <input 
                              type="text" value={profileForm.payment_methods?.bank_name || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, bank_name: e.target.value }})}
-                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
                              placeholder="e.g. HDFC Bank"
                           />
                       </div>
 
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Account Number</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Account Number</label>
                           <input 
                              type="text" value={profileForm.payment_methods?.account_number || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, account_number: e.target.value }})}
-                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
                              placeholder="Enter Bank Account Number"
                           />
                       </div>
 
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">IFSC Code</label>
+                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">IFSC Code</label>
                           <input 
                              type="text" value={profileForm.payment_methods?.ifsc || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, ifsc: e.target.value }})}
-                             className="w-full border-b border-gray-200 py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
                              placeholder="Enter Bank IFSC Code"
                           />
                       </div>
@@ -792,7 +792,7 @@ function ProfileContent() {
                           <button 
                              type="submit"
                              disabled={isUpdating}
-                             className="bg-black text-white px-12 py-4 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-blue-600 transition-all disabled:bg-gray-200"
+                             className="bg-black text-white px-12 py-4 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-primary transition-all disabled:bg-gray-200"
                           >
                              {isUpdating ? 'Synchronizing Node...' : 'Update Information'}
                           </button>
@@ -805,17 +805,17 @@ function ProfileContent() {
               {activeTab === "buying" && (
                 <div className="animate-in fade-in slide-in-from-left-4 duration-500">
                    <div className="mb-12">
-                      <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Buyer Hub</h2>
-                      <p className="text-xs text-gray-400 mt-2 font-medium">Tracking your active watch acquisitions and secured state-machine deals.</p>
+                      <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Buyer Hub</h2>
+                      <p className="text-xs text-muted mt-2 font-medium">Tracking your active watch acquisitions and secured state-machine deals.</p>
                    </div>
 
                    {/* Sub Tabs */}
-                   <div className="flex gap-8 border-b border-gray-100 mb-10 overflow-x-auto no-scrollbar">
+                   <div className="flex gap-8 border-b border-border mb-10 overflow-x-auto no-scrollbar">
                       {['active', 'shipped', 'delivered', 'completed', 'cancelled', 'negotiations'].map(sub => (
                         <button 
                            key={sub}
                            onClick={() => setBuyingSubTab(sub)}
-                           className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${buyingSubTab === sub ? 'text-blue-600 border-blue-600' : 'text-gray-300 border-transparent hover:text-gray-900'}`}
+                           className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${buyingSubTab === sub ? 'text-primary border-blue-600' : 'text-muted border-transparent hover:text-foreground'}`}
                         >
                            {sub} {
                              sub === 'negotiations' ? (
@@ -844,15 +844,15 @@ function ProfileContent() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {buyerNegotiations.length > 0 ? (
                               buyerNegotiations.map(offer => (
-                               <div key={offer.id} className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-md transition-all">
+                               <div key={offer.id} className="bg-surface border border-border rounded-none p-6 hover:shadow-md transition-all">
                                   <div className="flex items-center gap-4 mb-4">
-                                     <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden">
-                                        {offer.images?.[0] ? <img src={getImg(offer.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                                     <div className="w-12 h-12 bg-background rounded-none overflow-hidden">
+                                        {offer.images?.[0] ? <img src={getImg(offer.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-background" />}
                                      </div>
                                      <div className="flex-1 min-w-0">
                                         <h4 className="text-[13px] font-bold uppercase tracking-tight truncate">{offer.title}</h4>
                                         <div className="flex items-center gap-2">
-                                           <p className="text-[9px] font-bold text-gray-400 uppercase truncate">To: {offer.seller_name}</p>
+                                           <p className="text-[9px] font-bold text-muted uppercase truncate">To: {offer.seller_name}</p>
                                            {offer.status === 'pending' && offer.expires_at && (
                                              <span className="text-[7px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded uppercase">
                                                Expires in: {getRemainingTime(offer.expires_at)}
@@ -863,8 +863,8 @@ function ProfileContent() {
                                   </div>
                                    <div className="flex justify-between items-end">
                                      <div>
-                                        <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">{offer.status === 'countered' ? 'Seller Counter Price' : 'Your bid'}</p>
-                                        <p className={`text-md font-black ${offer.status === 'countered' ? 'text-blue-600' : 'text-gray-950'}`}>
+                                        <p className="text-[9px] font-bold text-muted uppercase mb-1">{offer.status === 'countered' ? 'Seller Counter Price' : 'Your bid'}</p>
+                                        <p className={`text-md font-black ${offer.status === 'countered' ? 'text-primary' : 'text-foreground'}`}>
                                            â‚¹{parseFloat(offer.status === 'countered' ? offer.counter_amount : offer.amount).toLocaleString()}
                                         </p>
                                      </div>
@@ -872,17 +872,17 @@ function ProfileContent() {
                                         {offer.status === 'countered' && (
                                            <div className="flex flex-col w-full gap-2 mt-2">
                                               <div className="flex w-full gap-2">
-                                                 <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition">Accept</button>
-                                                 <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2 bg-rose-50 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-100 transition border border-rose-200">Decline</button>
+                                                 <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-emerald-700 transition">Accept</button>
+                                                 <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2 bg-rose-50 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-rose-100 transition border border-rose-200">Decline</button>
                                                  <button
                                                     onClick={() => setCounterForm(counterForm.offerId === offer.id ? { offerId: null, amount: "" } : { offerId: offer.id, amount: "" })}
-                                                    className="flex-1 py-2 bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-100 transition border border-blue-200"
+                                                    className="flex-1 py-2 bg-blue-50 text-primary text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-blue-100 transition border border-blue-200"
                                                  >Counter</button>
                                               </div>
                                               {counterForm.offerId === offer.id && (
                                                  <div className="flex gap-2 w-full mt-1">
-                                                    <div className="flex items-center flex-1 border border-gray-200 rounded-lg px-3 py-2 bg-white">
-                                                       <span className="text-[10px] font-black text-gray-400 mr-1">â‚¹</span>
+                                                    <div className="flex items-center flex-1 border border-border rounded-none px-3 py-2 bg-surface">
+                                                       <span className="text-[10px] font-black text-muted mr-1">â‚¹</span>
                                                        <input
                                                           type="number"
                                                           placeholder="Your counter"
@@ -894,22 +894,22 @@ function ProfileContent() {
                                                     <button
                                                        onClick={() => { handleOfferResponse(offer.id, 'buyer_countered', counterForm.amount); setCounterForm({ offerId: null, amount: "" }); }}
                                                        disabled={!counterForm.amount}
-                                                       className="px-4 py-2 bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-700 transition disabled:opacity-40"
+                                                       className="px-4 py-2 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-blue-700 transition disabled:opacity-40"
                                                     >Send</button>
                                                  </div>
                                               )}
                                            </div>
                                         )}
                                         {offer.status === 'buyer_countered' && (
-                                           <div className="w-full mt-2 py-2 bg-blue-50 rounded-lg text-center">
-                                              <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Awaiting Seller Response</p>
+                                           <div className="w-full mt-2 py-2 bg-blue-50 rounded-none text-center">
+                                              <p className="text-[9px] font-black text-primary uppercase tracking-widest">Awaiting Seller Response</p>
                                               <p className="text-[8px] text-blue-400 font-bold mt-0.5">Your counter of â‚¹{parseFloat(offer.counter_amount).toLocaleString()} was sent</p>
                                            </div>
                                         )}
                                         {offer.chat_id && (
                                            <button 
                                               onClick={() => router.push(`/messages?chat=${offer.chat_id}`)}
-                                              className="w-full mt-2 px-6 py-2 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-600 transition shadow-lg shadow-gray-100 flex items-center justify-center gap-2"
+                                              className="w-full mt-2 px-6 py-2 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-primary transition shadow-lg shadow-gray-100 flex items-center justify-center gap-2"
                                            >
                                               <Send className="w-3 h-3" /> Chat & Negotiate
                                            </button>
@@ -922,8 +922,8 @@ function ProfileContent() {
                                </div>
                              ))
                            ) : (
-                              <div className="md:col-span-2 py-10 text-center bg-gray-50/50 rounded-2xl border border-gray-100 border-dashed">
-                                 <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">No pending negotiations</p>
+                              <div className="md:col-span-2 py-10 text-center bg-background/50 rounded-none border border-border border-dashed">
+                                 <p className="text-[9px] font-bold text-muted uppercase tracking-widest">No pending negotiations</p>
                               </div>
                            )}
                         </div>
@@ -942,9 +942,9 @@ function ProfileContent() {
                             buyingSubTab === 'cancelled' ? d.status === 'CANCELLED' :
                             d.status === 'CONFIRMED'
                           )).map(deal => (
-                            <div key={deal.id} className="border border-gray-100 rounded-2xl p-6 bg-white hover:shadow-xl hover:shadow-gray-100 transition-all flex flex-col md:flex-row gap-8 items-center">
-                               <div className="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
-                                  {deal.images?.[0] ? <img src={getImg(deal.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                            <div key={deal.id} className="border border-border rounded-none p-6 bg-surface hover:shadow-xl hover:shadow-gray-100 transition-all flex flex-col md:flex-row gap-8 items-center">
+                               <div className="w-20 h-20 bg-background rounded-none overflow-hidden flex-shrink-0">
+                                  {deal.images?.[0] ? <img src={getImg(deal.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-background" />}
                                </div>
                                <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-1">
@@ -963,7 +963,7 @@ function ProfileContent() {
                                           deal.status
                                          }
                                       </span>
-                                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Deal #D-{deal.id}</span>
+                                     <span className="text-[10px] font-bold text-muted uppercase tracking-tight">Deal #D-{deal.id}</span>
                                      {deal.payment_status === 'PAID' && (
                                        <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest ml-auto">PAID via {deal.payment_method}</span>
                                      )}
@@ -988,13 +988,13 @@ function ProfileContent() {
                                            return (
                                              <div key={s.key} className="flex items-center flex-1 min-w-0">
                                                <div className="flex flex-col items-center shrink-0">
-                                                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] transition-all ${done ? 'bg-emerald-500 text-white shadow-md' : active ? 'bg-blue-600 text-white step-pulse' : 'bg-gray-100 text-gray-400'}`}>
+                                                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] transition-all ${done ? 'bg-emerald-500 text-white shadow-md' : active ? 'bg-primary text-white step-pulse' : 'bg-background text-muted'}`}>
                                                    {done ? '✓' : s.icon}
                                                  </div>
-                                                 <span className={`text-[7px] font-black uppercase tracking-widest mt-1 ${active ? 'text-blue-600' : done ? 'text-emerald-600' : 'text-gray-300'}`}>{s.label}</span>
+                                                 <span className={`text-[7px] font-black uppercase tracking-widest mt-1 ${active ? 'text-primary' : done ? 'text-emerald-600' : 'text-muted'}`}>{s.label}</span>
                                                </div>
                                                {i < steps.length - 1 && (
-                                                 <div className={`h-0.5 flex-1 mx-1 mb-4 rounded-full transition-all ${done ? 'bg-emerald-400' : 'bg-gray-100'}`} />
+                                                 <div className={`h-0.5 flex-1 mx-1 mb-4 rounded-full transition-all ${done ? 'bg-emerald-400' : 'bg-background'}`} />
                                                )}
                                              </div>
                                            );
@@ -1005,15 +1005,15 @@ function ProfileContent() {
                                   <h4 className="text-sm font-bold uppercase tracking-tight mb-2">{deal.title}</h4>
                                   <div className="flex flex-col gap-1 mb-4">
                                      <div className="flex items-baseline gap-2">
-                                        <span className="text-lg font-black text-gray-950">â‚¹{(parseFloat(deal.amount || 0) + parseFloat(deal.shipping_fee || 0)).toLocaleString()}</span>
-                                        <span className="text-[9px] font-bold text-gray-400 uppercase">Total Paid</span>
+                                        <span className="text-lg font-black text-foreground">â‚¹{(parseFloat(deal.amount || 0) + parseFloat(deal.shipping_fee || 0)).toLocaleString()}</span>
+                                        <span className="text-[9px] font-bold text-muted uppercase">Total Paid</span>
                                      </div>
                                      <div className="flex items-center gap-3">
-                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Item: â‚¹{parseFloat(deal.amount).toLocaleString()}</p>
+                                        <p className="text-[9px] font-bold text-muted uppercase tracking-tight">Item: â‚¹{parseFloat(deal.amount).toLocaleString()}</p>
                                         {parseFloat(deal.shipping_fee || 0) > 0 && (
-                                           <p className="text-[9px] font-bold text-blue-600 uppercase tracking-tight">Shipping: â‚¹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
+                                           <p className="text-[9px] font-bold text-primary uppercase tracking-tight">Shipping: â‚¹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
                                         )}
-                                        <p className="text-[9px] font-medium text-gray-400 uppercase ml-auto">Seller: {deal.seller_name}</p>
+                                        <p className="text-[9px] font-medium text-muted uppercase ml-auto">Seller: {deal.seller_name}</p>
                                      </div>
                                   </div>
 
@@ -1028,14 +1028,14 @@ function ProfileContent() {
                                         
                                         return (
                                            <div key={s} className="flex-1 flex flex-col gap-1.5">
-                                              <div className={`h-1 rounded-full ${isPast ? 'bg-emerald-500' : isCurrent ? 'bg-blue-600 animate-pulse' : 'bg-gray-100'}`}></div>
-                                              <p className={`text-[6px] font-black uppercase tracking-tighter ${isPast ? 'text-emerald-600' : isCurrent ? 'text-blue-600' : 'text-gray-300'}`}>{s}</p>
+                                              <div className={`h-1 rounded-full ${isPast ? 'bg-emerald-500' : isCurrent ? 'bg-primary animate-pulse' : 'bg-background'}`}></div>
+                                              <p className={`text-[6px] font-black uppercase tracking-tighter ${isPast ? 'text-emerald-600' : isCurrent ? 'text-primary' : 'text-muted'}`}>{s}</p>
                                            </div>
                                         );
                                      })}
                                   </div>
                                    ) : (
-                                      <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl">
+                                      <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-none">
                                          <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Transaction Terminated</p>
                                          <p className="text-[11px] font-bold text-rose-800 leading-tight">{deal.cancel_reason || 'No reason provided.'}</p>
                                       </div>
@@ -1047,7 +1047,7 @@ function ProfileContent() {
                                   {deal.status === 'SHIPPED' && (
                                     <button 
                                        onClick={() => handleConfirmPurchase(deal.id)}
-                                       className="w-full py-3 bg-blue-600 text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition"
+                                       className="w-full py-3 bg-primary text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition"
                                     >
                                        Confirm Receipt
                                     </button>
@@ -1075,14 +1075,14 @@ function ProfileContent() {
                                          {deal.payment_status === 'PENDING' && (
                                             <button 
                                                onClick={() => handlePayWithRazorpay(deal)}
-                                               className="w-full py-3 bg-blue-600 text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition"
+                                               className="w-full py-3 bg-primary text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition"
                                             >
                                                Pay Online (Razorpay)
                                             </button>
                                          )}
                                         <button 
                                            onClick={() => handleCancelDeal(deal.id)}
-                                           className="w-full py-2 border border-gray-100 text-gray-400 rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-gray-50 transition"
+                                           className="w-full py-2 border border-border text-muted rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-background transition"
                                         >
                                            {deal.status === 'PAID' ? 'Request Refund & Cancel' : 'Cancel Order'}
                                         </button>
@@ -1099,7 +1099,7 @@ function ProfileContent() {
                                    )}
 
                                    {deal.status === 'DISPUTED' && (
-                                      <div className="w-full py-3 bg-gray-50 text-gray-400 rounded-full text-[9px] font-bold uppercase tracking-widest text-center border border-gray-100 italic">
+                                      <div className="w-full py-3 bg-background text-muted rounded-full text-[9px] font-bold uppercase tracking-widest text-center border border-border italic">
                                          Under Admin Review
                                       </div>
                                    )}
@@ -1114,17 +1114,17 @@ function ProfileContent() {
                                   )}
 
                                   {deal.tracking_number && (
-                                     <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 mt-2">
-                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
+                                     <div className="bg-background p-3 rounded-none border border-border mt-2">
+                                        <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
                                         <a 
                                            href={`https://www.google.com/search?q=${encodeURIComponent((deal.courier_name || '') + ' tracking ' + deal.tracking_number)}`}
                                            target="_blank"
-                                           className="text-[10px] font-bold text-blue-600 truncate hover:underline flex items-center gap-1"
+                                           className="text-[10px] font-bold text-primary truncate hover:underline flex items-center gap-1"
                                         >
                                            {deal.tracking_number} <ExternalLink className="w-3 h-3" />
                                         </a>
                                         {deal.packing_video && (
-                                           <a href={deal.packing_video.startsWith('http') ? deal.packing_video : `${API_BASE_URL}/uploads/${deal.packing_video}`} target="_blank" className="text-[9px] font-bold text-blue-600 uppercase tracking-widest mt-2 inline-flex items-center gap-1 hover:underline"><Camera className="w-3 h-3" /> View Packing Video</a>
+                                           <a href={deal.packing_video.startsWith('http') ? deal.packing_video : `${API_BASE_URL}/uploads/${deal.packing_video}`} target="_blank" className="text-[9px] font-bold text-primary uppercase tracking-widest mt-2 inline-flex items-center gap-1 hover:underline"><Camera className="w-3 h-3" /> View Packing Video</a>
                                         )}
                                      </div>
                                   )}
@@ -1132,8 +1132,8 @@ function ProfileContent() {
                             </div>
                           ))
                         ) : (
-                          <div className="py-20 text-center border border-dashed border-gray-100 rounded-3xl">
-                             <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No deals in {buyingSubTab} state</p>
+                          <div className="py-20 text-center border border-dashed border-border rounded-3xl">
+                             <p className="text-[10px] font-bold text-muted uppercase tracking-widest">No deals in {buyingSubTab} state</p>
                           </div>
                         )
                       )}
@@ -1146,19 +1146,19 @@ function ProfileContent() {
                   <div className="animate-in fade-in slide-in-from-left-4 duration-500">
                      <div className="mb-12 flex justify-between items-end">
                         <div>
-                          <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Seller Hub</h2>
-                          <p className="text-xs text-gray-400 mt-2 font-medium">Professional command center for your high-value inventory and active deal pipelines.</p>
+                          <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Seller Hub</h2>
+                          <p className="text-xs text-muted mt-2 font-medium">Professional command center for your high-value inventory and active deal pipelines.</p>
                         </div>
-                        <button onClick={() => router.push('/sell')} className="bg-black text-white px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-gray-100">Create Listing</button>
+                        <button onClick={() => router.push('/sell')} className="bg-black text-white px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all shadow-lg shadow-gray-100">Create Listing</button>
                      </div>
 
                      {/* Sub Tabs */}
-                     <div className="flex gap-8 border-b border-gray-100 mb-10 overflow-x-auto no-scrollbar">
+                     <div className="flex gap-8 border-b border-border mb-10 overflow-x-auto no-scrollbar">
                         {['inventory', 'deals', 'negotiations', 'cancelled'].map(sub => (
                           <button 
                              key={sub}
                              onClick={() => setSellingSubTab(sub)}
-                             className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${sellingSubTab === sub ? 'text-blue-600 border-blue-600' : 'text-gray-300 border-transparent hover:text-gray-900'}`}
+                             className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${sellingSubTab === sub ? 'text-primary border-blue-600' : 'text-muted border-transparent hover:text-foreground'}`}
                           >
                              {sub === 'inventory' ? `Inventory (${activity.listings?.length || 0})` : 
                               sub === 'deals' ? `Active Deals${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length > 0 ? ` (${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length})` : ''}` :
@@ -1173,7 +1173,7 @@ function ProfileContent() {
                         {sellingSubTab === 'inventory' && (
                            <div className="space-y-6">
                                {activity.listings?.some(item => item.status === 'pending') && (
-                                 <div className="bg-blue-50 border border-blue-100 text-blue-700 px-6 py-4 rounded-xl text-[11px] font-bold uppercase tracking-tight flex items-start gap-4">
+                                 <div className="bg-blue-50 border border-blue-100 text-blue-700 px-6 py-4 rounded-none text-[11px] font-bold uppercase tracking-tight flex items-start gap-4">
                                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     <p>Newly created listings will appear as <span className="px-1 py-0.5 bg-amber-500 text-white rounded font-black mx-1">PENDING</span> and must be approved by an administrator before they become visible on the marketplace.</p>
                                  </div>
@@ -1181,9 +1181,9 @@ function ProfileContent() {
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                  {activity.listings?.length > 0 ? (
                                 activity.listings.map(item => (
-                                  <div key={item.id} className="group border border-gray-100 rounded-2xl p-5 hover:bg-white hover:shadow-xl transition-all relative">
-                                     <div className="w-full aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden relative">
-                                        {item.images?.[0] ? <img src={getImg(item.images)} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                                  <div key={item.id} className="group border border-border rounded-none p-5 hover:bg-surface hover:shadow-xl transition-all relative">
+                                     <div className="w-full aspect-square bg-background rounded-none mb-4 overflow-hidden relative">
+                                        {item.images?.[0] ? <img src={getImg(item.images)} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" alt="watch" /> : <div className="w-full h-full bg-background" />}
                                         <div className={`absolute top-3 left-3 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${
                                           item.status === 'approved' || item.status === 'active' ? 'bg-black text-white' : 
                                           item.status === 'sold' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
@@ -1194,16 +1194,16 @@ function ProfileContent() {
                                      <h4 className="text-[11px] font-bold uppercase tracking-tight truncate leading-none mb-2">{item.title}</h4>
                                      
                                      {item.status === 'rejected' && item.rejection_reason && (
-                                       <div className="mb-3 p-2 bg-rose-50 border border-rose-100 rounded-lg">
+                                       <div className="mb-3 p-2 bg-rose-50 border border-rose-100 rounded-none">
                                          <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1">Rejection Reason:</p>
                                          <p className="text-[10px] text-rose-700 font-medium leading-tight">{item.rejection_reason}</p>
                                        </div>
                                      )}
 
                                      <div className="flex justify-between items-center">
-                                        <span className="text-sm font-black text-gray-950">â‚¹{parseFloat(item.price).toLocaleString()}</span>
+                                        <span className="text-sm font-black text-foreground">â‚¹{parseFloat(item.price).toLocaleString()}</span>
                                         <div className="flex gap-1">
-                                           <button onClick={() => router.push(`/sell?edit=${item.id}`)} className="p-1.5 hover:text-blue-600 transition-colors"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+                                           <button onClick={() => router.push(`/sell?edit=${item.id}`)} className="p-1.5 hover:text-primary transition-colors"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
                                            <button onClick={() => handleDeleteProduct(item.id)} className="p-1.5 hover:text-rose-600 transition-colors"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                                         </div>
                                      </div>
@@ -1211,7 +1211,7 @@ function ProfileContent() {
                                 ))
                               ) : (
                                  <div className="col-span-full py-12 text-center border border-gray-50 border-dashed rounded-3xl">
-                                    <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Zero items listed</p>
+                                    <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Zero items listed</p>
                                  </div>
                               )}
                            </div>
@@ -1223,13 +1223,13 @@ function ProfileContent() {
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                {deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','PAID','SHIPPED','DELIVERED','CONFIRMED','DISPUTED'].includes(d.status)).length > 0 ? (
                                  deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','PAID','SHIPPED','DELIVERED','CONFIRMED','DISPUTED'].includes(d.status)).map(deal => (
-                                   <div key={deal.id} className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 hover:shadow-xl transition-all group">
+                                   <div key={deal.id} className="bg-surface border border-border rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 hover:shadow-xl transition-all group">
                                       {/* Product Visual */}
-                                      <div className="w-full md:w-48 aspect-square rounded-2xl bg-gray-50 flex-shrink-0 relative overflow-hidden">
+                                      <div className="w-full md:w-48 aspect-square rounded-none bg-background flex-shrink-0 relative overflow-hidden">
                                          <img src={deal.images?.[0] ? getImg(deal.images) : '/placeholder.png'} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt="product" />
                                          <div className="absolute top-4 left-4">
                                             <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${
-                                               deal.status === 'ACCEPTED' ? 'bg-blue-600 text-white' : 
+                                               deal.status === 'ACCEPTED' ? 'bg-primary text-white' : 
                                                deal.status === 'PAID' ? 'bg-amber-500 text-white' : 
                                                deal.status === 'SHIPPED' ? 'bg-black text-white' : 'bg-emerald-500 text-white'
                                             }`}>
@@ -1243,16 +1243,16 @@ function ProfileContent() {
                                          <div className="space-y-4">
                                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                                <div>
-                                                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Deal #D-{deal.id}</p>
-                                                  <h3 className="text-xl font-bold text-gray-950 uppercase tracking-tight leading-none">{deal.product_title}</h3>
+                                                  <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Deal #D-{deal.id}</p>
+                                                  <h3 className="text-xl font-bold text-foreground uppercase tracking-tight leading-none">{deal.product_title}</h3>
                                                </div>
                                                <div className="text-right">
-                                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Your Payout</p>
-                                                  <p className="text-2xl font-black text-gray-950 leading-none">â‚¹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
+                                                  <p className="text-[9px] font-bold text-muted uppercase tracking-widest mb-1">Your Payout</p>
+                                                  <p className="text-2xl font-black text-foreground leading-none">â‚¹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
                                                   <div className="flex flex-col items-end mt-2">
-                                                     <p className="text-[8px] font-bold text-gray-400 uppercase">Sale: â‚¹{parseFloat(deal.amount).toLocaleString()}</p>
+                                                     <p className="text-[8px] font-bold text-muted uppercase">Sale: â‚¹{parseFloat(deal.amount).toLocaleString()}</p>
                                                      {parseFloat(deal.shipping_fee || 0) > 0 && (
-                                                        <p className="text-[8px] font-bold text-blue-600 uppercase">Shipping: +â‚¹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
+                                                        <p className="text-[8px] font-bold text-primary uppercase">Shipping: +â‚¹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
                                                      )}
                                                      <p className="text-[8px] font-bold text-rose-500 uppercase">Fee: -â‚¹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</p>
                                                   </div>
@@ -1270,8 +1270,8 @@ function ProfileContent() {
                                                   
                                                   return (
                                                      <div key={s} className="flex-1 flex flex-col gap-2">
-                                                        <div className={`h-1 rounded-full ${isPast ? 'bg-emerald-500' : isCurrent ? 'bg-blue-600 animate-pulse' : 'bg-gray-100'}`}></div>
-                                                        <p className={`text-[7px] font-black uppercase tracking-tighter ${isPast ? 'text-emerald-600' : isCurrent ? 'text-blue-600' : 'text-gray-300'}`}>{s}</p>
+                                                        <div className={`h-1 rounded-full ${isPast ? 'bg-emerald-500' : isCurrent ? 'bg-primary animate-pulse' : 'bg-background'}`}></div>
+                                                        <p className={`text-[7px] font-black uppercase tracking-tighter ${isPast ? 'text-emerald-600' : isCurrent ? 'text-primary' : 'text-muted'}`}>{s}</p>
                                                      </div>
                                                   );
                                                })}
@@ -1280,13 +1280,13 @@ function ProfileContent() {
 
                                          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {/* Left - Status Detail */}
-                                            <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100/50">
+                                            <div className="bg-background rounded-none p-5 border border-border/50">
                                                {deal.status === 'ACCEPTED' && (
                                                   <div className="flex items-start gap-3">
-                                                     <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center animate-pulse"><FileText className="w-4 h-4 text-blue-600" /></div>
+                                                     <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center animate-pulse"><FileText className="w-4 h-4 text-primary" /></div>
                                                      <div>
-                                                        <p className="text-[10px] font-black text-gray-900 uppercase">Awaiting Payment</p>
-                                                        <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">Buyer has been notified to send funds.</p>
+                                                        <p className="text-[10px] font-black text-foreground uppercase">Awaiting Payment</p>
+                                                        <p className="text-[9px] text-muted font-bold uppercase mt-1">Buyer has been notified to send funds.</p>
                                                      </div>
                                                   </div>
                                                )}
@@ -1296,14 +1296,14 @@ function ProfileContent() {
                                                      <div className="flex items-center gap-3">
                                                         <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center"><CheckCircle className="w-4 h-4 text-emerald-600" /></div>
                                                         <div>
-                                                           <p className="text-[10px] font-black text-gray-900 uppercase">Funds Verified</p>
-                                                           <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">Please prepare the shipment.</p>
+                                                           <p className="text-[10px] font-black text-foreground uppercase">Funds Verified</p>
+                                                           <p className="text-[9px] text-muted font-bold uppercase mt-1">Please prepare the shipment.</p>
                                                         </div>
                                                      </div>
                                                      {deal.payment_receipt && (
                                                         <button 
                                                            onClick={() => setPaymentReceiptModal(deal.payment_receipt?.startsWith('http') ? deal.payment_receipt : `${API_BASE_URL}/uploads/${deal.payment_receipt}`)}
-                                                           className="w-full py-2 bg-white border border-gray-200 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                                                           className="w-full py-2 bg-surface border border-border rounded-none text-[10px] font-black uppercase tracking-widest text-foreground hover:bg-background transition-all flex items-center justify-center gap-2"
                                                         >
                                                            <Camera className="w-4 h-4" /> View Receipt
                                                         </button>
@@ -1315,8 +1315,8 @@ function ProfileContent() {
                                                    <div className="flex items-start gap-3">
                                                       <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center"><Send className="w-4 h-4 text-white" /></div>
                                                       <div>
-                                                         <p className="text-[11px] font-black text-gray-900 uppercase">In Transit</p>
-                                                         <p className="text-[10px] text-blue-600 font-bold uppercase mt-1 tracking-widest">{deal.courier_name} Â· {deal.tracking_number}</p>
+                                                         <p className="text-[11px] font-black text-foreground uppercase">In Transit</p>
+                                                         <p className="text-[10px] text-primary font-bold uppercase mt-1 tracking-widest">{deal.courier_name} Â· {deal.tracking_number}</p>
                                                       </div>
                                                    </div>
                                                 )}
@@ -1326,20 +1326,20 @@ function ProfileContent() {
                                                       <div className="flex items-center gap-3">
                                                          <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center"><CheckCircle className="w-4 h-4 text-emerald-600" /></div>
                                                          <div>
-                                                            <p className="text-[10px] font-black text-gray-900 uppercase">Deal Completed</p>
-                                                            <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">Buyer has confirmed receipt.</p>
+                                                            <p className="text-[10px] font-black text-foreground uppercase">Deal Completed</p>
+                                                            <p className="text-[9px] text-muted font-bold uppercase mt-1">Buyer has confirmed receipt.</p>
                                                          </div>
                                                       </div>
-                                                      <div className="mt-2 p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                                                      <div className="mt-2 p-3 bg-surface rounded-none border border-border shadow-sm">
                                                          <div className="flex justify-between items-center mb-1">
-                                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Payout Status</p>
+                                                            <p className="text-[9px] font-black text-muted uppercase tracking-widest">Payout Status</p>
                                                             <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${deal.payout_status === 'RELEASED' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                                                                {deal.payout_status || 'PENDING'}
                                                             </span>
                                                          </div>
-                                                         <p className="text-sm font-black text-gray-950">â‚¹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
+                                                         <p className="text-sm font-black text-foreground">â‚¹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
                                                          {deal.payout_released_at && (
-                                                            <p className="text-[7px] text-gray-400 mt-1 font-bold uppercase tracking-tight">Released on {new Date(deal.payout_released_at).toLocaleDateString()}</p>
+                                                            <p className="text-[7px] text-muted mt-1 font-bold uppercase tracking-tight">Released on {new Date(deal.payout_released_at).toLocaleDateString()}</p>
                                                          )}
                                                       </div>
                                                    </div>
@@ -1353,7 +1353,7 @@ function ProfileContent() {
                                                       <div className="flex flex-col gap-2">
                                                          <div className="flex gap-2">
                                                             <select 
-                                                               className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 text-gray-900"
+                                                               className="flex-1 px-4 py-3 bg-surface border border-border rounded-none text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 text-foreground"
                                                                value={trackingForm.order_id === deal.id ? trackingForm.courier_name : (deal.courier_name || '')}
                                                                onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, courier_name: e.target.value })}
                                                             >
@@ -1367,7 +1367,7 @@ function ProfileContent() {
                                                             </select>
                                                             <input 
                                                                placeholder="TRACKING #" 
-                                                               className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-gray-200"
+                                                               className="flex-1 px-4 py-3 bg-surface border border-border rounded-none text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-gray-200"
                                                                value={trackingForm.order_id === deal.id ? trackingForm.tracking_number : (deal.tracking_number || '')}
                                                                onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, tracking_number: e.target.value.toUpperCase() })}
                                                             />
@@ -1380,13 +1380,13 @@ function ProfileContent() {
                                                                 onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, packing_video: e.target.files[0] })}
                                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                                             />
-                                                            <div className="w-full bg-white border-2 border-dashed border-gray-200 rounded-xl px-4 py-3 flex flex-col items-center justify-center gap-1 group-hover:border-blue-300 transition-colors">
+                                                            <div className="w-full bg-surface border-2 border-dashed border-border rounded-none px-4 py-3 flex flex-col items-center justify-center gap-1 group-hover:border-blue-300 transition-colors">
                                                                {trackingForm.order_id === deal.id && trackingForm.packing_video ? (
-                                                                  <span className="text-[10px] font-bold text-gray-900 truncate">Video Selected: {trackingForm.packing_video.name}</span>
+                                                                  <span className="text-[10px] font-bold text-foreground truncate">Video Selected: {trackingForm.packing_video.name}</span>
                                                                ) : (
                                                                   <>
-                                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest"><Camera className="w-3 h-3 inline-block mr-1" /> Upload Packing Video</span>
-                                                                    <span className="text-[8px] text-gray-400 font-medium">Mandatory for shipment verification</span>
+                                                                    <span className="text-[10px] font-bold text-muted uppercase tracking-widest"><Camera className="w-3 h-3 inline-block mr-1" /> Upload Packing Video</span>
+                                                                    <span className="text-[8px] text-muted font-medium">Mandatory for shipment verification</span>
                                                                   </>
                                                                )}
                                                             </div>
@@ -1396,14 +1396,14 @@ function ProfileContent() {
                                                          <button 
                                                             disabled={isSubmittingTracking}
                                                             onClick={() => handleSaveTracking(deal.id)}
-                                                            className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-100/50 hover:bg-black transition-all"
+                                                            className="flex-1 py-4 bg-primary text-white rounded-none text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-100/50 hover:bg-black transition-all"
                                                          >
                                                             {isSubmittingTracking ? 'Syncing...' : (deal.status === 'SHIPPED' ? 'Save Changes' : 'Confirm Shipment')}
                                                          </button>
                                                          {editingTrackingId === deal.id && (
                                                             <button 
                                                                onClick={() => setEditingTrackingId(null)}
-                                                               className="px-6 py-4 bg-gray-100 text-gray-500 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                                                               className="px-6 py-4 bg-background text-muted rounded-none text-[11px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
                                                             >
                                                                Cancel
                                                             </button>
@@ -1415,19 +1415,19 @@ function ProfileContent() {
                                                 {deal.status === 'SHIPPED' && editingTrackingId !== deal.id && (
                                                    <div className="flex flex-col gap-3">
                                                       {deal.tracking_number && (
-                                                         <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
+                                                         <div className="bg-background p-3 rounded-none border border-border">
+                                                            <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
                                                             <a 
                                                                href={`https://www.google.com/search?q=${encodeURIComponent((deal.courier_name || '') + ' tracking ' + deal.tracking_number)}`}
                                                                target="_blank"
-                                                               className="text-[10px] font-bold text-blue-600 truncate hover:underline flex items-center gap-1"
+                                                               className="text-[10px] font-bold text-primary truncate hover:underline flex items-center gap-1"
                                                             >
                                                                {deal.tracking_number} <ExternalLink className="w-3 h-3" />
                                                             </a>
                                                          </div>
                                                       )}
                                                       {deal.packing_video && (
-                                                         <a href={deal.packing_video.startsWith('http') ? deal.packing_video : `${API_BASE_URL}/uploads/${deal.packing_video}`} target="_blank" className="text-[9px] font-bold text-blue-600 uppercase tracking-widest mt-2 inline-flex items-center gap-1 hover:underline"><Camera className="w-3 h-3" /> View Packing Video</a>
+                                                         <a href={deal.packing_video.startsWith('http') ? deal.packing_video : `${API_BASE_URL}/uploads/${deal.packing_video}`} target="_blank" className="text-[9px] font-bold text-primary uppercase tracking-widest mt-2 inline-flex items-center gap-1 hover:underline"><Camera className="w-3 h-3" /> View Packing Video</a>
                                                       )}
                                                       <button 
                                                          onClick={() => {
@@ -1439,7 +1439,7 @@ function ProfileContent() {
                                                                packing_video: null
                                                             });
                                                          }}
-                                                         className="w-full py-3 bg-white border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                                                         className="w-full py-3 bg-surface border border-border rounded-none text-[10px] font-black uppercase tracking-widest text-foreground hover:bg-background transition-all flex items-center justify-center gap-2"
                                                       >
                                                          <Edit2 className="w-3 h-3" /> Edit Tracking Details
                                                       </button>
@@ -1449,7 +1449,7 @@ function ProfileContent() {
                                                {((deal.status === 'ACCEPTED') || (deal.status === 'PAID' && new Date(deal.expires_at) < new Date())) && (
                                                   <button 
                                                      onClick={() => handleCancelDeal(deal.id)}
-                                                     className="w-full py-3 border-2 border-dashed border-gray-100 text-gray-300 rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:border-rose-100 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                                                     className="w-full py-3 border-2 border-dashed border-border text-muted rounded-none text-[11px] font-bold uppercase tracking-widest hover:border-rose-100 hover:text-rose-500 hover:bg-rose-50 transition-all"
                                                   >
                                                      {deal.status === 'PAID' ? 'Cancel & Process Refund' : 'Cancel Deal'}
                                                   </button>
@@ -1460,12 +1460,12 @@ function ProfileContent() {
                                    </div>
                                  ))
                                ) : (
-                                   <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-sm border-dashed">
-                                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                   <div className="bg-surface rounded-3xl p-20 text-center border border-border shadow-sm border-dashed">
+                                      <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-6">
                                          <FileText className="w-8 h-8 text-gray-200" />
                                       </div>
-                                      <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">No Active Pipelines</h3>
-                                      <p className="text-[10px] text-gray-400 font-bold uppercase mt-2">Active deals will materialize here once offers are accepted.</p>
+                                      <h3 className="text-sm font-black text-foreground uppercase tracking-widest">No Active Pipelines</h3>
+                                      <p className="text-[10px] text-muted font-bold uppercase mt-2">Active deals will materialize here once offers are accepted.</p>
                                    </div>
                                )}
                             </div>
@@ -1476,26 +1476,26 @@ function ProfileContent() {
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                {sellerNegotiations.length > 0 ? (
                                  sellerNegotiations.map(offer => (
-                                   <div key={offer.id} className="bg-white border border-gray-100 rounded-3xl p-6 hover:shadow-xl transition-all flex flex-col md:flex-row gap-6">
-                                      <div className="w-24 h-24 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
-                                         {offer.images?.[0] ? <img src={getImg(offer.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-gray-100" />}
+                                   <div key={offer.id} className="bg-surface border border-border rounded-3xl p-6 hover:shadow-xl transition-all flex flex-col md:flex-row gap-6">
+                                      <div className="w-24 h-24 bg-background rounded-none overflow-hidden flex-shrink-0">
+                                         {offer.images?.[0] ? <img src={getImg(offer.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-background" />}
                                       </div>
                                       <div className="flex-1">
                                          <div className="flex justify-between items-start mb-2">
                                             <div>
                                                <h4 className="text-sm font-bold uppercase tracking-tight">{offer.title}</h4>
-                                               <p className="text-[9px] font-bold text-gray-400 uppercase mt-1">From: {offer.buyer_name}</p>
+                                               <p className="text-[9px] font-bold text-muted uppercase mt-1">From: {offer.buyer_name}</p>
                                             </div>
                                             <div className="text-right">
-                                               <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">{offer.status === 'buyer_countered' ? 'Buyer Counter Price' : 'Offered Price'}</p>
-                                               <p className="text-xl font-black text-blue-600">â‚¹{parseFloat(offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount).toLocaleString()}</p>
+                                               <p className="text-[9px] font-bold text-muted uppercase mb-1">{offer.status === 'buyer_countered' ? 'Buyer Counter Price' : 'Offered Price'}</p>
+                                               <p className="text-xl font-black text-primary">â‚¹{parseFloat(offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount).toLocaleString()}</p>
                                             </div>
                                          </div>
                                          
                                          {offer.message && (
-                                           <div className="mt-3 p-3 bg-gray-50 rounded-xl border-l-4 border-blue-600">
-                                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Buyer's Message:</p>
-                                              <p className="text-[11px] font-medium text-gray-700 italic leading-relaxed">"{offer.message}"</p>
+                                           <div className="mt-3 p-3 bg-background rounded-none border-l-4 border-blue-600">
+                                              <p className="text-[9px] font-black text-muted uppercase tracking-widest mb-1">Buyer's Message:</p>
+                                              <p className="text-[11px] font-medium text-muted italic leading-relaxed">"{offer.message}"</p>
                                            </div>
                                          )}
 
@@ -1504,37 +1504,37 @@ function ProfileContent() {
                                                 <span className="text-[8px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded uppercase tracking-widest">
                                                    Expires in: {getRemainingTime(offer.expires_at)}
                                                 </span>
-                                                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Offer Count: {offer.offer_count}/5</span>
+                                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Offer Count: {offer.offer_count}/5</span>
                                             </div>
                                             {(offer.status === 'pending' || offer.status === 'buyer_countered') && (
                                                 <>
                                                    {counterForm.offerId === offer.id ? (
                                                       <div className="flex items-center gap-2">
-                                                         <span className="text-sm font-bold text-gray-500">â‚¹</span>
+                                                         <span className="text-sm font-bold text-muted">â‚¹</span>
                                                          <input 
                                                             type="number" 
                                                             value={counterForm.amount} 
                                                             onChange={e => setCounterForm({...counterForm, amount: e.target.value})}
-                                                            className="flex-1 py-2 px-3 border border-gray-200 rounded outline-none text-xs font-bold"
+                                                            className="flex-1 py-2 px-3 border border-border rounded outline-none text-xs font-bold"
                                                             placeholder="Counter Amount"
                                                          />
-                                                         <button onClick={() => handleOfferResponse(offer.id, 'countered', counterForm.amount)} className="px-4 py-2 bg-blue-600 text-white rounded text-[9px] font-bold uppercase hover:bg-blue-700">Send</button>
-                                                         <button onClick={() => setCounterForm({offerId: null, amount: ""})} className="px-4 py-2 bg-gray-100 text-gray-600 rounded text-[9px] font-bold uppercase hover:bg-gray-200">Cancel</button>
+                                                         <button onClick={() => handleOfferResponse(offer.id, 'countered', counterForm.amount)} className="px-4 py-2 bg-primary text-white rounded text-[9px] font-bold uppercase hover:bg-blue-700">Send</button>
+                                                         <button onClick={() => setCounterForm({offerId: null, amount: ""})} className="px-4 py-2 bg-background text-muted rounded text-[9px] font-bold uppercase hover:bg-gray-200">Cancel</button>
                                                       </div>
                                                    ) : (
                                                       <div className="flex w-full gap-2">
-                                                         <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2.5 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition">Accept</button>
-                                                         <button onClick={() => setCounterForm({offerId: offer.id, amount: offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount})} className="flex-1 py-2.5 bg-white border-2 border-gray-900 text-gray-900 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-50 transition">Counter</button>
-                                                         <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-100 transition">Decline</button>
+                                                         <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2.5 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-emerald-700 transition">Accept</button>
+                                                         <button onClick={() => setCounterForm({offerId: offer.id, amount: offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount})} className="flex-1 py-2.5 bg-surface border-2 border-gray-900 text-foreground text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-background transition">Counter</button>
+                                                         <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-rose-100 transition">Decline</button>
                                                       </div>
                                                    )}
                                                 </>
                                             )}
-                                            {offer.status === 'countered' && <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest text-center mt-2">Awaiting Buyer Response</p>}
+                                            {offer.status === 'countered' && <p className="text-[10px] font-bold text-primary uppercase tracking-widest text-center mt-2">Awaiting Buyer Response</p>}
                                             {offer.status === 'declined' && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest text-center mt-2">Declined</p>}
                                             <button 
                                                onClick={() => router.push(`/messages?chat=${offer.chat_id}`)}
-                                               className="w-full mt-1 px-6 py-2.5 bg-gray-100 text-gray-700 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-200 transition flex items-center justify-center gap-2"
+                                               className="w-full mt-1 px-6 py-2.5 bg-background text-muted text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-gray-200 transition flex items-center justify-center gap-2"
                                             >
                                                <Send className="w-3 h-3" /> Go to Chat
                                             </button>
@@ -1543,8 +1543,8 @@ function ProfileContent() {
                                    </div>
                                  ))
                                ) : (
-                                 <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-sm border-dashed">
-                                    <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No pending offers received</p>
+                                 <div className="bg-surface rounded-3xl p-20 text-center border border-border shadow-sm border-dashed">
+                                    <p className="text-[10px] font-bold text-muted uppercase tracking-widest">No pending offers received</p>
                                  </div>
                                )}
                              </div>
@@ -1555,8 +1555,8 @@ function ProfileContent() {
                               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                  {deals.filter(d => d.seller_id == user?.id && d.status === 'CANCELLED').length > 0 ? (
                                    deals.filter(d => d.seller_id == user?.id && d.status === 'CANCELLED').map(deal => (
-                                     <div key={deal.id} className="bg-white border border-rose-100 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 opacity-75 grayscale-[0.5]">
-                                        <div className="w-full md:w-48 aspect-square rounded-2xl bg-gray-50 flex-shrink-0 relative overflow-hidden">
+                                     <div key={deal.id} className="bg-surface border border-rose-100 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 opacity-75 grayscale-[0.5]">
+                                        <div className="w-full md:w-48 aspect-square rounded-none bg-background flex-shrink-0 relative overflow-hidden">
                                            <img src={deal.images?.[0] ? getImg(deal.images) : '/placeholder.png'} className="w-full h-full object-contain" alt="product" />
                                            <div className="absolute top-4 left-4">
                                               <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-rose-500 text-white shadow-sm">
@@ -1569,16 +1569,16 @@ function ProfileContent() {
                                            <div className="space-y-4">
                                               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                                  <div>
-                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Deal #D-{deal.id}</p>
-                                                    <h3 className="text-xl font-bold text-gray-950 uppercase tracking-tight leading-none">{deal.product_title}</h3>
+                                                    <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Deal #D-{deal.id}</p>
+                                                    <h3 className="text-xl font-bold text-foreground uppercase tracking-tight leading-none">{deal.product_title}</h3>
                                                  </div>
                                                  <div className="text-right">
-                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Voided Amount</p>
-                                                    <p className="text-2xl font-black text-gray-400 leading-none line-through">â‚¹{parseFloat(deal.amount || 0).toLocaleString()}</p>
+                                                    <p className="text-[9px] font-bold text-muted uppercase tracking-widest mb-1">Voided Amount</p>
+                                                    <p className="text-2xl font-black text-muted leading-none line-through">â‚¹{parseFloat(deal.amount || 0).toLocaleString()}</p>
                                                  </div>
                                               </div>
 
-                                              <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl">
+                                              <div className="p-4 bg-rose-50 border border-rose-100 rounded-none">
                                                  <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Cancellation Reason</p>
                                                  <p className="text-[11px] font-bold text-rose-800 leading-tight">{deal.cancel_reason || 'Transaction terminated by either party or administrator.'}</p>
                                                  <p className="text-[9px] font-medium text-rose-400 uppercase mt-2 italic">Buyer: {deal.buyer_name}</p>
@@ -1588,11 +1588,11 @@ function ProfileContent() {
                                      </div>
                                    ))
                                  ) : (
-                                     <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-sm border-dashed">
-                                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                     <div className="bg-surface rounded-3xl p-20 text-center border border-border shadow-sm border-dashed">
+                                        <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-6">
                                            <XCircle className="w-8 h-8 text-gray-200" />
                                         </div>
-                                        <p className="text-[11px] font-black text-gray-300 uppercase tracking-[0.3em]">No Cancelled Deals</p>
+                                        <p className="text-[11px] font-black text-muted uppercase tracking-[0.3em]">No Cancelled Deals</p>
                                      </div>
                                  )}
                               </div>
@@ -1605,27 +1605,27 @@ function ProfileContent() {
                   <div className="animate-in fade-in slide-in-from-left-4 duration-500">
                      <div className="mb-12 flex justify-between items-end">
                         <div>
-                          <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Feedback Ledger</h2>
-                          <p className="text-xs text-gray-400 mt-2 font-medium">Verified historical performance and collector sentiment.</p>
+                          <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Feedback Ledger</h2>
+                          <p className="text-xs text-muted mt-2 font-medium">Verified historical performance and collector sentiment.</p>
                         </div>
                         <div className="text-right">
-                           <p className="text-2xl font-black text-gray-900">{receivedReviews.stats.average_rating}</p>
-                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Global Index / {receivedReviews.stats.review_count} nodes</p>
+                           <p className="text-2xl font-black text-foreground">{receivedReviews.stats.average_rating}</p>
+                           <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Global Index / {receivedReviews.stats.review_count} nodes</p>
                         </div>
                      </div>
 
                      <div className="space-y-6">
                         {receivedReviews.reviews?.length > 0 ? (
                            receivedReviews.reviews.map(review => (
-                              <div key={review.id} className="p-8 border border-gray-100 rounded-2xl bg-gray-50/20">
+                              <div key={review.id} className="p-8 border border-border rounded-none bg-background/20">
                                  <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-3">
-                                       <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
+                                       <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold">
                                           {review.reviewer_name?.charAt(0).toUpperCase()}
                                        </div>
                                        <div>
-                                          <p className="text-[11px] font-bold text-gray-900 uppercase">{review.reviewer_name}</p>
-                                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{new Date(review.created_at).toLocaleDateString()}</p>
+                                          <p className="text-[11px] font-bold text-foreground uppercase">{review.reviewer_name}</p>
+                                          <p className="text-[9px] text-muted font-bold uppercase tracking-widest">{new Date(review.created_at).toLocaleDateString()}</p>
                                        </div>
                                     </div>
                                     <div className="flex gap-0.5">
@@ -1634,12 +1634,12 @@ function ProfileContent() {
                                        ))}
                                     </div>
                                  </div>
-                                 <p className="text-sm font-medium text-gray-600 leading-relaxed italic">"{review.comment}"</p>
+                                 <p className="text-sm font-medium text-muted leading-relaxed italic">"{review.comment}"</p>
                               </div>
                            ))
                         ) : (
-                           <div className="py-20 text-center border-2 border-dashed border-gray-50 rounded-2xl">
-                              <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No Feedback Logs Found</p>
+                           <div className="py-20 text-center border-2 border-dashed border-gray-50 rounded-none">
+                              <p className="text-[10px] font-bold text-muted uppercase tracking-widest">No Feedback Logs Found</p>
                            </div>
                         )}
                      </div>
@@ -1652,25 +1652,25 @@ function ProfileContent() {
                    <div className="animate-in fade-in slide-in-from-left-4 duration-500">
                       <div className="mb-12 flex justify-between items-end">
                          <div>
-                            <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Financial Performance</h2>
-                            <p className="text-xs text-gray-400 mt-2 font-medium">Detailed audit logs and granular fee breakdowns.</p>
+                            <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Financial Performance</h2>
+                            <p className="text-xs text-muted mt-2 font-medium">Detailed audit logs and granular fee breakdowns.</p>
                          </div>
                          <div className="flex gap-2">
                             <button 
                                onClick={() => setLedgerFilters({...ledgerFilters, role: 'all'})}
-                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'all' ? 'bg-black text-white' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'all' ? 'bg-black text-white' : 'bg-background text-muted hover:bg-background'}`}
                             >
                                Global
                             </button>
                             <button 
                                onClick={() => setLedgerFilters({...ledgerFilters, role: 'seller'})}
-                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'seller' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'seller' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-background text-muted hover:bg-background'}`}
                             >
                                Sales
                             </button>
                             <button 
                                onClick={() => setLedgerFilters({...ledgerFilters, role: 'buyer'})}
-                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'buyer' ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'buyer' ? 'bg-primary text-white shadow-lg shadow-blue-100' : 'bg-background text-muted hover:bg-background'}`}
                             >
                                Purchases
                             </button>
@@ -1680,7 +1680,7 @@ function ProfileContent() {
                       {reportsLoading ? (
                         <div className="py-20 flex flex-col items-center gap-4">
                            <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
-                           <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Compiling Records...</p>
+                           <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Compiling Records...</p>
                         </div>
                       ) : (
                         <div className="space-y-12">
@@ -1689,23 +1689,23 @@ function ProfileContent() {
                               <div className="p-8 bg-black rounded-[2.5rem] text-white shadow-2xl shadow-gray-200 relative overflow-hidden group">
                                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
                                  <div className="flex justify-between items-start mb-6">
-                                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                                    <div className="w-10 h-10 bg-surface/10 rounded-none flex items-center justify-center">
                                        <TrendingUp className="w-5 h-5 text-emerald-400" />
                                     </div>
                                     <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30">Liquidated Assets</span>
                                  </div>
-                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Total Sales Volume</p>
+                                 <p className="text-[10px] font-bold text-muted uppercase tracking-[0.2em]">Total Sales Volume</p>
                                  <h3 className="text-4xl font-black mt-2 tracking-tighter">â‚¹{parseFloat(financialReports.totals.total_sales || 0).toLocaleString()}</h3>
-                                 <p className="text-[9px] font-medium text-gray-500 mt-4 uppercase tracking-wider">{financialReports.totals.total_items_sold} Orders Successfully Audited</p>
+                                 <p className="text-[9px] font-medium text-muted mt-4 uppercase tracking-wider">{financialReports.totals.total_items_sold} Orders Successfully Audited</p>
                               </div>
 
-                              <div className="p-8 bg-blue-600 rounded-[2.5rem] text-white shadow-2xl shadow-blue-100 relative overflow-hidden group">
-                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-white/20 transition-all"></div>
+                              <div className="p-8 bg-primary rounded-[2.5rem] text-white shadow-2xl shadow-blue-100 relative overflow-hidden group">
+                                 <div className="absolute top-0 right-0 w-32 h-32 bg-surface/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-surface/20 transition-all"></div>
                                  <div className="flex justify-between items-start mb-6">
-                                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                                    <div className="w-10 h-10 bg-surface/10 rounded-none flex items-center justify-center">
                                        <PieChart className="w-5 h-5 text-white" />
                                     </div>
-                                    <span className="text-[8px] font-black uppercase tracking-widest bg-white/20 text-white px-3 py-1 rounded-full border border-white/30">Acquired Inventory</span>
+                                    <span className="text-[8px] font-black uppercase tracking-widest bg-surface/20 text-white px-3 py-1 rounded-full border border-white/30">Acquired Inventory</span>
                                  </div>
                                  <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.2em]">Total Acquisition Cost</p>
                                  <h3 className="text-4xl font-black mt-2 tracking-tighter">â‚¹{parseFloat(financialReports.totals.total_spent || 0).toLocaleString()}</h3>
@@ -1714,26 +1714,26 @@ function ProfileContent() {
                            </div>
 
                            {/* Filter Bar */}
-                           <div className="bg-gray-50/50 p-8 rounded-[2.5rem] border border-gray-100 space-y-6">
+                           <div className="bg-background/50 p-8 rounded-[2.5rem] border border-border space-y-6">
                               <div className="flex flex-wrap items-center gap-6">
                                  <div className="flex-1 min-w-[250px] relative">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                                     <input 
                                        type="text" 
                                        placeholder="Search by product title or ID..."
                                        value={ledgerFilters.search}
                                        onChange={(e) => setLedgerFilters({...ledgerFilters, search: e.target.value})}
                                        onKeyDown={(e) => e.key === 'Enter' && loadLedger()}
-                                       className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl text-[11px] font-bold outline-none focus:ring-2 ring-blue-50 transition-all"
+                                       className="w-full pl-12 pr-4 py-3 bg-surface border border-border rounded-none text-[11px] font-bold outline-none focus:ring-2 ring-blue-50 transition-all"
                                     />
                                  </div>
                                  
                                  <div className="flex items-center gap-3">
-                                    <Filter className="w-4 h-4 text-gray-400" />
+                                    <Filter className="w-4 h-4 text-muted" />
                                     <select 
                                        value={ledgerFilters.status}
                                        onChange={(e) => setLedgerFilters({...ledgerFilters, status: e.target.value})}
-                                       className="bg-white border border-gray-100 text-[10px] font-black uppercase tracking-widest px-4 py-3 rounded-xl outline-none cursor-pointer"
+                                       className="bg-surface border border-border text-[10px] font-black uppercase tracking-widest px-4 py-3 rounded-none outline-none cursor-pointer"
                                     >
                                        <option value="ALL">All States</option>
                                        <option value="PAID">Paid</option>
@@ -1745,25 +1745,25 @@ function ProfileContent() {
                                  </div>
                               </div>
 
-                              <div className="flex flex-wrap items-center justify-between gap-6 pt-4 border-t border-gray-100">
+                              <div className="flex flex-wrap items-center justify-between gap-6 pt-4 border-t border-border">
                                  <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
-                                       <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">From</span>
+                                       <span className="text-[9px] font-black text-muted uppercase tracking-widest">From</span>
                                        <input 
                                           type="date" 
                                           value={ledgerFilters.startDate}
                                           onChange={(e) => setLedgerFilters({...ledgerFilters, startDate: e.target.value})}
-                                          className="bg-white border border-gray-100 text-[10px] font-bold px-3 py-2 rounded-lg outline-none focus:ring-2 ring-blue-50"
+                                          className="bg-surface border border-border text-[10px] font-bold px-3 py-2 rounded-none outline-none focus:ring-2 ring-blue-50"
                                        />
                                     </div>
-                                    <ArrowRight className="w-3 h-3 text-gray-300" />
+                                    <ArrowRight className="w-3 h-3 text-muted" />
                                     <div className="flex items-center gap-2">
-                                       <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">To</span>
+                                       <span className="text-[9px] font-black text-muted uppercase tracking-widest">To</span>
                                        <input 
                                           type="date" 
                                           value={ledgerFilters.endDate}
                                           onChange={(e) => setLedgerFilters({...ledgerFilters, endDate: e.target.value})}
-                                          className="bg-white border border-gray-100 text-[10px] font-bold px-3 py-2 rounded-lg outline-none focus:ring-2 ring-blue-50"
+                                          className="bg-surface border border-border text-[10px] font-bold px-3 py-2 rounded-none outline-none focus:ring-2 ring-blue-50"
                                        />
                                     </div>
                                  </div>
@@ -1774,20 +1774,20 @@ function ProfileContent() {
                                           setLedgerFilters({ status: 'ALL', role: 'all', search: '', year: new Date().getFullYear(), startDate: '', endDate: '' });
                                           loadLedger();
                                        }}
-                                       className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-gray-900 transition-colors"
+                                       className="text-[9px] font-black text-muted uppercase tracking-[0.2em] hover:text-foreground transition-colors"
                                     >
                                        Reset
                                     </button>
                                     <button 
                                        onClick={downloadLedgerCSV}
-                                       className="flex items-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-100 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all"
+                                       className="flex items-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-100 px-6 py-3 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all"
                                     >
                                        <Download className="w-4 h-4" />
                                        Download Report
                                     </button>
                                     <button 
                                        onClick={loadLedger}
-                                       className="bg-gray-900 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200"
+                                       className="bg-foreground text-white px-8 py-3 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200"
                                     >
                                        Apply
                                     </button>
@@ -1798,35 +1798,35 @@ function ProfileContent() {
                            {/* Ledger Table */}
                            <div className="space-y-6">
                               <div className="flex justify-between items-center px-4">
-                                 <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900">Detailed Transaction Ledger</h4>
-                                 <p className="text-[9px] font-bold text-gray-400 uppercase">{ledger.length} Record(s) Found</p>
+                                 <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Detailed Transaction Ledger</h4>
+                                 <p className="text-[9px] font-bold text-muted uppercase">{ledger.length} Record(s) Found</p>
                               </div>
 
                               {ledgerLoading ? (
                                 <div className="py-20 flex justify-center">
-                                   <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 animate-spin rounded-full"></div>
+                                   <div className="w-6 h-6 border-2 border-border border-t-gray-900 animate-spin rounded-full"></div>
                                 </div>
                               ) : ledger.length > 0 ? (
                                 <div className="space-y-4">
                                    {ledger.map((deal) => {
                                       const isBuyer = deal.buyer_id === user.id;
                                       return (
-                                         <div key={deal.id} className="bg-white border border-gray-100 rounded-3xl p-6 hover:shadow-xl hover:shadow-gray-100/50 transition-all group">
+                                         <div key={deal.id} className="bg-surface border border-border rounded-3xl p-6 hover:shadow-xl hover:shadow-gray-100/50 transition-all group">
                                             <div className="flex flex-col lg:flex-row gap-8">
                                                {/* Product Info */}
                                                <div className="flex gap-5 flex-1">
-                                                  <div className="w-20 h-20 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0">
+                                                  <div className="w-20 h-20 rounded-none bg-background border border-border overflow-hidden flex-shrink-0">
                                                      <img src={deal.product_image ? (deal.product_image.startsWith('http') ? deal.product_image : `${API_BASE_URL}/uploads/${deal.product_image}`) : "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=200&auto=format&fit=crop"} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                                   </div>
                                                   <div className="flex flex-col justify-between py-1">
                                                      <div>
                                                         <div className="flex items-center gap-2 mb-1">
-                                                           {isBuyer ? <ArrowDownLeft className="w-3 h-3 text-blue-600" /> : <ArrowUpRight className="w-3 h-3 text-emerald-600" />}
-                                                           <span className={`text-[8px] font-black uppercase tracking-widest ${isBuyer ? 'text-blue-600' : 'text-emerald-600'}`}>{isBuyer ? 'Acquisition' : 'Liquidation'}</span>
+                                                           {isBuyer ? <ArrowDownLeft className="w-3 h-3 text-primary" /> : <ArrowUpRight className="w-3 h-3 text-emerald-600" />}
+                                                           <span className={`text-[8px] font-black uppercase tracking-widest ${isBuyer ? 'text-primary' : 'text-emerald-600'}`}>{isBuyer ? 'Acquisition' : 'Liquidation'}</span>
                                                         </div>
-                                                        <h5 className="text-[13px] font-black text-gray-900 uppercase tracking-tight line-clamp-1">{deal.product_title}</h5>
+                                                        <h5 className="text-[13px] font-black text-foreground uppercase tracking-tight line-clamp-1">{deal.product_title}</h5>
                                                      </div>
-                                                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                                     <p className="text-[9px] font-bold text-muted uppercase tracking-widest">
                                                         {new Date(deal.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} â€¢ ID: {deal.id}
                                                      </p>
                                                   </div>
@@ -1835,30 +1835,30 @@ function ProfileContent() {
                                                {/* Counterparty & Status */}
                                                <div className="flex flex-wrap lg:flex-nowrap gap-8 items-center">
                                                   <div className="min-w-[140px]">
-                                                     <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{isBuyer ? 'Seller Node' : 'Buyer Node'}</p>
-                                                     <p className="text-[11px] font-bold text-gray-900 uppercase">{isBuyer ? deal.seller_name : deal.buyer_name}</p>
+                                                     <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">{isBuyer ? 'Seller Node' : 'Buyer Node'}</p>
+                                                     <p className="text-[11px] font-bold text-foreground uppercase">{isBuyer ? deal.seller_name : deal.buyer_name}</p>
                                                   </div>
                                                   <div className="min-w-[100px]">
-                                                     <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">State</p>
-                                                     <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${deal.status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : deal.status === 'CANCELLED' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
+                                                     <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">State</p>
+                                                     <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${deal.status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : deal.status === 'CANCELLED' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-blue-50 text-primary border border-blue-100'}`}>
                                                         {deal.status}
                                                      </span>
                                                   </div>
                                                   
                                                   {/* Financial Breakdown */}
-                                                  <div className="bg-gray-50/50 px-6 py-4 rounded-2xl border border-gray-100 min-w-[200px]">
+                                                  <div className="bg-background/50 px-6 py-4 rounded-none border border-border min-w-[200px]">
                                                      <div className="flex justify-between items-center mb-2">
-                                                        <span className="text-[9px] font-bold text-gray-400 uppercase">Base Amount</span>
-                                                        <span className="text-[10px] font-black text-gray-900">â‚¹{parseFloat(deal.amount).toLocaleString()}</span>
+                                                        <span className="text-[9px] font-bold text-muted uppercase">Base Amount</span>
+                                                        <span className="text-[10px] font-black text-foreground">â‚¹{parseFloat(deal.amount).toLocaleString()}</span>
                                                      </div>
                                                      <div className="flex justify-between items-center mb-2">
-                                                        <span className="text-[9px] font-bold text-gray-400 uppercase">Shipping</span>
-                                                        <span className="text-[10px] font-black text-gray-900">+â‚¹{parseFloat(deal.shipping_fee || 0).toLocaleString()}</span>
+                                                        <span className="text-[9px] font-bold text-muted uppercase">Shipping</span>
+                                                        <span className="text-[10px] font-black text-foreground">+â‚¹{parseFloat(deal.shipping_fee || 0).toLocaleString()}</span>
                                                      </div>
                                                      {isBuyer ? (
                                                         <div className="flex justify-between items-center mb-3">
-                                                           <span className="text-[9px] font-bold text-gray-400 uppercase">Service Fee + GST</span>
-                                                           <span className="text-[10px] font-black text-gray-900">+â‚¹{(parseFloat(deal.buyer_commission_amount || 0) + (parseFloat(deal.buyer_commission_amount || 0) * 0.18)).toLocaleString()}</span>
+                                                           <span className="text-[9px] font-bold text-muted uppercase">Service Fee + GST</span>
+                                                           <span className="text-[10px] font-black text-foreground">+â‚¹{(parseFloat(deal.buyer_commission_amount || 0) + (parseFloat(deal.buyer_commission_amount || 0) * 0.18)).toLocaleString()}</span>
                                                         </div>
                                                      ) : (
                                                         <div className="flex justify-between items-center mb-3 text-rose-500">
@@ -1866,9 +1866,9 @@ function ProfileContent() {
                                                            <span className="text-[10px] font-black">-â‚¹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</span>
                                                         </div>
                                                      )}
-                                                     <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
-                                                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{isBuyer ? 'Total Paid' : 'Net Payout'}</span>
-                                                        <span className={`text-[12px] font-black ${isBuyer ? 'text-blue-600' : 'text-emerald-600'}`}>
+                                                     <div className="pt-2 border-t border-border flex justify-between items-center">
+                                                        <span className="text-[10px] font-black text-foreground uppercase tracking-widest">{isBuyer ? 'Total Paid' : 'Net Payout'}</span>
+                                                        <span className={`text-[12px] font-black ${isBuyer ? 'text-primary' : 'text-emerald-600'}`}>
                                                            â‚¹{isBuyer ? parseFloat(deal.total_buyer_cost).toLocaleString() : parseFloat(deal.seller_payout).toLocaleString()}
                                                         </span>
                                                      </div>
@@ -1880,12 +1880,12 @@ function ProfileContent() {
                                    })}
                                 </div>
                               ) : (
-                                <div className="py-20 text-center bg-gray-50/30 border-2 border-dashed border-gray-100 rounded-[2.5rem]">
-                                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-50">
+                                <div className="py-20 text-center bg-background/30 border-2 border-dashed border-border rounded-[2.5rem]">
+                                   <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-50">
                                       <Search className="w-6 h-6 text-gray-200" />
                                    </div>
-                                   <p className="text-[11px] font-black text-gray-300 uppercase tracking-[0.2em]">Zero Matching Records</p>
-                                   <p className="text-[9px] font-bold text-gray-400 uppercase mt-2">Adjust your filters to audit other nodes.</p>
+                                   <p className="text-[11px] font-black text-muted uppercase tracking-[0.2em]">Zero Matching Records</p>
+                                   <p className="text-[9px] font-bold text-muted uppercase mt-2">Adjust your filters to audit other nodes.</p>
                                 </div>
                               )}
                            </div>
@@ -1898,15 +1898,15 @@ function ProfileContent() {
                {activeTab === "security" && (
                   <div className="animate-in fade-in slide-in-from-left-4 duration-500">
                      <div className="mb-12">
-                        <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">Access Control</h2>
-                        <p className="text-xs text-gray-400 mt-2 font-medium">Monitoring active sessions and multi-factor authentication nodes.</p>
+                        <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Access Control</h2>
+                        <p className="text-xs text-muted mt-2 font-medium">Monitoring active sessions and multi-factor authentication nodes.</p>
                      </div>
 
                      <div className="space-y-4">
-                        <div className="p-8 border border-gray-100 rounded-2xl flex justify-between items-center bg-gray-50/20">
+                        <div className="p-8 border border-border rounded-none flex justify-between items-center bg-background/20">
                            <div>
-                              <p className="text-sm font-bold text-gray-900 uppercase tracking-tight">Current Session</p>
-                              <p className="text-[10px] text-gray-400 mt-1 uppercase font-medium">Windows Chrome â€¢ IP: 152.16.x.x â€¢ Active Now</p>
+                              <p className="text-sm font-bold text-foreground uppercase tracking-tight">Current Session</p>
+                              <p className="text-[10px] text-muted mt-1 uppercase font-medium">Windows Chrome â€¢ IP: 152.16.x.x â€¢ Active Now</p>
                            </div>
                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-sm shadow-emerald-200"></span>
                         </div>
@@ -1927,18 +1927,18 @@ function ProfileContent() {
         <div className="fixed inset-0 z-[1100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPaymentReceiptModal(null)}>
           <div className="relative max-w-2xl w-full" onClick={e => e.stopPropagation()}>
             <button onClick={() => setPaymentReceiptModal(null)} className="absolute -top-10 right-0 text-white/60 hover:text-white text-[10px] font-black uppercase tracking-widest">Close âœ•</button>
-            <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-                <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
+            <div className="bg-surface rounded-none overflow-hidden shadow-2xl">
+              <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+                <div className="w-8 h-8 bg-emerald-50 rounded-none flex items-center justify-center">
                   <CheckCircle className="w-4 h-4 text-emerald-500" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-black uppercase tracking-widest text-gray-900">Payment Receipt</p>
-                  <p className="text-[9px] font-bold text-gray-400 uppercase">Buyer submitted proof of payment</p>
+                  <p className="text-[11px] font-black uppercase tracking-widest text-foreground">Payment Receipt</p>
+                  <p className="text-[9px] font-bold text-muted uppercase">Buyer submitted proof of payment</p>
                 </div>
               </div>
               <div className="p-4">
-                <img src={paymentReceiptModal} alt="Payment Receipt" className="w-full rounded-xl object-contain max-h-[60vh]" />
+                <img src={paymentReceiptModal} alt="Payment Receipt" className="w-full rounded-none object-contain max-h-[60vh]" />
               </div>
             </div>
           </div>
@@ -1949,15 +1949,15 @@ function ProfileContent() {
       {isReviewModalOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsReviewModalOpen(false)} />
-           <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl p-10 animate-in zoom-in-95 duration-300">
+           <div className="relative bg-surface w-full max-w-lg rounded-3xl shadow-2xl p-10 animate-in zoom-in-95 duration-300">
               <div className="mb-8">
-                 <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Evaluate Transaction</h3>
-                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-2">Logging performance for: {reviewForm.product_title}</p>
+                 <h3 className="text-2xl font-black text-foreground uppercase tracking-tight">Evaluate Transaction</h3>
+                 <p className="text-[11px] font-bold text-muted uppercase tracking-widest mt-2">Logging performance for: {reviewForm.product_title}</p>
               </div>
 
               <div className="space-y-8">
                  <div className="flex flex-col items-center gap-4">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Service Rating</p>
+                    <p className="text-[10px] font-black text-muted uppercase tracking-[0.2em]">Service Rating</p>
                     <div className="flex gap-4">
                        {[1,2,3,4,5].map(star => (
                           <button 
@@ -1974,12 +1974,12 @@ function ProfileContent() {
                  </div>
 
                  <div className="space-y-4">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Feedback Log</label>
+                    <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em]">Feedback Log</label>
                     <textarea 
                        rows="4"
                        value={reviewForm.comment}
                        onChange={(e) => setReviewForm({...reviewForm, comment: e.target.value})}
-                       className="w-full bg-gray-50 border border-gray-100 p-6 rounded-2xl outline-none focus:border-blue-600 focus:bg-white transition-all text-sm font-medium"
+                       className="w-full bg-background border border-border p-6 rounded-none outline-none focus:border-blue-600 focus:bg-surface transition-all text-sm font-medium"
                        placeholder="Detail your acquisition experience..."
                     />
                  </div>
@@ -1987,14 +1987,14 @@ function ProfileContent() {
                  <div className="grid grid-cols-2 gap-4 pt-4">
                     <button 
                        onClick={() => setIsReviewModalOpen(false)}
-                       className="py-4 border border-gray-100 rounded-xl text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-all"
+                       className="py-4 border border-border rounded-none text-[10px] font-bold uppercase tracking-widest text-muted hover:bg-background transition-all"
                     >
                        Cancel
                     </button>
                     <button 
                        onClick={submitReview}
                        disabled={isSubmittingReview}
-                       className="py-4 bg-black text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all disabled:opacity-50"
+                       className="py-4 bg-black text-white rounded-none text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all disabled:opacity-50"
                     >
                        {isSubmittingReview ? 'Logging...' : 'Submit Records'}
                     </button>
@@ -2010,11 +2010,11 @@ function ProfileContent() {
 export default function ProfilePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-surface">
         <Navbar />
         <div className="flex items-center justify-center h-[60vh] gap-3">
           <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-          <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Verifying credentials...</span>
+          <span className="text-muted font-bold uppercase tracking-widest text-[10px]">Verifying credentials...</span>
         </div>
       </div>
     }>

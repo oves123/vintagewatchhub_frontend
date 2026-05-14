@@ -151,27 +151,27 @@ function HomeContent() {
   }, [search, category, brand, minPrice, maxPrice, conditionParam, formatParam, sortParam, strapParam]);
 
   return (
-    <div className="bg-[#fafafa] min-h-screen flex flex-col">
+    <div className="bg-background min-h-screen flex flex-col transition-colors duration-500">
       <Navbar />
 
       {/* Hero Section - Only show when NOT searching/filtering */}
       {!isCatalogView && (
-        <section className="bg-white border-b border-gray-100 overflow-hidden">
+        <section className="bg-surface border-b border-border overflow-hidden relative">
           <div className="max-w-[1300px] mx-auto px-5 py-12 md:py-20 flex flex-col md:flex-row items-center gap-10 md:gap-16">
-            <div className="w-full md:w-1/2 space-y-6 text-center md:text-left">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-950 leading-tight">
-                Premium Marketplace for <span className="text-[#1e3a5f]">Timepiece</span> <span className="text-[#b8860b]">Collectors</span>.
+            <div className="w-full md:w-1/2 space-y-6 text-center md:text-left z-10">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold font-serif text-foreground leading-tight tracking-tight">
+                Premium Marketplace for <span className="text-primary dark:text-primary-light italic">Timepiece</span> <span className="text-gold">Collectors</span>.
               </h2>
-              <p className="text-gray-500 text-base md:text-lg font-medium max-w-md mx-auto md:mx-0 leading-relaxed">
+              <p className="text-muted text-base md:text-lg font-medium max-w-md mx-auto md:mx-0 leading-relaxed tracking-wide">
                 The leading destination for authentic vintage watches and enthusiast collectibles.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                <Link href="/?catalog=true#market" className="bg-[#1e3a5f] text-white px-8 py-4 rounded-xl font-bold text-sm tracking-wide hover:bg-[#2e538a] transition shadow-lg">Shop Marketplace</Link>
-                <Link href="/sell" className="bg-white border-2 border-[#1e3a5f] text-[#1e3a5f] px-8 py-4 rounded-xl font-bold text-sm tracking-wide hover:bg-blue-50 transition shadow-sm">Sell Your Watch</Link>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start pt-4">
+                <Link href="/?catalog=true#market" className="bg-primary text-white px-8 py-4 font-bold text-xs uppercase tracking-widest hover:bg-primary-light transition shadow-lg">Discover</Link>
+                <Link href="/sell" className="bg-transparent border border-foreground text-foreground px-8 py-4 font-bold text-xs uppercase tracking-widest hover:bg-foreground hover:text-background transition shadow-sm">Sell Your Watch</Link>
               </div>
             </div>
             <div className="w-full md:w-1/2 relative">
-              <div className="w-full aspect-square md:aspect-[4/3] bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 shadow-xl relative group">
+              <div className="w-full aspect-square md:aspect-[4/3] bg-background rounded-none overflow-hidden border border-border shadow-2xl dark:shadow-neutral-900 relative group">
                 <img
                   src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg"
                   className="w-full h-full object-contain mix-blend-multiply p-10 md:p-16 transition-transform duration-700 group-hover:scale-105"
@@ -185,16 +185,16 @@ function HomeContent() {
 
       {/* Brand Quick Links - New Section */}
       {!isCatalogView && brands.length > 0 && (
-         <section className="bg-gray-50 border-b border-gray-100 py-6 overflow-x-auto selection:bg-none">
+         <section className="bg-background border-b border-border py-6 overflow-x-auto selection:bg-none">
             <div className="max-w-[1300px] mx-auto px-5">
                <div className="flex items-center gap-6">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] whitespace-nowrap">Shop by Brand:</span>
+                  <span className="text-[10px] font-black text-muted uppercase tracking-widest whitespace-nowrap">Shop by Brand:</span>
                   <div className="flex items-center gap-4">
                      {brands.slice(0, 10).map(b => (
                         <button 
                            key={b}
                            onClick={() => updateFilters('brand', b.toLowerCase())}
-                           className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[11px] font-bold text-[#1e3a5f] uppercase tracking-wider hover:border-[#1e3a5f] hover:shadow-sm transition-all whitespace-nowrap"
+                           className="px-4 py-2 bg-surface border border-border text-[11px] font-bold text-foreground uppercase tracking-widest hover:border-gold transition-all whitespace-nowrap"
                         >
                            {b}
                         </button>
@@ -220,10 +220,10 @@ function HomeContent() {
             {/* Ending Soon Section */}
             {featuredSelection.length > 0 && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-8 border-b border-border pb-4">
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Featured Selection</h2>
-                    <p className="text-[11px] text-blue-600 font-bold uppercase tracking-wider mt-1">Curated assets from across all categories</p>
+                    <h2 className="text-3xl font-serif text-foreground tracking-wide">Featured Selection</h2>
+                    <p className="text-[11px] text-gold font-bold uppercase tracking-widest mt-2">Curated assets from across all categories</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -237,10 +237,10 @@ function HomeContent() {
             {/* Pre-Owned Excellence Section */}
             {newArrivals.length > 0 && (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-8 border-b border-border pb-4">
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Pre-Owned Excellence</h2>
-                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mt-1">Exceptional pre-owned pieces in prime condition</p>
+                    <h2 className="text-3xl font-serif text-foreground tracking-wide">Pre-Owned Excellence</h2>
+                    <p className="text-[11px] text-muted font-bold uppercase tracking-widest mt-2">Exceptional pre-owned pieces in prime condition</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -261,12 +261,12 @@ function HomeContent() {
               fixed inset-0 z-[110] lg:relative lg:inset-auto lg:z-auto
               ${showMobileFilters ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
               transition-transform duration-300 lg:transition-none
-              w-full lg:w-64 flex-shrink-0 bg-white lg:bg-transparent overflow-y-auto lg:overflow-visible
+              w-full lg:w-64 flex-shrink-0 bg-surface lg:bg-transparent overflow-y-auto lg:overflow-visible
             `}>
               {/* Mobile Header for Filters */}
-              <div className="flex lg:hidden items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
-                <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Filter Assets</h3>
-                <button onClick={() => setShowMobileFilters(false)} className="p-2 text-gray-400 hover:text-gray-900">
+              <div className="flex lg:hidden items-center justify-between p-6 border-b border-border sticky top-0 bg-surface z-10">
+                <h3 className="text-lg font-serif text-foreground tracking-widest">Filter Assets</h3>
+                <button onClick={() => setShowMobileFilters(false)} className="p-2 text-muted hover:text-foreground">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -437,23 +437,23 @@ function HomeContent() {
               </div>
 
               {products.length === 0 && (
-                <div className="bg-white rounded-2xl p-20 text-center border border-gray-100 shadow-sm">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <div className="bg-surface p-20 text-center border border-border shadow-sm">
+                  <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg className="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">No Listings Found</h3>
-                  <p className="text-sm text-gray-500 font-medium mt-2">Try adjusting your filters or searching for something else.</p>
+                  <h3 className="text-xl font-serif text-foreground">No Listings Found</h3>
+                  <p className="text-sm text-muted font-medium mt-2">Try adjusting your filters or searching for something else.</p>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* Popular Categories - Narrowed */}
+        {/* Popular Categories */}
         {!isCatalogView && (
           <section className="mt-20">
-            <div className="flex items-center justify-between mb-10">
-              <h2 className="text-2xl font-bold text-gray-950 tracking-tight">Browse Categories</h2>
+            <div className="flex items-center justify-between mb-10 border-b border-border pb-4">
+              <h2 className="text-3xl font-serif text-foreground tracking-wide">Browse Categories</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
@@ -465,11 +465,11 @@ function HomeContent() {
                 <Link
                   href={`/?category=${cat.name}`}
                   key={cat.name}
-                  className="bg-white p-10 rounded-2xl border border-gray-100 hover:shadow-xl transition-all group shadow-sm"
+                  className="bg-surface p-10 border border-border hover:shadow-2xl dark:hover:shadow-neutral-900 transition-all duration-500 group"
                 >
-                  <span className="text-4xl mb-6 block group-hover:scale-110 transition duration-500">{cat.icon}</span>
-                  <p className="font-bold text-gray-900 text-lg mb-1">{cat.name}</p>
-                  <p className="text-sm font-medium text-gray-500">{cat.desc}</p>
+                  <span className="text-4xl mb-6 block group-hover:scale-110 group-hover:text-gold transition duration-500 grayscale group-hover:grayscale-0">{cat.icon}</span>
+                  <p className="font-serif tracking-wide text-foreground text-xl mb-2">{cat.name}</p>
+                  <p className="text-sm font-medium text-muted">{cat.desc}</p>
                 </Link>
               ))}
             </div>
@@ -477,14 +477,14 @@ function HomeContent() {
         )}
 
         {/* Promotional Banner */}
-        <section className="mt-24 bg-gray-900 rounded-2xl p-10 md:p-20 text-white overflow-hidden relative shadow-xl">
+        <section className="mt-24 bg-[#0a0a0a] border border-[#262626] p-10 md:p-20 text-white overflow-hidden relative shadow-2xl">
           <div className="md:w-2/3 relative z-10">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight tracking-tight">Join the Hub of Collectors.</h2>
-            <p className="text-gray-400 text-lg font-medium mb-10 max-w-md leading-relaxed">Start selling your vintage pieces to a dedicated community of enthusiasts. Professional tools for professional sellers.</p>
-            <Link href="/sell" className="bg-blue-600 text-white px-10 py-4 rounded-lg font-bold text-base hover:bg-blue-700 transition shadow-lg shadow-blue-900/20 inline-block">List Your Item</Link>
+            <h2 className="text-4xl md:text-5xl font-bold font-serif mb-6 leading-tight tracking-wide">Join the Hub of Collectors.</h2>
+            <p className="text-neutral-400 text-lg font-medium mb-10 max-w-md leading-relaxed">Start selling your vintage pieces to a dedicated community of enthusiasts. Professional tools for professional sellers.</p>
+            <Link href="/sell" className="bg-primary text-white px-10 py-4 font-bold text-xs uppercase tracking-widest hover:bg-primary-light transition shadow-lg inline-block">List Your Item</Link>
           </div>
-          <div className="absolute right-0 top-0 h-full hidden lg:block opacity-20 transition-transform duration-1000 group-hover:scale-110">
-            <img src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg" className="h-full object-contain -rotate-12" />
+          <div className="absolute right-0 top-0 h-full hidden lg:block opacity-30 mix-blend-screen transition-transform duration-1000 group-hover:scale-110">
+            <img src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg" className="h-full object-cover -rotate-12 scale-150" />
           </div>
         </section>
       </main>

@@ -1,9 +1,14 @@
-import { Inter } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
 });
 
 export const metadata = {
@@ -14,19 +19,22 @@ export const metadata = {
 import TermsGuard from "../components/TermsGuard";
 import { ComparisonProvider } from "../context/ComparisonContext";
 import ComparisonDrawer from "../components/ComparisonDrawer";
+import { ThemeProvider } from "../context/ThemeContext";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} font-sans antialiased`}
+        className={`${inter.variable} ${playfair.variable} font-sans bg-background text-foreground antialiased transition-colors duration-500`}
       >
-        <ComparisonProvider>
-          <ComparisonDrawer />
-          <TermsGuard>
-            {children}
-          </TermsGuard>
-        </ComparisonProvider>
+        <ThemeProvider>
+          <ComparisonProvider>
+            <ComparisonDrawer />
+            <TermsGuard>
+              {children}
+            </TermsGuard>
+          </ComparisonProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

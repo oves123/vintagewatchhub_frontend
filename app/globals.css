@@ -1,22 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafafa;
+  /* Premium Light Mode Palette (Rolex Inspired) */
+  --background: #ffffff;
   --foreground: #111827;
-  --primary: #1e3a5f;
-  --primary-light: #2e538a;
+  --primary: #006039; /* Rolex Green */
+  --primary-light: #007a4a;
   --gold: #b8860b;
   --gold-light: #daa520;
-  --surface: #ffffff;
+  --surface: #f9fafb;
   --border: #e5e7eb;
   --muted: #6b7280;
-  --radius: 12px;
+  --radius: 0px; /* Sharp, elegant edges for luxury feel */
+}
+
+/* Dark Mode Palette */
+.dark {
+  --background: #050505; /* Deep space black */
+  --foreground: #e5e5e5;
+  --primary: #006039; /* Keep the green accent */
+  --primary-light: #007a4a;
+  --gold: #a37d34;
+  --gold-light: #c29845;
+  --surface: #111111;
+  --border: #262626;
+  --muted: #a3a3a3;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --radius-none: var(--radius);
 }
 
 html {

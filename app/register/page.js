@@ -43,9 +43,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="bg-[#fafafa] min-h-screen font-sans antialiased text-[#191919] flex flex-col">
+    <div className="bg-background min-h-screen font-sans antialiased text-foreground flex flex-col">
       {/* Header */}
-      <header className="px-5 py-4 bg-white border-b border-gray-100 flex items-center justify-between">
+      <header className="px-5 py-4 bg-surface border-b border-border flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="16" cy="18" r="12" stroke="#1e3a5f" strokeWidth="2"/>
@@ -55,17 +55,17 @@ export default function RegisterPage() {
             <path d="M10 6 L12 3 L14 5 L16 2 L18 5 L20 3 L22 6 Z" fill="#b8860b"/>
             <circle cx="16" cy="18" r="1.5" fill="#1e3a5f"/>
           </svg>
-          <span className="font-bold tracking-tight text-gray-950 text-[17px] leading-none">
-            Watch<span className="text-[#1e3a5f]">Collector</span><span className="text-[#b8860b] font-black">HUB</span>
+          <span className="font-bold tracking-tight text-foreground text-[17px] leading-none">
+            Watch<span className="text-primary">Collector</span><span className="text-gold font-black">HUB</span>
           </span>
         </Link>
-        <p className="text-sm text-gray-500">
-           Already a member? <Link href="/login" className="text-blue-600 hover:underline font-semibold">Sign in</Link>
+        <p className="text-sm text-muted">
+           Already a member? <Link href="/login" className="text-primary hover:underline font-semibold">Sign in</Link>
         </p>
       </header>
       
       <main className="flex-1 flex items-center justify-center px-5 py-10">
-        <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sm:p-10">
+        <div className="w-full max-w-[420px] bg-surface rounded-none shadow-sm border border-border p-8 sm:p-10">
           <div className="mb-8">
             <h1 className="text-3xl font-black mb-1">Create an account</h1>
           </div>
@@ -82,7 +82,7 @@ export default function RegisterPage() {
               <input
                 type="text"
                 required
-                className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
+                className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
                 placeholder=" "
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -90,7 +90,7 @@ export default function RegisterPage() {
               />
               <label 
                 htmlFor="name" 
-                className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
+                className="absolute text-muted duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-primary"
               >
                 Full Name
               </label>
@@ -100,7 +100,7 @@ export default function RegisterPage() {
               <input
                 type="email"
                 required
-                className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
+                className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
                 placeholder=" "
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -108,7 +108,7 @@ export default function RegisterPage() {
               />
               <label 
                 htmlFor="email" 
-                className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
+                className="absolute text-muted duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-primary"
               >
                 Email
               </label>
@@ -120,7 +120,7 @@ export default function RegisterPage() {
               <input
                 type="password"
                 required
-                className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
+                className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
                 placeholder=" "
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -128,7 +128,7 @@ export default function RegisterPage() {
               />
               <label 
                 htmlFor="password" 
-                className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
+                className="absolute text-muted duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-primary"
               >
                 Password
               </label>
@@ -136,7 +136,7 @@ export default function RegisterPage() {
 
             <div className="relative">
               <select
-                className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer appearance-none"
+                className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer appearance-none"
                 value={formData.seller_type}
                 onChange={(e) => setFormData({...formData, seller_type: e.target.value})}
                 id="seller_type"
@@ -146,11 +146,11 @@ export default function RegisterPage() {
               </select>
               <label 
                 htmlFor="seller_type" 
-                className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4"
+                className="absolute text-muted duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4"
               >
                 Account Type
               </label>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 mt-2">
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted mt-2">
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   required
-                  className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
+                  className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
                   placeholder=" "
                   value={formData.gst_number}
                   onChange={(e) => setFormData({...formData, gst_number: e.target.value})}
@@ -168,34 +168,34 @@ export default function RegisterPage() {
                 />
                 <label 
                   htmlFor="gst_number" 
-                  className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
+                  className="absolute text-muted duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-primary"
                 >
                   GST Number
                 </label>
               </div>
             )}
 
-            <p className="text-[11px] text-gray-500 py-2">
-              By selecting **Create account**, you agree to our <span className="text-blue-600">User Agreement</span> and acknowledge reading our <span className="text-blue-600">Privacy Notice</span>.
+            <p className="text-[11px] text-muted py-2">
+              By selecting **Create account**, you agree to our <span className="text-primary">User Agreement</span> and acknowledge reading our <span className="text-primary">Privacy Notice</span>.
             </p>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-blue-600 text-white rounded-full font-bold text-base hover:bg-blue-700 transition-colors shadow-sm active:scale-[0.99] disabled:opacity-50 mt-2"
+              className="w-full py-3.5 bg-primary text-white rounded-full font-bold text-base hover:bg-blue-700 transition-colors shadow-sm active:scale-[0.99] disabled:opacity-50 mt-2"
             >
               {loading ? "Creating account..." : "Create account"}
             </button>
           </form>
 
-          <div className="mt-8 text-center text-[13px] text-gray-500">
+          <div className="mt-8 text-center text-[13px] text-muted">
              By joining, you help us keep the marketplace safe and fair for all collectors.
           </div>
         </div>
       </main>
 
-      <footer className="py-8 border-t border-gray-100 text-center">
-        <p className="text-[11px] text-gray-400">&copy; 2026 WatchCollectorHub Inc. All Rights Reserved.</p>
+      <footer className="py-8 border-t border-border text-center">
+        <p className="text-[11px] text-muted">&copy; 2026 WatchCollectorHub Inc. All Rights Reserved.</p>
       </footer>
     </div>
   );

@@ -19,10 +19,10 @@ function WCHLogo() {
         <circle cx="16" cy="18" r="1.5" fill="#1e3a5f"/>
       </svg>
       <div className="flex flex-col leading-none">
-        <span className="font-bold tracking-tight text-gray-950 text-[16px]">
-          Watch<span className="text-[#1e3a5f]">Collector</span><span className="text-[#b8860b] font-black">HUB</span>
+        <span className="font-bold tracking-tight text-foreground text-[16px]">
+          Watch<span className="text-primary">Collector</span><span className="text-gold font-black">HUB</span>
         </span>
-        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Admin Panel</span>
+        <span className="text-[9px] font-bold text-muted uppercase tracking-widest mt-0.5">Admin Panel</span>
       </div>
     </div>
   );
@@ -57,41 +57,41 @@ export default function AdminSidebar({ activeTab, setActiveTab, adminUser, onLog
         />
       )}
 
-      <aside className={`w-64 bg-white border-r border-gray-100 h-full fixed left-0 top-0 z-[60] flex flex-col transition-transform duration-300 lg:translate-x-0 ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}`}>
+      <aside className={`w-64 bg-surface border-r border-border h-full fixed left-0 top-0 z-[60] flex flex-col transition-transform duration-300 lg:translate-x-0 ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}`}>
         
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+        <div className="p-6 border-b border-border flex items-center justify-between">
           <Link href="/" className="block">
             <WCHLogo />
           </Link>
-          <button onClick={() => setIsOpen(false)} className="lg:hidden p-1.5 text-gray-400 hover:text-gray-900 rounded-lg">
+          <button onClick={() => setIsOpen(false)} className="lg:hidden p-1.5 text-muted hover:text-foreground rounded-none">
             <X size={18} />
           </button>
         </div>
 
         {/* Nav */}
         <div className="flex-grow overflow-y-auto p-4 space-y-1">
-          <p className="px-3 text-[9px] font-black text-gray-400 uppercase tracking-[0.25em] mb-3 mt-2">Navigation</p>
+          <p className="px-3 text-[9px] font-black text-muted uppercase tracking-[0.25em] mb-3 mt-2">Navigation</p>
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => handleTabClick(item.id)}
-              className={`w-full group flex items-center justify-between px-3 py-2.5 rounded-xl text-[12px] font-bold tracking-tight transition-all ${
+              className={`w-full group flex items-center justify-between px-3 py-2.5 rounded-none text-[12px] font-bold tracking-tight transition-all ${
                 activeTab === item.id
-                  ? "bg-[#1e3a5f] text-white shadow-lg"
-                  : "text-gray-500 hover:bg-blue-50 hover:text-[#1e3a5f]"
+                  ? "bg-primary text-white shadow-lg"
+                  : "text-muted hover:bg-blue-50 hover:text-primary"
               }`}
             >
               <div className="flex items-center gap-3">
-                <item.icon size={16} className={activeTab === item.id ? "text-white" : "text-gray-400 group-hover:text-[#1e3a5f]"} />
+                <item.icon size={16} className={activeTab === item.id ? "text-white" : "text-muted group-hover:text-primary"} />
                 <span>{item.label}</span>
               </div>
               {activeTab === item.id
                 ? <div className="w-1.5 h-1.5 rounded-full bg-[#b8860b]" />
                 : item.id === "chats" && unreadMessagesCount > 0 ? (
-                  <span className="bg-[#1e3a5f] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
+                  <span className="bg-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
                 ) : (
-                  <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 text-gray-300 transition-all" />
+                  <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 text-muted transition-all" />
                 )
               }
             </button>
@@ -100,32 +100,32 @@ export default function AdminSidebar({ activeTab, setActiveTab, adminUser, onLog
 
         {/* Security badge */}
         <div className="px-4 pb-2">
-          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+          <div className="bg-blue-50 rounded-none p-4 border border-blue-100">
             <div className="flex items-center gap-2 mb-1">
-              <ShieldCheck size={13} className="text-[#1e3a5f]" />
-              <span className="text-[9px] font-black text-[#1e3a5f] uppercase tracking-widest">Secured Session</span>
+              <ShieldCheck size={13} className="text-primary" />
+              <span className="text-[9px] font-black text-primary uppercase tracking-widest">Secured Session</span>
             </div>
-            <p className="text-[10px] font-bold text-gray-500 leading-snug">All actions are audit-logged.</p>
+            <p className="text-[10px] font-bold text-muted leading-snug">All actions are audit-logged.</p>
           </div>
         </div>
 
         {/* User footer */}
-        <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 mb-3 p-3 bg-gray-50 rounded-xl">
-            <div className="w-9 h-9 rounded-lg bg-[#1e3a5f] flex items-center justify-center font-black text-white text-sm uppercase">
+        <div className="p-4 border-t border-border">
+          <div className="flex items-center gap-3 mb-3 p-3 bg-background rounded-none">
+            <div className="w-9 h-9 rounded-none bg-primary flex items-center justify-center font-black text-white text-sm uppercase">
               {adminUser?.name?.[0] || "A"}
             </div>
             <div className="overflow-hidden">
-              <p className="text-[12px] font-black text-gray-900 truncate">{adminUser?.name || "Administrator"}</p>
+              <p className="text-[12px] font-black text-foreground truncate">{adminUser?.name || "Administrator"}</p>
               <div className="flex items-center gap-1 mt-0.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Admin</p>
+                <p className="text-[9px] text-muted font-bold uppercase tracking-widest">Admin</p>
               </div>
             </div>
           </div>
           <button
             onClick={onLogout}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[11px] font-black text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-all border border-transparent hover:border-rose-100"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-none text-[11px] font-black text-muted hover:text-rose-600 hover:bg-rose-50 transition-all border border-transparent hover:border-rose-100"
           >
             <LogOut size={15} />
             <span>Sign Out</span>

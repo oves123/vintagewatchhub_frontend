@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Navbar from "../../components/Navbar";
@@ -526,7 +526,7 @@ export default function SellPage() {
    </div>;
 
    return (
-      <div className="bg-[#f8f9fa] min-h-screen pb-20 font-sans text-[#191919]">
+      <div className="bg-background min-h-screen pb-20 font-sans text-foreground transition-colors duration-500 transition-colors duration-500">
          <ProfileOnboardingModal 
             isOpen={showOnboarding} 
             onClose={() => router.push('/')} 
@@ -586,8 +586,8 @@ export default function SellPage() {
          <main className="max-w-4xl mx-auto px-4 py-8">
 
             <div className="mb-10">
-               <h1 className="text-3xl font-bold tracking-tight text-gray-900 leading-tight">Create Listing</h1>
-               <p className="text-gray-500 font-medium text-sm mt-2">Professional marketplace standards for collectors.</p>
+               <h1 className="text-4xl font-serif tracking-wide text-foreground leading-tight">Create Listing</h1>
+               <p className="text-muted font-medium text-sm mt-2">Professional marketplace standards for collectors.</p>
                
                {productStatus === 'rejected' && rejectionReason && (
                   <div className="mt-6 p-5 bg-rose-50 border border-rose-100 rounded-2xl animate-in slide-in-from-top-2 duration-500">
@@ -602,7 +602,7 @@ export default function SellPage() {
             </div>
 
             {/* Multi-step Nav */}
-            <div className="mb-10 bg-white p-5 rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+            <div className="mb-10 bg-surface p-5 border border-border shadow-sm overflow-x-auto">
                <div className="flex items-center justify-between min-w-[800px] px-4">
                   {[
                      { n: 1, t: "Basics" },
@@ -613,43 +613,43 @@ export default function SellPage() {
                      { n: 6, t: "Review" }
                   ].map((s) => (
                      <div key={s.n} className={`flex flex-col items-center gap-2 transition-all ${step === s.n ? 'scale-100' : 'opacity-40'}`}>
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs transition-all ${step === s.n ? 'bg-blue-600 text-white shadow-md' : (step > s.n ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400')}`}>
-                           {step > s.n ? "âœ“" : s.n}
+                        <div className={`w-8 h-8 rounded-none flex items-center justify-center font-bold text-xs transition-all ${step === s.n ? 'bg-primary text-white shadow-md' : (step > s.n ? 'bg-primary/10 text-primary' : 'bg-background text-muted border border-border')}`}>
+                           {step > s.n ? "✓" : s.n}
                         </div>
-                        <span className={`text-[10px] font-semibold uppercase tracking-wider ${step === s.n ? 'text-blue-600' : 'text-gray-500'}`}>{s.t}</span>
+                        <span className={`text-[10px] font-semibold uppercase tracking-widest ${step === s.n ? 'text-primary' : 'text-muted'}`}>{s.t}</span>
                      </div>
                   ))}
                </div>
             </div>
 
-            <div className="bg-white rounded-[3rem] shadow-2xl shadow-gray-200/50 border border-gray-100 overflow-hidden min-h-[500px]">
+            <div className="bg-surface border border-border shadow-2xl dark:shadow-neutral-900 overflow-hidden min-h-[500px]">
                <div className="p-8 md:p-14">
 
                   {/* STEP 1: Basics */}
                   {step === 1 && (
                      <div className="animate-in fade-in duration-500 space-y-10">
                         <div className="space-y-3">
-                           <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest ml-1">Listing Title</label>
+                           <label className="text-[11px] font-bold text-muted uppercase tracking-widest ml-1">Listing Title</label>
                            <input
                               type="text"
                               name="title"
                               value={formData.title}
                               onChange={handleInputChange}
                               placeholder="e.g. Omega Seamaster 300 Heritage 2021"
-                              className="w-full bg-white border border-gray-200 p-5 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-semibold text-gray-900 text-lg placeholder:text-gray-300 shadow-sm"
+                              className="w-full bg-background border border-border p-5 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-semibold text-foreground text-lg placeholder:text-muted shadow-sm"
                            />
                         </div>
 
                         <div className="space-y-4">
-                           <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest ml-1">Select Category</label>
+                           <label className="text-[11px] font-bold text-muted uppercase tracking-widest ml-1">Select Category</label>
                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                               {categories.map(c => (
                                  <button
                                     key={c.id}
                                     onClick={() => handleInputChange({ target: { name: 'category_id', value: c.id.toString() } })}
-                                    className={`p-5 rounded-xl border transition-all text-center ${formData.category_id === c.id.toString() ? 'border-blue-600 bg-blue-50/50 shadow-sm' : 'border-gray-100 bg-white hover:bg-gray-50 hover:border-gray-200'}`}
+                                    className={`p-5 border transition-all text-center ${formData.category_id === c.id.toString() ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-background hover:bg-surface'}`}
                                  >
-                                    <p className={`text-[12px] font-semibold ${formData.category_id === c.id.toString() ? 'text-blue-600' : 'text-gray-600'}`}>{c.name}</p>
+                                    <p className={`text-[12px] font-semibold uppercase tracking-widest ${formData.category_id === c.id.toString() ? 'text-primary' : 'text-foreground'}`}>{c.name}</p>
                                  </button>
                               ))}
                            </div>
@@ -659,7 +659,7 @@ export default function SellPage() {
                            <button
                               onClick={nextStep}
                               disabled={!formData.title || !formData.category_id}
-                              className="bg-blue-600 text-white px-10 py-4 rounded-lg font-bold text-[13px] uppercase tracking-wider hover:bg-blue-700 transition-all disabled:opacity-20 shadow-lg shadow-blue-100"
+                              className="bg-primary text-white px-10 py-4 font-bold text-[13px] uppercase tracking-widest hover:bg-primary-light transition-all disabled:opacity-20 shadow-lg shadow-primary/20"
                            >
                               Continue
                            </button>

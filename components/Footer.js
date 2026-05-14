@@ -6,7 +6,7 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#1e3a5f] text-white mt-auto">
+    <footer className="bg-primary text-white mt-auto">
       <div className="max-w-[1300px] mx-auto px-5 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
           {/* Brand */}
@@ -21,7 +21,7 @@ export default function Footer() {
                 <circle cx="16" cy="18" r="1.5" fill="white"/>
               </svg>
               <span className="font-bold text-[17px]">
-                WatchCollector<span className="text-[#b8860b]">HUB</span>
+                WatchCollector<span className="text-gold">HUB</span>
               </span>
             </div>
             <p className="text-[13px] text-white/70 leading-relaxed">
@@ -31,7 +31,7 @@ export default function Footer() {
 
           {/* Marketplace */}
           <div>
-            <h4 className="text-[11px] font-black uppercase tracking-widest text-[#b8860b] mb-4">Marketplace</h4>
+            <h4 className="text-[11px] font-black uppercase tracking-widest text-gold mb-4">Marketplace</h4>
             <ul className="space-y-2.5">
               {[
                 { label: "Browse Watches", href: "/" },
@@ -42,7 +42,7 @@ export default function Footer() {
                 { label: "Tools & Parts", href: "/?category=Tools & Parts" },
               ].map(link => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-[13px] text-white/70 hover:text-white hover:text-[#b8860b] transition-colors">
+                  <Link href={link.href} className="text-[13px] text-white/70 hover:text-white hover:text-gold transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -52,7 +52,7 @@ export default function Footer() {
 
           {/* Account */}
           <div>
-            <h4 className="text-[11px] font-black uppercase tracking-widest text-[#b8860b] mb-4">Account</h4>
+            <h4 className="text-[11px] font-black uppercase tracking-widest text-gold mb-4">Account</h4>
             <ul className="space-y-2.5">
               {[
                 { label: "My Profile", href: "/profile" },
@@ -62,7 +62,7 @@ export default function Footer() {
                 { label: "Sign In", href: "/login" },
               ].map(link => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-[13px] text-white/70 hover:text-[#b8860b] transition-colors">
+                  <Link href={link.href} className="text-[13px] text-white/70 hover:text-gold transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -72,13 +72,13 @@ export default function Footer() {
 
           {/* Trust & Info */}
           <div>
-            <h4 className="text-[11px] font-black uppercase tracking-widest text-[#b8860b] mb-4">Security</h4>
+            <h4 className="text-[11px] font-black uppercase tracking-widest text-gold mb-4">Security</h4>
             <ul className="space-y-3">
               {[
-                { icon: "🔒", text: "Buyer Protection" },
-                { icon: "✅", text: "Verified Sellers" },
-                { icon: "🛡️", text: "Secure Transactions" },
-                { icon: "🕒", text: "24/7 Support" },
+                { icon: "ðŸ”’", text: "Buyer Protection" },
+                { icon: "âœ…", text: "Verified Sellers" },
+                { icon: "ðŸ›¡ï¸", text: "Secure Transactions" },
+                { icon: "ðŸ•’", text: "24/7 Support" },
               ].map(item => (
                 <li key={item.text} className="flex items-center gap-2 text-[13px] text-white/70">
                   <span>{item.icon}</span>

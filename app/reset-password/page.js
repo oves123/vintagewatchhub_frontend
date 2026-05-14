@@ -52,11 +52,11 @@ function ResetPasswordContent() {
   };
 
   return (
-    <div className="bg-white min-h-screen font-sans antialiased text-[#191919]">
+    <div className="bg-surface min-h-screen font-sans antialiased text-foreground">
       <header className="px-6 py-6 max-w-[1240px] mx-auto">
         <Link href="/">
           <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">
-            WATCH<span className="text-blue-600">COLLECTOR</span>HUB
+            WATCH<span className="text-primary">COLLECTOR</span>HUB
           </h1>
         </Link>
       </header>
@@ -84,7 +84,7 @@ function ResetPasswordContent() {
 
           {!token ? (
             <div className="text-center">
-              <Link href="/forgot-password" size="sm" className="text-sm font-medium text-blue-600 hover:underline">
+              <Link href="/forgot-password" size="sm" className="text-sm font-medium text-primary hover:underline">
                 Request a new reset link
               </Link>
             </div>
@@ -94,7 +94,7 @@ function ResetPasswordContent() {
                 <input
                   type="password"
                   required
-                  className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
+                  className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
                   placeholder=" "
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -102,7 +102,7 @@ function ResetPasswordContent() {
                 />
                 <label 
                   htmlFor="password" 
-                  className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
+                  className="absolute text-muted duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-primary"
                 >
                   New Password
                 </label>
@@ -112,7 +112,7 @@ function ResetPasswordContent() {
                 <input
                   type="password"
                   required
-                  className="w-full px-4 pt-6 pb-2 bg-white border border-gray-300 rounded-lg outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
+                  className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
                   placeholder=" "
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -120,7 +120,7 @@ function ResetPasswordContent() {
                 />
                 <label 
                   htmlFor="confirmPassword" 
-                  className="absolute text-gray-500 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-600"
+                  className="absolute text-muted duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-primary"
                 >
                   Confirm New Password
                 </label>
@@ -129,7 +129,7 @@ function ResetPasswordContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-blue-600 text-white rounded-full font-bold text-base hover:bg-blue-700 transition-colors shadow-sm active:scale-[0.99] disabled:opacity-50 mt-4"
+                className="w-full py-3.5 bg-primary text-white rounded-full font-bold text-base hover:bg-blue-700 transition-colors shadow-sm active:scale-[0.99] disabled:opacity-50 mt-4"
               >
                 {loading ? "Updating..." : "Update Password"}
               </button>
@@ -137,21 +137,21 @@ function ResetPasswordContent() {
           )}
 
           <div className="mt-8 text-center">
-            <Link href="/login" className="text-sm font-medium text-blue-600 hover:underline">
+            <Link href="/login" className="text-sm font-medium text-primary hover:underline">
               Back to Sign In
             </Link>
           </div>
         </div>
       </main>
 
-      <footer className="mt-auto py-10 border-t border-gray-200">
-         <div className="max-w-[1240px] mx-auto px-6 flex flex-col items-center gap-4 text-[11px] text-gray-500 uppercase tracking-widest font-bold">
+      <footer className="mt-auto py-10 border-t border-border">
+         <div className="max-w-[1240px] mx-auto px-6 flex flex-col items-center gap-4 text-[11px] text-muted uppercase tracking-widest font-bold">
             <div className="flex gap-6">
               <Link href="/help" className="hover:underline">User Agreement</Link>
               <Link href="/privacy" className="hover:underline">Privacy Notice</Link>
               <Link href="/cookies" className="hover:underline">Cookies</Link>
             </div>
-            <p>Copyright © 1995-2026 WatchCollectorHub Inc. All Rights Reserved.</p>
+            <p>Copyright Â© 1995-2026 WatchCollectorHub Inc. All Rights Reserved.</p>
          </div>
       </footer>
     </div>
@@ -161,8 +161,8 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="bg-white min-h-screen font-sans antialiased text-[#191919] flex items-center justify-center">
-        <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">Loading parameters...</p>
+      <div className="bg-surface min-h-screen font-sans antialiased text-foreground flex items-center justify-center">
+        <p className="text-sm font-bold text-muted uppercase tracking-widest">Loading parameters...</p>
       </div>
     }>
       <ResetPasswordContent />
