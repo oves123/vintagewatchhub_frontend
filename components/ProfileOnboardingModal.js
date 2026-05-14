@@ -31,9 +31,18 @@ export default function ProfileOnboardingModal({ isOpen, onClose, user, onComple
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    // Resolve user id — handle both id and _id shapes
+    const userId = user?.id || user?._id;
+    if (!userId) {
+      alert("Session error: user ID not found. Please refresh and try again.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/user/profile/${user.id}`, {
+      const res = await fetch(`${API_URL}/user/profile/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

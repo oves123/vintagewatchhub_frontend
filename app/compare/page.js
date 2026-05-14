@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { useComparison } from "../context/ComparisonContext";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import { API_BASE_URL } from "../services/api";
+import { useComparison } from "../../context/ComparisonContext";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
+import { API_BASE_URL } from "../../services/api";
 import Link from "next/link";
 
 export default function ComparePage() {

@@ -150,16 +150,23 @@ export default function SellPage() {
       }
 
       // Fetch latest user profile to check completeness
-      const userId = user ? JSON.parse(user).id : null;
+      const parsedUser = user ? JSON.parse(user) : null;
+      const userId = parsedUser?.id || parsedUser?._id;
       if (userId) {
-         fetch(`${API_URL}/user/profile/${userId}`)
+         const token = localStorage.getItem("token");
+         fetch(`${API_URL}/user/profile/${userId}`, {
+           headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
+         })
            .then(res => res.json())
            .then(data => {
-              setCurrentUser(data);
-              if (!data.address || !data.city || !data.phone) {
-                 setShowOnboarding(true);
+              if (data && data.id) {
+                 setCurrentUser(data);
+                 if (!data.address || !data.city || !data.phone) {
+                    setShowOnboarding(true);
+                 }
               }
-           });
+           })
+           .catch(err => console.error("Profile fetch error:", err));
       }
 
       getCategories().then((data) => {
