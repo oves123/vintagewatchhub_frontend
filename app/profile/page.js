@@ -304,21 +304,17 @@ function ProfileContent() {
 
     setIsSubmittingTracking(true);
     try {
-      const res = await markOrderShipped(orderId, user.id, {
+      await markOrderShipped(orderId, user.id, {
         tracking_number: trackingForm.tracking_number,
         courier_name: trackingForm.courier_name,
         packing_video: trackingForm.packing_video
       });
-      if (res.message) {
-        showToast("Shipping updated successfully!");
-        setTrackingForm({ order_id: null, tracking_number: "", courier_name: "", packing_video: null });
-        setEditingTrackingId(null);
-        await loadActivity();
-      } else {
-        showToast(res.message || "Failed to mark as shipped.", "error");
-      }
+      showToast("Shipping updated successfully!");
+      setTrackingForm({ order_id: null, tracking_number: "", courier_name: "", packing_video: null });
+      setEditingTrackingId(null);
+      await loadActivity();
     } catch (err) {
-      showToast("Error updating shipping status.", "error");
+      showToast(err.message || "Error updating shipping status.", "error");
     } finally {
       setIsSubmittingTracking(false);
     }
@@ -874,9 +870,40 @@ function ProfileContent() {
                                      </div>
                                      <div className="flex flex-col items-end gap-2 w-full mt-4">
                                         {offer.status === 'countered' && (
-                                           <div className="flex w-full gap-2 mt-2">
-                                              <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition">Accept</button>
-                                              <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2 bg-rose-50 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-100 transition border border-rose-200">Decline</button>
+                                           <div className="flex flex-col w-full gap-2 mt-2">
+                                              <div className="flex w-full gap-2">
+                                                 <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition">Accept</button>
+                                                 <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2 bg-rose-50 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-100 transition border border-rose-200">Decline</button>
+                                                 <button
+                                                    onClick={() => setCounterForm(counterForm.offerId === offer.id ? { offerId: null, amount: "" } : { offerId: offer.id, amount: "" })}
+                                                    className="flex-1 py-2 bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-100 transition border border-blue-200"
+                                                 >Counter</button>
+                                              </div>
+                                              {counterForm.offerId === offer.id && (
+                                                 <div className="flex gap-2 w-full mt-1">
+                                                    <div className="flex items-center flex-1 border border-gray-200 rounded-lg px-3 py-2 bg-white">
+                                                       <span className="text-[10px] font-black text-gray-400 mr-1">₹</span>
+                                                       <input
+                                                          type="number"
+                                                          placeholder="Your counter"
+                                                          value={counterForm.amount}
+                                                          onChange={(e) => setCounterForm({ ...counterForm, amount: e.target.value })}
+                                                          className="flex-1 text-[10px] font-black outline-none bg-transparent"
+                                                       />
+                                                    </div>
+                                                    <button
+                                                       onClick={() => { handleOfferResponse(offer.id, 'buyer_countered', counterForm.amount); setCounterForm({ offerId: null, amount: "" }); }}
+                                                       disabled={!counterForm.amount}
+                                                       className="px-4 py-2 bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-700 transition disabled:opacity-40"
+                                                    >Send</button>
+                                                 </div>
+                                              )}
+                                           </div>
+                                        )}
+                                        {offer.status === 'buyer_countered' && (
+                                           <div className="w-full mt-2 py-2 bg-blue-50 rounded-lg text-center">
+                                              <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Awaiting Seller Response</p>
+                                              <p className="text-[8px] text-blue-400 font-bold mt-0.5">Your counter of ₹{parseFloat(offer.counter_amount).toLocaleString()} was sent</p>
                                            </div>
                                         )}
                                         {offer.chat_id && (
@@ -1426,8 +1453,8 @@ function ProfileContent() {
                                                <p className="text-[9px] font-bold text-gray-400 uppercase mt-1">From: {offer.buyer_name}</p>
                                             </div>
                                             <div className="text-right">
-                                               <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Offered Price</p>
-                                               <p className="text-xl font-black text-blue-600">₹{parseFloat(offer.amount).toLocaleString()}</p>
+                                               <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">{offer.status === 'buyer_countered' ? 'Buyer Counter Price' : 'Offered Price'}</p>
+                                               <p className="text-xl font-black text-blue-600">₹{parseFloat(offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount).toLocaleString()}</p>
                                             </div>
                                          </div>
                                          
@@ -1445,7 +1472,7 @@ function ProfileContent() {
                                                 </span>
                                                 <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Offer Count: {offer.offer_count}/5</span>
                                             </div>
-                                            {offer.status === 'pending' && (
+                                            {(offer.status === 'pending' || offer.status === 'buyer_countered') && (
                                                 <>
                                                    {counterForm.offerId === offer.id ? (
                                                       <div className="flex items-center gap-2">
@@ -1463,7 +1490,7 @@ function ProfileContent() {
                                                    ) : (
                                                       <div className="flex w-full gap-2">
                                                          <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2.5 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition">Accept</button>
-                                                         <button onClick={() => setCounterForm({offerId: offer.id, amount: offer.amount})} className="flex-1 py-2.5 bg-white border-2 border-gray-900 text-gray-900 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-50 transition">Counter</button>
+                                                         <button onClick={() => setCounterForm({offerId: offer.id, amount: offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount})} className="flex-1 py-2.5 bg-white border-2 border-gray-900 text-gray-900 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-gray-50 transition">Counter</button>
                                                          <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-100 transition">Decline</button>
                                                       </div>
                                                    )}

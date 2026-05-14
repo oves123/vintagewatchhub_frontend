@@ -279,7 +279,9 @@ export const markOrderShipped = async (dealId, sellerId, trackingData) => {
     },
     body: formData
   });
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to mark as shipped.");
+  return data;
 };
 
 export const markOrderDelivered = async (dealId, sellerId) => {

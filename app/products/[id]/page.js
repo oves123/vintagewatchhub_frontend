@@ -200,7 +200,7 @@ export default function ProductPage({ params }) {
   // Fetch seller's other listings when product loads
   useEffect(() => {
     if (product?.seller_id) {
-      fetch(`${API_URL}/products/my-listings/${product.seller_id}`)
+      fetch(`${API_URL}/products/seller/${product.seller_id}`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) setSellerListings(data);
