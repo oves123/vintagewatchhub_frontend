@@ -69,7 +69,10 @@ function HomeContent() {
     }
 
     fetch(url)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         if (!Array.isArray(data)) {
           console.error("Expected array from API, got:", data);
@@ -115,11 +118,18 @@ function HomeContent() {
 
           setNewArrivals(preOwnedExcellent.sort((a, b) => b.id - a.id).slice(0, 4));
         }
+      })
+      .catch((err) => {
+        console.error("Products fetch error:", err);
+        setProducts([]);
       });
 
     // Fetch categories for sidebar
     fetch(`${API_URL}/products/categories`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then(data => {
         if (Array.isArray(data)) {
           setCategories(data);
@@ -135,7 +145,10 @@ function HomeContent() {
 
     // Fetch brands for sidebar
     fetch(`${API_URL}/products/brands`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then(data => {
         if (Array.isArray(data)) {
           setBrands(data);

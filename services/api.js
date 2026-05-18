@@ -1,8 +1,8 @@
-const rawApiUrl = typeof window !== "undefined" && window.location.hostname !== "localhost"
+const rawApiUrl = typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1"
   ? process.env.NEXT_PUBLIC_API_URL 
-  : "http://localhost:5000";
+  : "http://127.0.0.1:5000";
 
-export const API_BASE_URL = rawApiUrl?.replace(/\/api\/?$/, "");
+export const API_BASE_URL = rawApiUrl?.replace(/\/api\/?$/, "") || "http://127.0.0.1:5000";
 export const API_URL = `${API_BASE_URL}/api`;
 
 export const getHeaders = () => {

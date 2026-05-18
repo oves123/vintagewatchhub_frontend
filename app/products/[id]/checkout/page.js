@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { ShieldCheck, Truck, Clock, CheckCircle, ArrowLeft, ExternalLink, Info } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:5000";
 
 export default function CheckoutPage({ params: paramsPromise }) {
   const params = use(paramsPromise);

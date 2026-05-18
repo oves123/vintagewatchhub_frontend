@@ -53,7 +53,10 @@ export default function ProductCard({ product, horizontal = false }) {
         const parsedUser = JSON.parse(storedUser);
         setIsOwner(parseInt(product.seller_id) === parseInt(parsedUser.id));
         fetch(`${API_URL}/watchlist/${parsedUser.id}`)
-          .then(res => res.json())
+          .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+          })
           .then(data => {
             if (Array.isArray(data)) {
               setIsInWatchlist(data.some(item => item.product_id === parseInt(product.id)));
