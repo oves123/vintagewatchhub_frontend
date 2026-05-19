@@ -636,7 +636,7 @@ export default function ProductPage({ params }) {
                     <button 
                       key={i} 
                       onClick={() => setSelectedImage(i)}
-                      className={`aspect-square bg-surface border rounded-none overflow-hidden transition-all relative ${selectedImage === i ? "border-blue-600 shadow-md ring-2 ring-blue-50" : "border-border opacity-60 hover:opacity-100"}`}
+                      className={`aspect-square bg-surface border rounded-none overflow-hidden transition-all relative ${selectedImage === i ? "border-gold shadow-md ring-1 ring-gold/20" : "border-border opacity-60 hover:opacity-100"}`}
                     >
                        {item.type === 'video' ? (
                          <div className="w-full h-full bg-foreground flex items-center justify-center">
@@ -656,7 +656,7 @@ export default function ProductPage({ params }) {
             <div className="lg:col-span-6 p-8 md:p-12 flex flex-col">
               <div className="flex-grow">
                 <div className="flex items-center gap-3 mb-6">
-                    <span className="bg-primary text-white px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest">{product.condition_code || "PRE-OWNED"}</span>
+                    <span className="bg-primary text-white px-3 py-1 rounded-none text-[10px] font-bold uppercase tracking-widest">{product.condition_code || "PRE-OWNED"}</span>
                     <div className="flex items-center gap-3 text-[10px] font-bold text-muted uppercase tracking-widest">
                        <span className="flex items-center gap-1">
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -679,8 +679,8 @@ export default function ProductPage({ params }) {
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
                     Professional Hub Authentication
                   </div>
-                  <div className="flex items-center gap-1.5 text-primary bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
-                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                  <div className="flex items-center gap-1.5 text-primary bg-primary/5 px-3 py-1.5 rounded-none border border-primary/10">
+                    <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
                     Verified Listing
                   </div>
                 </div>
@@ -722,7 +722,7 @@ export default function ProductPage({ params }) {
                               {product.allow_buy_now && bidHistory.length === 0 && (
                                 <button 
                                   onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow}
-                                  className={`w-full h-14 rounded-none font-bold text-[11px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-3 group ${product.shipping_type === 'contact' ? 'bg-surface border-2 border-blue-600 text-primary hover:bg-blue-50 shadow-blue-50' : 'bg-primary text-white hover:bg-blue-700 shadow-blue-100'}`}
+                                  className={`w-full h-14 rounded-none font-bold text-[11px] uppercase tracking-[0.2em] transition-all border flex items-center justify-center gap-3 group ${product.shipping_type === 'contact' ? 'bg-background border-gold text-gold hover:bg-gold hover:text-white' : 'bg-primary text-white border-primary hover:bg-transparent hover:text-primary'}`}
                                 >
                                    {product.shipping_type === 'contact' ? (
                                       <>
@@ -790,7 +790,7 @@ export default function ProductPage({ params }) {
 
                               <button 
                                  onClick={handleChatWithSeller}
-                                 className="w-full h-14 bg-background border border-border text-muted rounded-none font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-surface hover:border-blue-600 hover:text-primary transition-all flex items-center justify-center gap-3 group"
+                                 className="w-full h-14 bg-background border border-border text-muted rounded-none font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-surface hover:border-gold hover:text-gold transition-all flex items-center justify-center gap-3 group"
                               >
                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -824,17 +824,17 @@ export default function ProductPage({ params }) {
 
                {/* Seller Profile Card */}
                {product.seller_id && (
-                 <div className="mt-8 p-6 bg-surface border border-border rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+                 <div className="mt-8 p-6 bg-surface border border-border rounded-none shadow-sm hover:shadow-md transition-shadow">
                    <div className="flex items-center justify-between mb-6">
                      <div className="flex items-center gap-4">
-                       <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                       <div className="w-12 h-12 rounded-none bg-primary flex items-center justify-center text-white font-bold text-lg shadow-sm">
                          {(product.seller_name || 'S').charAt(0).toUpperCase()}
                        </div>
                         <div>
                           <div className="flex items-center gap-2">
                              <p className="font-bold text-foreground text-base">{product.seller_name || `Seller #${product.seller_id}`}</p>
                              {product.seller_verified && (
-                                <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-none border border-emerald-100">
                                   <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                                   Verified
                                 </span>
@@ -874,7 +874,7 @@ export default function ProductPage({ params }) {
                    <div className="flex flex-col gap-3">
                      <button 
                        onClick={() => setShowItemsModal(true)}
-                       className="w-full py-3.5 bg-background border border-border rounded-none text-[11px] font-bold text-foreground uppercase tracking-widest hover:bg-primary hover:text-white hover:border-blue-600 transition-all flex items-center justify-center gap-2 group"
+                       className="w-full py-3.5 bg-background border border-border rounded-none text-[11px] font-bold text-foreground uppercase tracking-widest hover:bg-primary hover:text-white hover:border-gold transition-all flex items-center justify-center gap-2 group"
                      >
                        <span>Seller other items</span>
                        <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
@@ -934,7 +934,7 @@ export default function ProductPage({ params }) {
                 return (
                   <button 
                     key={t} onClick={() => setActiveTab(t)}
-                    className={`pb-4 text-[12px] font-bold uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${activeTab === t ? "border-blue-600 text-primary" : "border-transparent text-muted"}`}
+                    className={`pb-4 text-[12px] font-bold uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${activeTab === t ? "border-gold text-primary" : "border-transparent text-muted"}`}
                   >
                     {t}
                   </button>

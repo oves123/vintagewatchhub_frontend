@@ -53,48 +53,48 @@ function ResetPasswordContent() {
 
   return (
     <div className="bg-surface min-h-screen font-sans antialiased text-foreground">
-      <header className="px-6 py-6 max-w-[1240px] mx-auto">
+      <header className="px-6 py-6 max-w-[1240px] mx-auto border-b border-border">
         <Link href="/">
-          <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">
-            WATCH<span className="text-primary">COLLECTOR</span>HUB
+          <h1 className="text-2xl font-black tracking-tighter uppercase leading-none font-serif">
+            WATCH<span className="text-gold italic font-light">COLLECTOR</span>HUB
           </h1>
         </Link>
       </header>
 
-      <main className="max-w-[1240px] mx-auto px-6 py-10 flex justify-center">
+      <main className="max-w-[1240px] mx-auto px-6 py-20 flex justify-center">
         <div className="w-full max-w-[420px] pt-4">
           <div className="mb-10 text-center">
-            <h1 className="text-3xl font-black mb-1">Set New Password</h1>
-            <p className="text-sm">
+            <h1 className="text-3xl font-serif uppercase tracking-[0.1em] mb-3">Set New Password</h1>
+            <p className="text-xs text-muted font-medium">
               Please enter your new password below.
             </p>
           </div>
 
           {message && (
-            <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 flex items-center gap-3 animate-in fade-in duration-300">
-               <p className="text-sm font-medium text-green-800">{message}</p>
+            <div className="mb-6 p-4 bg-emerald-50/50 border border-emerald-100 flex items-center gap-3 animate-in fade-in duration-300">
+               <p className="text-xs font-semibold text-emerald-700">{message}</p>
             </div>
           )}
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 flex items-center gap-3 animate-in fade-in duration-300">
-               <p className="text-sm font-medium text-red-800">{error}</p>
+            <div className="mb-6 p-4 bg-rose-50/50 border border-rose-200 flex items-center gap-3 animate-in fade-in duration-300">
+               <p className="text-xs font-semibold text-rose-700">{error}</p>
             </div>
           )}
 
           {!token ? (
             <div className="text-center">
-              <Link href="/forgot-password" size="sm" className="text-sm font-medium text-primary hover:underline">
+              <Link href="/forgot-password" size="sm" className="text-xs font-bold uppercase tracking-wider text-gold hover:text-gold/80 transition-colors">
                 Request a new reset link
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="relative">
                 <input
                   type="password"
                   required
-                  className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
+                  className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all peer text-[13px] text-foreground"
                   placeholder=" "
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -102,7 +102,7 @@ function ResetPasswordContent() {
                 />
                 <label 
                   htmlFor="password" 
-                  className="absolute text-muted duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-primary"
+                  className="absolute text-muted duration-300 transform -translate-y-3.5 scale-75 top-4.5 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3.5 peer-focus:text-gold text-[12px] uppercase tracking-wider"
                 >
                   New Password
                 </label>
@@ -112,7 +112,7 @@ function ResetPasswordContent() {
                 <input
                   type="password"
                   required
-                  className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all peer"
+                  className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all peer text-[13px] text-foreground"
                   placeholder=" "
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -120,7 +120,7 @@ function ResetPasswordContent() {
                 />
                 <label 
                   htmlFor="confirmPassword" 
-                  className="absolute text-muted duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-primary"
+                  className="absolute text-muted duration-300 transform -translate-y-3.5 scale-75 top-4.5 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3.5 peer-focus:text-gold text-[12px] uppercase tracking-wider"
                 >
                   Confirm New Password
                 </label>
@@ -129,7 +129,7 @@ function ResetPasswordContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-primary text-white rounded-full font-bold text-base hover:bg-blue-700 transition-colors shadow-sm active:scale-[0.99] disabled:opacity-50 mt-4"
+                className="w-full py-4 bg-black text-white border border-black hover:bg-gold hover:text-black transition-all duration-300 rounded-none font-serif uppercase tracking-[0.2em] text-[11px] font-bold disabled:opacity-50 mt-6"
               >
                 {loading ? "Updating..." : "Update Password"}
               </button>
@@ -137,7 +137,7 @@ function ResetPasswordContent() {
           )}
 
           <div className="mt-8 text-center">
-            <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+            <Link href="/login" className="text-xs font-bold uppercase tracking-wider text-gold hover:text-gold/80 transition-colors">
               Back to Sign In
             </Link>
           </div>

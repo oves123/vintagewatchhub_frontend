@@ -5,7 +5,7 @@ import Navbar from "../../components/Navbar";
 import { getUserProfile, updateUserProfile, getUserActivity, API_BASE_URL, API_URL, getSellerReviews, createReview, markOrderShipped, markOrderDelivered, confirmOrderReceived, confirmOrderSale, cancelDeal, disputeDeal, getUserDeals, markOrderPaid, createRazorpayOrder, verifyRazorpayPayment, getUserReports, getUserLedger } from "../../services/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { X, Camera, CheckCircle, FileText, ExternalLink, Send, Edit2, PieChart, TrendingUp, Calendar, Search, Sliders, ArrowUpRight, ArrowDownLeft, Filter, ArrowRight, Download } from "lucide-react";
+import { X, Camera, CheckCircle, FileText, ExternalLink, Send, Edit2, PieChart, TrendingUp, Calendar, Search, Sliders, ArrowUpRight, ArrowDownLeft, Filter, ArrowRight, Download, XCircle } from "lucide-react";
 
 function ProfileContent() {
   const [user, setUser] = useState(null);
@@ -638,7 +638,7 @@ function ProfileContent() {
                    <button 
                       key={nav.id}
                       onClick={() => setActiveTab(nav.id)}
-                      className={`text-left text-[11px] font-bold uppercase tracking-[0.15em] transition-all pb-2 border-b w-fit ${activeTab === nav.id ? 'text-primary border-blue-600' : 'text-muted border-transparent hover:text-foreground hover:border-border'}`}
+                      className={`text-left text-[11px] font-bold uppercase tracking-[0.15em] transition-all pb-2 border-b w-fit ${activeTab === nav.id ? 'text-primary border-gold' : 'text-muted border-transparent hover:text-foreground hover:border-border'}`}
                    >
                       {nav.label}
                    </button>
@@ -677,7 +677,7 @@ function ProfileContent() {
                           <input 
                              type="text" value={profileForm.name}
                              onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
                           />
                       </div>
                       <div className="space-y-4">
@@ -685,7 +685,7 @@ function ProfileContent() {
                           <input 
                              type="text" value={profileForm.phone}
                              onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors"
                           />
                       </div>
                       <div className="space-y-4">
@@ -693,7 +693,7 @@ function ProfileContent() {
                           <input 
                              type="text" value={profileForm.city}
                              onChange={(e) => setProfileForm({...profileForm, city: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
                           />
                       </div>
                       <div className="space-y-4">
@@ -701,7 +701,7 @@ function ProfileContent() {
                           <input 
                              type="text" value={profileForm.state}
                              onChange={(e) => setProfileForm({...profileForm, state: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
                           />
                       </div>
                       <div className="space-y-4">
@@ -709,7 +709,7 @@ function ProfileContent() {
                           <input 
                              type="text" value={profileForm.pincode}
                              onChange={(e) => setProfileForm({...profileForm, pincode: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
                           />
                       </div>
                       <div className="md:col-span-2 space-y-4 pt-4">
@@ -717,7 +717,7 @@ function ProfileContent() {
                           <textarea 
                              rows="4" value={profileForm.bio}
                              onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
-                             className="w-full border border-border bg-background/50 p-6 rounded-none outline-none text-[13px] font-medium leading-relaxed focus:border-blue-600 focus:bg-surface transition-all"
+                             className="w-full border border-border bg-background/50 p-6 rounded-none outline-none text-[13px] font-medium leading-relaxed focus:border-gold focus:bg-surface transition-all"
                              placeholder="Briefly describe your watch collection interest..."
                           />
                       </div>
@@ -727,7 +727,7 @@ function ProfileContent() {
                           <select 
                              value={profileForm.seller_type}
                              onChange={(e) => setProfileForm({...profileForm, seller_type: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
                           >
                              <option value="individual">Individual</option>
                              <option value="business">Business</option>
@@ -739,7 +739,7 @@ function ProfileContent() {
                           <input 
                              type="text" value={profileForm.gst_number}
                              onChange={(e) => setProfileForm({...profileForm, gst_number: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
                              placeholder="e.g. 22AAAAA0000A1Z5"
                           />
                       </div>
@@ -754,7 +754,7 @@ function ProfileContent() {
                           <input 
                              type="text" value={profileForm.payment_methods?.upi || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, upi: e.target.value }})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors"
                              placeholder="Enter UPI ID"
                           />
                       </div>
@@ -764,7 +764,7 @@ function ProfileContent() {
                           <input 
                              type="text" value={profileForm.payment_methods?.bank_name || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, bank_name: e.target.value }})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
                              placeholder="e.g. HDFC Bank"
                           />
                       </div>
@@ -774,7 +774,7 @@ function ProfileContent() {
                           <input 
                              type="text" value={profileForm.payment_methods?.account_number || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, account_number: e.target.value }})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors"
                              placeholder="Enter Bank Account Number"
                           />
                       </div>
@@ -784,7 +784,7 @@ function ProfileContent() {
                           <input 
                              type="text" value={profileForm.payment_methods?.ifsc || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, ifsc: e.target.value }})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-blue-600 transition-colors uppercase tracking-tight"
+                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
                              placeholder="Enter Bank IFSC Code"
                           />
                       </div>
@@ -792,7 +792,7 @@ function ProfileContent() {
                           <button 
                              type="submit"
                              disabled={isUpdating}
-                             className="bg-black text-white px-12 py-4 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-primary transition-all disabled:bg-gray-200"
+                             className="bg-primary text-white border border-primary px-12 py-4 rounded-none text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-transparent hover:text-primary transition-all disabled:bg-gray-200"
                           >
                              {isUpdating ? 'Synchronizing Node...' : 'Update Information'}
                           </button>
@@ -815,7 +815,7 @@ function ProfileContent() {
                         <button 
                            key={sub}
                            onClick={() => setBuyingSubTab(sub)}
-                           className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${buyingSubTab === sub ? 'text-primary border-blue-600' : 'text-muted border-transparent hover:text-foreground'}`}
+                           className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${buyingSubTab === sub ? 'text-primary border-gold' : 'text-muted border-transparent hover:text-foreground'}`}
                         >
                            {sub} {
                              sub === 'negotiations' ? (
@@ -863,9 +863,9 @@ function ProfileContent() {
                                   </div>
                                    <div className="flex justify-between items-end">
                                      <div>
-                                        <p className="text-[9px] font-bold text-muted uppercase mb-1">{offer.status === 'countered' ? 'Seller Counter Price' : 'Your bid'}</p>
+                      <p className="text-[9px] font-bold text-muted uppercase mb-1">{offer.status === 'countered' ? 'Seller Counter Price' : 'Your bid'}</p>
                                         <p className={`text-md font-black ${offer.status === 'countered' ? 'text-primary' : 'text-foreground'}`}>
-                                           â‚¹{parseFloat(offer.status === 'countered' ? offer.counter_amount : offer.amount).toLocaleString()}
+                                           ₹{parseFloat(offer.status === 'countered' ? offer.counter_amount : offer.amount).toLocaleString()}
                                         </p>
                                      </div>
                                      <div className="flex flex-col items-end gap-2 w-full mt-4">
@@ -876,13 +876,13 @@ function ProfileContent() {
                                                  <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2 bg-rose-50 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-rose-100 transition border border-rose-200">Decline</button>
                                                  <button
                                                     onClick={() => setCounterForm(counterForm.offerId === offer.id ? { offerId: null, amount: "" } : { offerId: offer.id, amount: "" })}
-                                                    className="flex-1 py-2 bg-blue-50 text-primary text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-blue-100 transition border border-blue-200"
+                                                    className="flex-1 py-2 bg-gold/5 text-gold text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-gold/10 transition border border-gold/20"
                                                  >Counter</button>
                                               </div>
                                               {counterForm.offerId === offer.id && (
                                                  <div className="flex gap-2 w-full mt-1">
                                                     <div className="flex items-center flex-1 border border-border rounded-none px-3 py-2 bg-surface">
-                                                       <span className="text-[10px] font-black text-muted mr-1">â‚¹</span>
+                                                       <span className="text-[10px] font-black text-muted mr-1">₹</span>
                                                        <input
                                                           type="number"
                                                           placeholder="Your counter"
@@ -894,16 +894,16 @@ function ProfileContent() {
                                                     <button
                                                        onClick={() => { handleOfferResponse(offer.id, 'buyer_countered', counterForm.amount); setCounterForm({ offerId: null, amount: "" }); }}
                                                        disabled={!counterForm.amount}
-                                                       className="px-4 py-2 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-blue-700 transition disabled:opacity-40"
+                                                       className="px-4 py-2 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-primary-light transition disabled:opacity-40"
                                                     >Send</button>
                                                  </div>
                                               )}
                                            </div>
                                         )}
                                         {offer.status === 'buyer_countered' && (
-                                           <div className="w-full mt-2 py-2 bg-blue-50 rounded-none text-center">
+                                           <div className="w-full mt-2 py-2 bg-primary/5 rounded-none text-center">
                                               <p className="text-[9px] font-black text-primary uppercase tracking-widest">Awaiting Seller Response</p>
-                                              <p className="text-[8px] text-blue-400 font-bold mt-0.5">Your counter of â‚¹{parseFloat(offer.counter_amount).toLocaleString()} was sent</p>
+                                              <p className="text-[8px] text-gold font-bold mt-0.5">Your counter of ₹{parseFloat(offer.counter_amount).toLocaleString()} was sent</p>
                                            </div>
                                         )}
                                         {offer.chat_id && (
@@ -948,11 +948,11 @@ function ProfileContent() {
                                </div>
                                <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-1">
-                                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none ${
                                         deal.status === 'CONFIRMED' ? 'bg-black text-white' : 
                                         deal.status === 'SHIPPED' ? 'bg-amber-500 text-white' : 
                                         deal.status === 'DELIVERED' ? 'bg-emerald-500 text-white' : 
-                                        ['CANCELLED', 'REFUND_PENDING'].includes(deal.status) ? 'bg-rose-500 text-white' : 'bg-blue-500 text-white'
+                                        ['CANCELLED', 'REFUND_PENDING'].includes(deal.status) ? 'bg-rose-500 text-white' : 'bg-primary text-white'
                                       }`}>
                                          {
                                           deal.status === 'PAID' ? 'âœ“ Payment Verified' : 
@@ -965,7 +965,7 @@ function ProfileContent() {
                                       </span>
                                      <span className="text-[10px] font-bold text-muted uppercase tracking-tight">Deal #D-{deal.id}</span>
                                      {deal.payment_status === 'PAID' && (
-                                       <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest ml-auto">PAID via {deal.payment_method}</span>
+                                       <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-none uppercase tracking-widest ml-auto">PAID via {deal.payment_method}</span>
                                      )}
                                   </div>
                                    {/* Animated Deal Progress Stepper */}
@@ -981,20 +981,20 @@ function ProfileContent() {
                                      const currentIdx = order.indexOf(deal.status);
                                      return (
                                        <div className="flex items-center mb-3 mt-2 w-full overflow-hidden">
-                                         <style>{`.step-pulse{animation:spulse 1.5s ease-in-out infinite}@keyframes spulse{0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,.5)}70%{box-shadow:0 0 0 6px rgba(59,130,246,0)}}`}</style>
+                                         <style>{`.step-pulse{animation:spulse 1.5s ease-in-out infinite}@keyframes spulse{0%,100%{box-shadow:0 0 0 0 rgba(197,160,89,.5)}70%{box-shadow:0 0 0 6px rgba(197,160,89,0)}}`}</style>
                                          {steps.map((s, i) => {
                                            const done = i < currentIdx;
                                            const active = i === currentIdx;
                                            return (
                                              <div key={s.key} className="flex items-center flex-1 min-w-0">
                                                <div className="flex flex-col items-center shrink-0">
-                                                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] transition-all ${done ? 'bg-emerald-500 text-white shadow-md' : active ? 'bg-primary text-white step-pulse' : 'bg-background text-muted'}`}>
+                                                 <div className={`w-7 h-7 rounded-none flex items-center justify-center text-[11px] transition-all ${done ? 'bg-emerald-500 text-white shadow-md' : active ? 'bg-primary text-white step-pulse' : 'bg-background text-muted'}`}>
                                                    {done ? '✓' : s.icon}
                                                  </div>
                                                  <span className={`text-[7px] font-black uppercase tracking-widest mt-1 ${active ? 'text-primary' : done ? 'text-emerald-600' : 'text-muted'}`}>{s.label}</span>
                                                </div>
                                                {i < steps.length - 1 && (
-                                                 <div className={`h-0.5 flex-1 mx-1 mb-4 rounded-full transition-all ${done ? 'bg-emerald-400' : 'bg-background'}`} />
+                                                 <div className={`h-0.5 flex-1 mx-1 mb-4 rounded-none transition-all ${done ? 'bg-emerald-400' : 'bg-background'}`} />
                                                )}
                                              </div>
                                            );
@@ -1047,7 +1047,7 @@ function ProfileContent() {
                                   {deal.status === 'SHIPPED' && (
                                     <button 
                                        onClick={() => handleConfirmPurchase(deal.id)}
-                                       className="w-full py-3 bg-primary text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition"
+                                       className="w-full py-3 bg-primary text-white rounded-none text-[9px] font-bold uppercase tracking-widest hover:bg-primary-light transition shadow-none"
                                     >
                                        Confirm Receipt
                                     </button>
@@ -1057,13 +1057,13 @@ function ProfileContent() {
                                      <>
                                       <button 
                                           onClick={() => handleFinalizeCompletion(deal.id)}
-                                          className="w-full py-3 bg-emerald-600 text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition"
+                                          className="w-full py-3 bg-emerald-600 text-white rounded-none text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-700 transition shadow-none"
                                        >
                                           Confirm Completion
                                        </button>
                                        <button 
                                           onClick={() => handleDisputeDeal(deal.id)}
-                                          className="w-full py-2 border border-rose-100 text-rose-500 rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-rose-50 transition"
+                                          className="w-full py-2 border border-rose-100 text-rose-500 rounded-none text-[8px] font-bold uppercase tracking-widest hover:bg-rose-50 transition"
                                        >
                                           Item Not As Described
                                        </button>
@@ -1075,14 +1075,14 @@ function ProfileContent() {
                                          {deal.payment_status === 'PENDING' && (
                                             <button 
                                                onClick={() => handlePayWithRazorpay(deal)}
-                                               className="w-full py-3 bg-primary text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition"
+                                               className="w-full py-3 bg-primary text-white rounded-none text-[9px] font-bold uppercase tracking-widest hover:bg-primary-light transition shadow-none"
                                             >
                                                Pay Online (Razorpay)
                                             </button>
                                          )}
                                         <button 
                                            onClick={() => handleCancelDeal(deal.id)}
-                                           className="w-full py-2 border border-border text-muted rounded-full text-[8px] font-bold uppercase tracking-widest hover:bg-background transition"
+                                           className="w-full py-2 border border-border text-muted rounded-none text-[8px] font-bold uppercase tracking-widest hover:bg-background transition"
                                         >
                                            {deal.status === 'PAID' ? 'Request Refund & Cancel' : 'Cancel Order'}
                                         </button>
@@ -1099,7 +1099,7 @@ function ProfileContent() {
                                    )}
 
                                    {deal.status === 'DISPUTED' && (
-                                      <div className="w-full py-3 bg-background text-muted rounded-full text-[9px] font-bold uppercase tracking-widest text-center border border-border italic">
+                                      <div className="w-full py-3 bg-background text-muted rounded-none text-[9px] font-bold uppercase tracking-widest text-center border border-border italic">
                                          Under Admin Review
                                       </div>
                                    )}
@@ -1107,7 +1107,7 @@ function ProfileContent() {
                                   {deal.status === 'CONFIRMED' && !deal.review_id && (
                                      <button 
                                         onClick={() => openReviewModal({...deal, seller_id: deal.seller_id})}
-                                        className="w-full py-3 bg-black text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 transition"
+                                        className="w-full py-3 bg-black text-white rounded-none text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 transition"
                                      >
                                         Leave Feedback
                                      </button>
@@ -1149,7 +1149,7 @@ function ProfileContent() {
                           <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Seller Hub</h2>
                           <p className="text-xs text-muted mt-2 font-medium">Professional command center for your high-value inventory and active deal pipelines.</p>
                         </div>
-                        <button onClick={() => router.push('/sell')} className="bg-black text-white px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all shadow-lg shadow-gray-100">Create Listing</button>
+                        <button onClick={() => router.push('/sell')} className="bg-black text-white px-6 py-3 rounded-none text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all shadow-none">Create Listing</button>
                      </div>
 
                      {/* Sub Tabs */}
@@ -1158,7 +1158,7 @@ function ProfileContent() {
                           <button 
                              key={sub}
                              onClick={() => setSellingSubTab(sub)}
-                             className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${sellingSubTab === sub ? 'text-primary border-blue-600' : 'text-muted border-transparent hover:text-foreground'}`}
+                             className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${sellingSubTab === sub ? 'text-primary border-gold' : 'text-muted border-transparent hover:text-foreground'}`}
                           >
                              {sub === 'inventory' ? `Inventory (${activity.listings?.length || 0})` : 
                               sub === 'deals' ? `Active Deals${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length > 0 ? ` (${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length})` : ''}` :
@@ -1173,7 +1173,7 @@ function ProfileContent() {
                         {sellingSubTab === 'inventory' && (
                            <div className="space-y-6">
                                {activity.listings?.some(item => item.status === 'pending') && (
-                                 <div className="bg-blue-50 border border-blue-100 text-blue-700 px-6 py-4 rounded-none text-[11px] font-bold uppercase tracking-tight flex items-start gap-4">
+                                 <div className="bg-gold/5 border border-gold/20 text-gold px-6 py-4 rounded-none text-[11px] font-bold uppercase tracking-tight flex items-start gap-4">
                                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     <p>Newly created listings will appear as <span className="px-1 py-0.5 bg-amber-500 text-white rounded font-black mx-1">PENDING</span> and must be approved by an administrator before they become visible on the marketplace.</p>
                                  </div>
@@ -1679,37 +1679,37 @@ function ProfileContent() {
 
                       {reportsLoading ? (
                         <div className="py-20 flex flex-col items-center gap-4">
-                           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
+                            <div className="w-8 h-8 border-2 border-gold border-t-transparent animate-spin rounded-none"></div>
                            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Compiling Records...</p>
                         </div>
                       ) : (
                         <div className="space-y-12">
                            {/* Summary Grid */}
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className="p-8 bg-black rounded-[2.5rem] text-white shadow-2xl shadow-gray-200 relative overflow-hidden group">
+                              <div className="p-8 bg-black rounded-none text-white border border-border/40 shadow-none relative overflow-hidden group">
                                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
                                  <div className="flex justify-between items-start mb-6">
                                     <div className="w-10 h-10 bg-surface/10 rounded-none flex items-center justify-center">
                                        <TrendingUp className="w-5 h-5 text-emerald-400" />
                                     </div>
-                                    <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30">Liquidated Assets</span>
+                                    <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-none border border-emerald-500/30">Liquidated Assets</span>
                                  </div>
                                  <p className="text-[10px] font-bold text-muted uppercase tracking-[0.2em]">Total Sales Volume</p>
                                  <h3 className="text-4xl font-black mt-2 tracking-tighter">â‚¹{parseFloat(financialReports.totals.total_sales || 0).toLocaleString()}</h3>
                                  <p className="text-[9px] font-medium text-muted mt-4 uppercase tracking-wider">{financialReports.totals.total_items_sold} Orders Successfully Audited</p>
                               </div>
 
-                              <div className="p-8 bg-primary rounded-[2.5rem] text-white shadow-2xl shadow-blue-100 relative overflow-hidden group">
+                              <div className="p-8 bg-primary rounded-none text-white border border-gold/20 shadow-none relative overflow-hidden group">
                                  <div className="absolute top-0 right-0 w-32 h-32 bg-surface/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-surface/20 transition-all"></div>
                                  <div className="flex justify-between items-start mb-6">
                                     <div className="w-10 h-10 bg-surface/10 rounded-none flex items-center justify-center">
                                        <PieChart className="w-5 h-5 text-white" />
                                     </div>
-                                    <span className="text-[8px] font-black uppercase tracking-widest bg-surface/20 text-white px-3 py-1 rounded-full border border-white/30">Acquired Inventory</span>
+                                    <span className="text-[8px] font-black uppercase tracking-widest bg-surface/20 text-white px-3 py-1 rounded-none border border-white/30">Acquired Inventory</span>
                                  </div>
-                                 <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.2em]">Total Acquisition Cost</p>
+                                 <p className="text-[10px] font-bold text-gold uppercase tracking-[0.2em]">Total Acquisition Cost</p>
                                  <h3 className="text-4xl font-black mt-2 tracking-tighter">â‚¹{parseFloat(financialReports.totals.total_spent || 0).toLocaleString()}</h3>
-                                 <p className="text-[9px] font-medium text-blue-200 mt-4 uppercase tracking-wider">{financialReports.totals.total_items_bought} Products in Vault</p>
+                                 <p className="text-[9px] font-medium text-white/60 mt-4 uppercase tracking-wider">{financialReports.totals.total_items_bought} Products in Vault</p>
                               </div>
                            </div>
 
@@ -1753,7 +1753,7 @@ function ProfileContent() {
                                           type="date" 
                                           value={ledgerFilters.startDate}
                                           onChange={(e) => setLedgerFilters({...ledgerFilters, startDate: e.target.value})}
-                                          className="bg-surface border border-border text-[10px] font-bold px-3 py-2 rounded-none outline-none focus:ring-2 ring-blue-50"
+                                          className="bg-surface border border-border text-[10px] font-bold px-3 py-2 rounded-none outline-none focus:border-gold"
                                        />
                                     </div>
                                     <ArrowRight className="w-3 h-3 text-muted" />
@@ -1763,7 +1763,7 @@ function ProfileContent() {
                                           type="date" 
                                           value={ledgerFilters.endDate}
                                           onChange={(e) => setLedgerFilters({...ledgerFilters, endDate: e.target.value})}
-                                          className="bg-surface border border-border text-[10px] font-bold px-3 py-2 rounded-none outline-none focus:ring-2 ring-blue-50"
+                                          className="bg-surface border border-border text-[10px] font-bold px-3 py-2 rounded-none outline-none focus:border-gold"
                                        />
                                     </div>
                                  </div>
@@ -1804,14 +1804,14 @@ function ProfileContent() {
 
                               {ledgerLoading ? (
                                 <div className="py-20 flex justify-center">
-                                   <div className="w-6 h-6 border-2 border-border border-t-gray-900 animate-spin rounded-full"></div>
+                                   <div className="w-6 h-6 border-2 border-border border-t-gold animate-spin rounded-none"></div>
                                 </div>
                               ) : ledger.length > 0 ? (
                                 <div className="space-y-4">
                                    {ledger.map((deal) => {
                                       const isBuyer = deal.buyer_id === user.id;
                                       return (
-                                         <div key={deal.id} className="bg-surface border border-border rounded-3xl p-6 hover:shadow-xl hover:shadow-gray-100/50 transition-all group">
+                                         <div key={deal.id} className="bg-surface border border-border rounded-none p-6 hover:shadow-xl hover:shadow-gray-100/50 transition-all group">
                                             <div className="flex flex-col lg:flex-row gap-8">
                                                {/* Product Info */}
                                                <div className="flex gap-5 flex-1">
@@ -1840,7 +1840,7 @@ function ProfileContent() {
                                                   </div>
                                                   <div className="min-w-[100px]">
                                                      <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">State</p>
-                                                     <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${deal.status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : deal.status === 'CANCELLED' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-blue-50 text-primary border border-blue-100'}`}>
+                                                     <span className={`px-2 py-0.5 rounded-none text-[8px] font-black uppercase tracking-widest ${deal.status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : deal.status === 'CANCELLED' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-gold/5 text-gold border border-gold/20'}`}>
                                                         {deal.status}
                                                      </span>
                                                   </div>
@@ -1979,7 +1979,7 @@ function ProfileContent() {
                        rows="4"
                        value={reviewForm.comment}
                        onChange={(e) => setReviewForm({...reviewForm, comment: e.target.value})}
-                       className="w-full bg-background border border-border p-6 rounded-none outline-none focus:border-blue-600 focus:bg-surface transition-all text-sm font-medium"
+                       className="w-full bg-background border border-border p-6 rounded-none outline-none focus:border-gold focus:bg-surface transition-all text-sm font-medium"
                        placeholder="Detail your acquisition experience..."
                     />
                  </div>
@@ -2013,7 +2013,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-surface">
         <Navbar />
         <div className="flex items-center justify-center h-[60vh] gap-3">
-          <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+          <div className="animate-spin h-5 w-5 border-2 border-gold border-t-transparent rounded-none"></div>
           <span className="text-muted font-bold uppercase tracking-widest text-[10px]">Verifying credentials...</span>
         </div>
       </div>

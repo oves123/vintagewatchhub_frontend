@@ -381,14 +381,14 @@ function MessagesContent() {
     });
   }, [chats, searchQuery, user]);
 
-  if (!user) return <div className="min-h-screen bg-surface"><Navbar /><div className="flex items-center justify-center h-[60vh] gap-3"><div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div><span className="text-muted font-bold uppercase tracking-widest text-[10px]">Authenticating Session...</span></div></div>;
+  if (!user) return <div className="min-h-screen bg-surface"><Navbar /><div className="flex items-center justify-center h-[60vh] gap-3"><div className="animate-spin h-5 w-5 border-2 border-gold border-t-transparent rounded-none"></div><span className="text-muted font-bold uppercase tracking-widest text-[10px]">Authenticating Session...</span></div></div>;
 
   return (
     <div className="h-screen bg-[#f4f7f6] flex flex-col font-sans overflow-hidden">
       <Navbar />
       
       <div className="flex-grow flex overflow-hidden lg:p-4 p-0">
-        <main className="flex-grow flex overflow-hidden bg-surface shadow-2xl rounded-none lg:rounded-none max-w-[1400px] mx-auto w-full border border-border overflow-hidden">
+        <main className="flex-grow flex overflow-hidden bg-surface shadow-none rounded-none lg:rounded-none max-w-[1400px] mx-auto w-full border border-border overflow-hidden">
           
           {/* SIDEBAR: EBAY/OLX STYLE */}
           <aside className={`w-full md:w-[350px] lg:w-[380px] flex flex-col border-r border-border bg-surface shrink-0 ${mobileShowChat ? 'hidden md:flex' : 'flex'}`}>
@@ -401,7 +401,7 @@ function MessagesContent() {
                     placeholder={labels.chat_search_placeholder || "Search or start new chat"} 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-background border border-transparent focus:bg-surface focus:border-blue-500 rounded-none py-2.5 pl-10 pr-4 text-sm outline-none transition-all"
+                    className="w-full bg-background border border-transparent focus:bg-surface focus:border-gold rounded-none py-2.5 pl-10 pr-4 text-sm outline-none transition-all"
                   />
                </div>
             </div>
@@ -409,7 +409,7 @@ function MessagesContent() {
             <div className="flex-grow overflow-y-auto custom-scrollbar">
                {filteredChats.length === 0 ? (
                  <div className="p-12 text-center">
-                    <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-16 h-16 bg-background rounded-none border border-border flex items-center justify-center mx-auto mb-4">
                        <Search className="text-muted w-8 h-8" />
                     </div>
                     <p className="text-sm font-semibold text-muted">{labels.chat_no_conversations || "No conversations found"}</p>
@@ -427,15 +427,15 @@ function MessagesContent() {
                       <div 
                         key={chat.id} 
                         onClick={() => { setActiveChat(chat); setMobileShowChat(true); }}
-                        className={`group px-4 py-4 flex gap-3 cursor-pointer transition-all border-b border-gray-50/50 ${isActive ? "bg-blue-50/50 border-blue-100" : "hover:bg-background"}`}
+                        className={`group px-4 py-4 flex gap-3 cursor-pointer transition-all border-b border-gray-50/50 ${isActive ? "bg-gold/5 border-gold/20" : "hover:bg-background"}`}
                       >
                          <div className="relative shrink-0">
-                            <div className="w-12 h-12 rounded-full overflow-hidden border border-border bg-background uppercase font-black text-muted flex items-center justify-center text-lg">
+                            <div className="w-12 h-12 rounded-none overflow-hidden border border-border bg-background uppercase font-black text-muted flex items-center justify-center text-lg">
                                {otherAvatar ? (
                                  <img src={otherAvatar.startsWith('http') ? otherAvatar : `${API_BASE_URL}/uploads/${otherAvatar}`} className="w-full h-full object-cover" />
                                ) : otherName?.[0]}
                             </div>
-                            {isOnline && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />}
+                            {isOnline && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-none shadow-sm" />}
                          </div>
                          <div className="flex-grow min-w-0">
                             <div className="flex justify-between items-start mb-0.5">
@@ -448,10 +448,10 @@ function MessagesContent() {
                                <p className={`text-xs truncate ${isUnread ? "font-bold text-foreground" : "text-muted"}`}>
                                   {chat.last_message || labels.chat_active_listing_discussion || "Active discussion"}
                                </p>
-                               {isUnread && <div className="bg-primary text-white min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold px-1">{chat.unread_count}</div>}
+                               {isUnread && <div className="bg-primary text-white min-w-[18px] h-[18px] rounded-none flex items-center justify-center text-[10px] font-bold px-1">{chat.unread_count}</div>}
                             </div>
                             <Link href={`/products/${chat.product_id}`} className="mt-2 flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity hover:underline">
-                               <div className="w-5 h-5 rounded overflow-hidden bg-background shrink-0">
+                               <div className="w-5 h-5 rounded-none overflow-hidden bg-background shrink-0">
                                   <img src={chat.product_image?.startsWith('http') ? chat.product_image : `${API_BASE_URL}/uploads/${chat.product_image}`} className="w-full h-full object-cover" />
                                </div>
                                <span className="text-[10px] font-bold text-muted truncate uppercase tracking-tighter">{chat.product_title}</span>
@@ -471,31 +471,31 @@ function MessagesContent() {
                 {/* MODERN HEADER */}
                 <header className="h-[75px] border-b border-border px-3 md:px-6 flex items-center justify-between bg-surface/80 backdrop-blur-md sticky top-0 z-30">
                    <div className="flex items-center gap-4 min-w-0">
-                      <button onClick={() => setMobileShowChat(false)} className="md:hidden p-2 hover:bg-background rounded-full transition-colors">
+                      <button onClick={() => setMobileShowChat(false)} className="md:hidden p-2 hover:bg-background rounded-none transition-colors">
                          <X className="w-5 h-5 text-muted" />
                       </button>
                       
                       <div className="relative shrink-0">
-                         <div className="w-10 h-10 rounded-full overflow-hidden border border-border bg-background font-bold text-muted flex items-center justify-center">
+                         <div className="w-10 h-10 rounded-none overflow-hidden border border-border bg-background font-bold text-muted flex items-center justify-center">
                             {(activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar) ? (
                               <img src={(activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar).startsWith('http') ? (activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar) : `${API_BASE_URL}/uploads/${activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar}`} className="w-full h-full object-cover" />
                             ) : (activeChat.buyer_id === user.id ? activeChat.seller_name : activeChat.buyer_name)?.[0]}
                          </div>
                          {onlineUsers.has(activeChat.buyer_id === user.id ? activeChat.seller_id : activeChat.buyer_id) && (
-                           <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
+                           <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-none shadow-sm" />
                          )}
                       </div>
 
                       <div className="min-w-0 flex-shrink">
                          <div className="flex items-center gap-1.5 md:gap-2">
                            <h3 className="font-bold text-[14px] md:text-[16px] text-foreground truncate tracking-tight">{activeChat.buyer_id === user.id ? activeChat.seller_name : activeChat.buyer_name}</h3>
-                           <span className={`text-[8px] md:text-[10px] font-black uppercase px-1.5 md:px-2 py-0.5 rounded-full ${onlineUsers.has(activeChat.buyer_id === user.id ? activeChat.seller_id : activeChat.buyer_id) ? "bg-emerald-50 text-emerald-600" : "bg-background text-muted"}`}>
+                           <span className={`text-[8px] md:text-[10px] font-black uppercase px-1.5 md:px-2 py-0.5 rounded-none ${onlineUsers.has(activeChat.buyer_id === user.id ? activeChat.seller_id : activeChat.buyer_id) ? "bg-emerald-50 text-emerald-600" : "bg-background text-muted"}`}>
                               {onlineUsers.has(activeChat.buyer_id === user.id ? activeChat.seller_id : activeChat.buyer_id) ? (labels.chat_online_status || "Online") : (labels.chat_offline_status || "Offline")}
                            </span>
                          </div>
                          <div className="flex items-center gap-1 mt-0.5 overflow-hidden">
                             <span className="hidden sm:inline text-[10px] md:text-[11px] font-bold text-muted uppercase tracking-tight">{labels.chat_discussing_prefix || "Discussing:"}</span>
-                            <Link href={`/products/${activeChat.product_id}`} className="text-[10px] md:text-[11px] font-black text-primary uppercase tracking-tight hover:underline cursor-pointer truncate max-w-[100px] sm:max-w-none">
+                            <Link href={`/products/${activeChat.product_id}`} className="text-[10px] md:text-[11px] font-black text-gold uppercase tracking-tight hover:underline cursor-pointer truncate max-w-[100px] sm:max-w-none">
                                {activeChat.product_title} - â‚¹{parseFloat(activeChat.product_price || 0).toLocaleString()}
                             </Link>
                          </div>
@@ -523,7 +523,7 @@ function MessagesContent() {
                       <Fragment key={msg.id || i}>
                         {showDate && (
                            <div className="flex justify-center my-6">
-                              <span className="px-4 py-1.5 bg-surface border border-border rounded-full text-[10px] font-black text-muted uppercase tracking-[0.2em] shadow-sm">
+                              <span className="px-4 py-1.5 bg-surface border border-border rounded-none text-[10px] font-black text-muted uppercase tracking-[0.2em] shadow-sm">
                                  {new Date(msg.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                               </span>
                            </div>
@@ -540,8 +540,8 @@ function MessagesContent() {
                                  {msg.type === 'offer' ? (
                                     <div className="space-y-4 min-w-[200px]">
                                        <div className="flex items-center gap-3">
-                                          <div className={`w-8 h-8 rounded-none flex items-center justify-center ${isOwn ? "bg-surface/10" : "bg-blue-50"}`}>
-                                             <Send className={`w-4 h-4 ${isOwn ? "text-white" : "text-primary"}`} ordnance="4" />
+                                          <div className={`w-8 h-8 rounded-none flex items-center justify-center ${isOwn ? "bg-surface/10" : "bg-gold/5"}`}>
+                                             <Send className={`w-4 h-4 ${isOwn ? "text-white" : "text-gold"}`} ordnance="4" />
                                           </div>
                                           <span className="text-[11px] font-black uppercase tracking-widest">
                                               {msg.metadata?.status === 'countered' 
@@ -563,7 +563,7 @@ function MessagesContent() {
                                                       value={offerCounterForm.amount}
                                                       onChange={(e) => setOfferCounterForm({...offerCounterForm, amount: e.target.value})}
                                                       className={`w-full border rounded-none px-4 py-2 text-xs font-bold outline-none transition-all ${
-                                                        isOwn ? 'bg-surface/10 border-white/20 text-white focus:border-white' : 'bg-background border-border text-foreground focus:border-blue-500'
+                                                        isOwn ? 'bg-surface/10 border-white/20 text-white focus:border-white' : 'bg-background border-border text-foreground focus:border-gold'
                                                       }`}
                                                       autoFocus
                                                    />
@@ -633,7 +633,7 @@ function MessagesContent() {
                                     </div>
                                  ) : msg.type === 'system_deal' ? (
                                     <div className="bg-emerald-50/50 border border-emerald-100 rounded-none p-4 flex items-center gap-4 min-w-[280px]">
-                                       <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                                       <div className="w-10 h-10 bg-emerald-100 rounded-none flex items-center justify-center shrink-0">
                                           <Package className="w-5 h-5 text-emerald-600" />
                                        </div>
                                        <div>
@@ -671,8 +671,8 @@ function MessagesContent() {
                                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                  </span>
                                  {isOwn && (
-                                    <span className={`text-[10px] ${msg.is_read ? "text-blue-500" : "text-gray-200"}`}>
-                                       {msg.is_read ? "âœ“âœ“" : "âœ“"}
+                                    <span className={`text-[10px] ${msg.is_read ? "text-gold" : "text-gray-200"}`}>
+                                       {msg.is_read ? "✓✓" : "✓"}
                                     </span>
                                  )}
                               </div>
@@ -693,14 +693,14 @@ function MessagesContent() {
                         <button 
                           key={reply.id} 
                           onClick={() => sendQuickMessage(reply.text)}
-                          className="whitespace-nowrap px-4 py-2 bg-background hover:bg-background border border-transparent rounded-full text-[11px] font-bold text-muted transition-all uppercase tracking-wider"
+                          className="whitespace-nowrap px-4 py-2 bg-background hover:bg-gold/5 border border-border rounded-none text-[11px] font-bold text-muted transition-all uppercase tracking-wider"
                         >
                            {reply.text}
                         </button>
                       ))}
                    </div>
 
-                   <form onSubmit={handleSendMessage} className="relative flex items-end gap-3 bg-background rounded-none p-2 pr-4 ring-1 ring-transparent focus-within:ring-blue-100 transition-all focus-within:bg-surface">
+                   <form onSubmit={handleSendMessage} className="relative flex items-end gap-3 bg-background rounded-none p-2 pr-4 border border-border focus-within:border-gold transition-all focus-within:bg-surface">
                       <div className="flex items-center shrink-0 h-[46px]">
                          <button 
                            type="button" 
@@ -741,15 +741,15 @@ function MessagesContent() {
               </Fragment>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center p-12 lg:p-24 bg-background/20">
-                 <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center mb-8 animate-in fade-in zoom-in duration-700">
-                    <Send className="w-10 h-10 text-primary transform -rotate-12" />
+                 <div className="w-24 h-24 bg-gold/5 border border-gold/10 rounded-none flex items-center justify-center mb-8 animate-in fade-in zoom-in duration-700">
+                    <Send className="w-10 h-10 text-gold transform -rotate-12" />
                  </div>
                  <h3 className="text-3xl font-black text-foreground tracking-tight mb-4 uppercase">{labels.chat_empty_state_title || "Marketplace Conversations"}</h3>
                  <p className="text-sm font-medium text-muted max-w-[450px] leading-relaxed mb-10">
                     {labels.chat_empty_state_desc || "Manage your discussions professionally within the collector hub."}
                  </p>
                  <div className="flex items-center gap-3 px-6 py-3 bg-surface border border-border rounded-none shadow-sm animate-in slide-in-from-bottom-5 duration-700 delay-200">
-                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <div className="w-6 h-6 bg-emerald-100 rounded-none flex items-center justify-center">
                        <Smile className="w-3.5 h-3.5 text-emerald-600" />
                     </div>
                     <span className="text-[11px] font-black text-muted uppercase tracking-widest">{labels.chat_encryption_notice || "End-to-end encrypted"}</span>
@@ -806,9 +806,9 @@ function MessagesContent() {
       {/* DEAL CONFIRMATION MODAL */}
       {showDealModal && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-           <div className="bg-surface rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+           <div className="bg-surface rounded-none border border-border w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
               <div className="p-8">
-                 <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-6">
+                 <div className="w-16 h-16 bg-emerald-50 rounded-none flex items-center justify-center mb-6">
                     <CheckCircle className="w-8 h-8 text-emerald-600" />
                  </div>
                  <h3 className="text-2xl font-black text-foreground mb-2 uppercase tracking-tight">Confirm Deal</h3>
@@ -816,12 +816,12 @@ function MessagesContent() {
                  
                  <div className="space-y-6">
                     <div>
-                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-2 block">Agreed Price (â‚¹)</label>
+                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-2 block">Agreed Price (₹)</label>
                        <input 
                          type="number"
                          value={finalPrice}
                          onChange={(e) => setFinalPrice(e.target.value)}
-                         className="w-full bg-background border-2 border-transparent focus:border-emerald-500 focus:bg-surface rounded-none p-4 text-xl font-black outline-none transition-all"
+                         className="w-full bg-background border border-border focus:border-gold focus:bg-surface rounded-none p-4 text-xl font-black outline-none transition-all"
                          placeholder="0.00"
                        />
                     </div>
@@ -835,7 +835,7 @@ function MessagesContent() {
                        </button>
                        <button 
                          onClick={handleConfirmDirectDeal}
-                         className="flex-grow py-4 bg-emerald-600 text-white rounded-none text-[11px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100"
+                         className="flex-grow py-4 bg-emerald-600 text-white rounded-none text-[11px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-none"
                        >
                           Finalize Deal
                        </button>
@@ -850,7 +850,7 @@ function MessagesContent() {
       {acceptedOverlay && (
         <div className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-500">
           <div className="text-center space-y-6 animate-in zoom-in-95 duration-500">
-            <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/30">
+            <div className="w-24 h-24 bg-emerald-500 rounded-none flex items-center justify-center mx-auto shadow-none">
               <CheckCircle className="w-12 h-12 text-white" />
             </div>
             <h2 className="text-3xl font-black text-white uppercase tracking-tight">Offer Accepted!</h2>
@@ -861,7 +861,7 @@ function MessagesContent() {
             </p>
             <div className="flex gap-1.5 justify-center mt-4">
               {[0,1,2].map(i => (
-                <div key={i} className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
+                <div key={i} className="w-2 h-2 bg-emerald-500 rounded-none animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
               ))}
             </div>
           </div>
@@ -871,7 +871,7 @@ function MessagesContent() {
       {/* TOAST */}
       {toast && (
         <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500 rounded-none shadow-2xl px-8 py-4 flex items-center gap-4 bg-surface border border-border`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${toast.type === "error" ? "bg-red-50" : "bg-emerald-50"}`}>
+          <div className={`w-8 h-8 rounded-none flex items-center justify-center ${toast.type === "error" ? "bg-red-50" : "bg-emerald-50"}`}>
              {toast.type === "error" ? (
                 <X className="w-4 h-4 text-red-600" />
              ) : (

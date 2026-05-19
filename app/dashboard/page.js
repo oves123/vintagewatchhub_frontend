@@ -61,7 +61,7 @@ export default function Dashboard() {
             <button className="px-5 py-2.5 bg-surface border border-border rounded-none text-xs font-bold text-muted hover:bg-background transition">Export Report</button>
             <button 
               onClick={() => window.location.href = '/sell'}
-              className="px-5 py-2.5 bg-primary text-white rounded-none text-xs font-bold hover:bg-blue-800 transition shadow-lg shadow-blue-900/10"
+              className="px-5 py-2.5 bg-primary text-white rounded-none text-xs font-bold hover:bg-primary-light transition shadow-none"
             >
               Add New Listing
             </button>
@@ -71,47 +71,47 @@ export default function Dashboard() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-32 bg-surface rounded-none border border-border animate-pulse shadow-sm" />
+              <div key={i} className="h-32 bg-surface rounded-none border border-border animate-pulse shadow-none" />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-8 bg-surface rounded-none border border-border shadow-sm border-b-4 border-b-[#1e3a5f]">
+            <div className="p-8 bg-surface rounded-none border border-border shadow-none border-b-4 border-b-primary">
               <span className="text-[10px] font-black text-muted uppercase tracking-[0.2em] block mb-2">My Active Listings</span>
               <div className="flex items-baseline gap-2">
                 <h2 className="text-4xl font-black text-primary">{stats.listings}</h2>
-                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+12%</span>
+                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-none">+12%</span>
               </div>
             </div>
 
-            <div className="p-8 bg-surface rounded-none border border-border shadow-sm border-b-4 border-b-[#b8860b]">
+            <div className="p-8 bg-surface rounded-none border border-border shadow-none border-b-4 border-b-gold">
               <span className="text-[10px] font-black text-muted uppercase tracking-[0.2em] block mb-2">Total Sales Orders</span>
               <div className="flex items-baseline gap-2">
                 <h2 className="text-4xl font-black text-gold">{stats.orders}</h2>
-                <span className="text-xs font-bold text-muted bg-background px-2 py-0.5 rounded-full">Stable</span>
+                <span className="text-xs font-bold text-muted bg-background px-2 py-0.5 rounded-none">Stable</span>
               </div>
             </div>
 
-            <div className="p-8 bg-surface rounded-none border border-border shadow-sm border-b-4 border-b-green-600">
+            <div className="p-8 bg-surface rounded-none border border-border shadow-none border-b-4 border-b-emerald-600">
               <span className="text-[10px] font-black text-muted uppercase tracking-[0.2em] block mb-2">Gross Revenue</span>
               <div className="flex items-baseline gap-2">
-                <h2 className="text-4xl font-black text-green-600">â‚¹{Number(stats.revenue).toLocaleString()}</h2>
-                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+â‚¹4,500</span>
+                <h2 className="text-4xl font-black text-emerald-600">â‚¹{Number(stats.revenue).toLocaleString()}</h2>
+                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-none">+â‚¹4,500</span>
               </div>
             </div>
           </div>
         )}
 
         <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-surface p-8 rounded-none border border-border shadow-sm">
+            <div className="bg-surface p-8 rounded-none border border-border shadow-none">
                 <h3 className="font-bold text-foreground mb-6 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                    <span className="w-1.5 h-1.5 bg-gold rounded-none"></span>
                     Recent Activity
                 </h3>
                 <div className="space-y-6">
                     {[1,2,3].map(i => (
                         <div key={i} className="flex gap-4 pb-4 border-b border-gray-50 last:border-0">
-                            <div className="w-10 h-10 rounded-full bg-blue-50 flex-shrink-0 flex items-center justify-center text-primary font-bold text-xs">#{i}</div>
+                            <div className="w-10 h-10 rounded-none bg-gold/5 flex-shrink-0 flex items-center justify-center text-gold border border-gold/10 font-bold text-xs">#{i}</div>
                             <div>
                                 <p className="text-xs font-bold text-foreground leading-tight">New offer received for Omega Speedmaster</p>
                                 <p className="text-[10px] font-medium text-muted mt-1 uppercase tracking-wider">2 hours ago</p>
@@ -121,11 +121,11 @@ export default function Dashboard() {
                 </div>
             </div>
             
-            <div className="bg-primary p-10 rounded-none shadow-xl relative overflow-hidden group">
+            <div className="bg-primary p-10 rounded-none shadow-none relative overflow-hidden group">
                 <div className="relative z-10">
                     <h3 className="text-white font-black text-2xl mb-4 leading-tight">Professional Seller<br/>Tools & Verification</h3>
-                    <p className="text-blue-100/60 text-sm font-medium mb-8 max-w-[240px] leading-relaxed">Upgrade your account to access bulk listings and lower transaction fees.</p>
-                    <button className="px-6 py-3 bg-surface text-primary rounded-none font-bold text-xs hover:bg-blue-50 transition shadow-lg">Verify Account</button>
+                    <p className="text-white/60 text-sm font-medium mb-8 max-w-[240px] leading-relaxed">Upgrade your account to access bulk listings and lower transaction fees.</p>
+                    <button className="px-6 py-3 bg-surface text-primary rounded-none font-bold text-xs hover:bg-gold/10 hover:text-gold border border-primary/20 transition shadow-none">Verify Account</button>
                 </div>
                 <div className="absolute -right-8 -bottom-8 opacity-20 transform rotate-12 transition-transform duration-700 group-hover:rotate-6">
                     <svg className="w-48 h-48 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>

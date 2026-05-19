@@ -222,14 +222,14 @@ function HomeContent() {
                         <button 
                            key={b}
                            onClick={() => updateFilters('brand', b.toLowerCase())}
-                           className="px-4 py-2 bg-surface border border-border text-[11px] font-bold text-foreground uppercase tracking-widest hover:border-gold transition-all whitespace-nowrap"
+                           className="px-4 py-2 bg-background border border-border text-[11px] font-bold text-foreground uppercase tracking-widest hover:border-gold hover:text-gold transition-all whitespace-nowrap rounded-none"
                         >
                            {b}
                         </button>
                      ))}
                      <button 
                         onClick={() => router.push('/?catalog=true#market')}
-                        className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline whitespace-nowrap"
+                        className="text-[10px] font-bold text-gold hover:text-primary uppercase tracking-widest hover:underline whitespace-nowrap transition-colors"
                      >
                         View All →
                      </button>
@@ -302,103 +302,100 @@ function HomeContent() {
               <div className="p-6 lg:p-0 space-y-8">
                 {/* Category Filter */}
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-widest text-[10px] text-gray-400">Category</h3>
-                <ul className="space-y-3 text-[13px]">
-
-                  {categories.map(c => (
-                    <li key={c.id}>
-                      <button
-                        onClick={() => updateFilters('category', c.name.toLowerCase())}
-                        className={`hover:text-blue-600 transition-colors text-left ${category === c.name.toLowerCase() ? "font-bold text-gray-900" : "text-gray-600"}`}
-                      >
-                        {c.name}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Brand Filter */}
-              {brands.length > 0 && (
-                <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-sm font-bold text-gray-900 mb-4">Brand</h3>
-                  <ul className="space-y-3 text-[13px]">
-                    <li>
-                      <button
-                        onClick={() => updateFilters('brand', '')}
-                        className={`hover:text-blue-600 transition-colors text-left ${!brand ? "font-bold text-gray-900" : "text-gray-600"}`}
-                      >
-                        All Brands
-                      </button>
-                    </li>
-                    {brands.map(b => (
-                      <li key={b}>
+                  <h3 className="font-serif text-xs font-bold text-foreground mb-4 uppercase tracking-[0.15em]">Category</h3>
+                  <ul className="space-y-3 text-[12px] font-serif uppercase tracking-[0.1em]">
+                    {categories.map(c => (
+                      <li key={c.id}>
                         <button
-                          onClick={() => updateFilters('brand', b.toLowerCase())}
-                          className={`hover:text-blue-600 transition-colors text-left ${brand === b.toLowerCase() ? "font-bold text-gray-900" : "text-gray-600"} capitalize`}
+                          onClick={() => updateFilters('category', c.name.toLowerCase())}
+                          className={`hover:text-gold transition-colors text-left ${category === c.name.toLowerCase() ? "font-bold text-gold" : "text-muted"}`}
                         >
-                          {b}
+                          {c.name}
                         </button>
                       </li>
                     ))}
                   </ul>
                 </div>
-              )}
 
+                {/* Brand Filter */}
+                {brands.length > 0 && (
+                  <div className="border-t border-border pt-6">
+                    <h3 className="font-serif text-xs font-bold text-foreground mb-4 uppercase tracking-[0.15em]">Brand</h3>
+                    <ul className="space-y-3 text-[12px] font-serif uppercase tracking-[0.1em]">
+                      <li>
+                        <button
+                          onClick={() => updateFilters('brand', '')}
+                          className={`hover:text-gold transition-colors text-left ${!brand ? "font-bold text-gold" : "text-muted"}`}
+                        >
+                          All Brands
+                        </button>
+                      </li>
+                      {brands.map(b => (
+                        <li key={b}>
+                          <button
+                            onClick={() => updateFilters('brand', b.toLowerCase())}
+                            className={`hover:text-gold transition-colors text-left ${brand === b.toLowerCase() ? "font-bold text-gold" : "text-muted"} capitalize`}
+                          >
+                            {b}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-
-              {/* Price Filter */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-sm font-bold text-gray-900 mb-4">Price</h3>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (localMin) updateFilters("minPrice", localMin); else updateFilters("minPrice", "");
-                    if (localMax) updateFilters("maxPrice", localMax); else updateFilters("maxPrice", "");
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <input type="number" placeholder="Min ₹" className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all placeholder:font-normal" value={localMin} onChange={e => setLocalMin(e.target.value)} />
-                  <span className="text-gray-400 text-xs">to</span>
-                  <input type="number" placeholder="Max ₹" className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all placeholder:font-normal" value={localMax} onChange={e => setLocalMax(e.target.value)} />
-                  <button type="submit" className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
-                  </button>
-                </form>
-              </div>
-
-              {/* Strap Type Filter */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-widest text-[10px] text-gray-400">Strap Type</h3>
-                <ul className="space-y-3 text-[13px]">
-                  <li>
-                    <button
-                      onClick={() => updateFilters('strap_type', '')}
-                      className={`hover:text-blue-600 transition-colors text-left ${!strapParam ? "font-bold text-gray-900" : "text-gray-600"}`}
-                    >
-                      All Straps
+                {/* Price Filter */}
+                <div className="border-t border-border pt-6">
+                  <h3 className="font-serif text-xs font-bold text-foreground mb-4 uppercase tracking-[0.15em]">Price</h3>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (localMin) updateFilters("minPrice", localMin); else updateFilters("minPrice", "");
+                      if (localMax) updateFilters("maxPrice", localMax); else updateFilters("maxPrice", "");
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <input type="number" placeholder="Min ₹" className="w-full px-3 py-2 bg-background border border-border rounded-none text-xs font-semibold text-foreground outline-none focus:border-gold transition-all placeholder:font-normal placeholder:text-muted" value={localMin} onChange={e => setLocalMin(e.target.value)} />
+                    <span className="text-muted text-xs">to</span>
+                    <input type="number" placeholder="Max ₹" className="w-full px-3 py-2 bg-background border border-border rounded-none text-xs font-semibold text-foreground outline-none focus:border-gold transition-all placeholder:font-normal placeholder:text-muted" value={localMax} onChange={e => setLocalMax(e.target.value)} />
+                    <button type="submit" className="p-2 bg-primary text-white border border-primary hover:bg-transparent hover:text-primary transition rounded-none">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                     </button>
-                  </li>
-                  {['Metal', 'Leather', 'No Strap'].map(s => (
-                    <li key={s}>
+                  </form>
+                </div>
+
+                {/* Strap Type Filter */}
+                <div className="border-t border-border pt-6">
+                  <h3 className="font-serif text-xs font-bold text-foreground mb-4 uppercase tracking-[0.15em]">Strap Type</h3>
+                  <ul className="space-y-3 text-[12px] font-serif uppercase tracking-[0.1em]">
+                    <li>
                       <button
-                        onClick={() => updateFilters('strap_type', s)}
-                        className={`hover:text-blue-600 transition-colors text-left ${strapParam === s ? "font-bold text-gray-900" : "text-gray-600"}`}
+                        onClick={() => updateFilters('strap_type', '')}
+                        className={`hover:text-gold transition-colors text-left ${!strapParam ? "font-bold text-gold" : "text-muted"}`}
                       >
-                        {s}
+                        All Straps
                       </button>
                     </li>
-                  ))}
-                </ul>
-              </div>
+                    {['Metal', 'Leather', 'No Strap'].map(s => (
+                      <li key={s}>
+                        <button
+                          onClick={() => updateFilters('strap_type', s)}
+                          className={`hover:text-gold transition-colors text-left ${strapParam === s ? "font-bold text-gold" : "text-muted"}`}
+                        >
+                          {s}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
               </div>
 
               {/* Mobile Footer for Filters */}
-              <div className="lg:hidden p-6 border-t border-gray-100 bg-gray-50/50">
+              <div className="lg:hidden p-6 border-t border-border bg-background">
                  <button 
                   onClick={() => setShowMobileFilters(false)}
-                  className="w-full py-4 bg-[#1e3a5f] text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-blue-100"
+                  className="w-full py-4 bg-primary text-white border border-primary hover:bg-transparent hover:text-primary rounded-none font-bold text-[10px] uppercase tracking-[0.2em] transition"
                  >
                     Apply & Show {products.length} Results
                  </button>
@@ -410,9 +407,9 @@ function HomeContent() {
             <div className="flex-grow">
 
               {/* Top Bar (eBay style info & sort) */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-gray-200 pb-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-border pb-4">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 tracking-tight capitalize">
+                  <h2 className="text-xl font-serif text-foreground tracking-wide capitalize">
                     {products.length} Results for {search ? `"${search}"` : brand ? `${brand}` : category ? `${category}` : "All Items"}
                   </h2>
                 </div>
@@ -420,15 +417,15 @@ function HomeContent() {
                   {/* Mobile Filter Toggle */}
                   <button 
                     onClick={() => setShowMobileFilters(true)}
-                    className="lg:hidden flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-700 hover:bg-gray-50 transition-all"
+                    className="lg:hidden flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-none text-[10px] font-bold uppercase tracking-widest text-foreground hover:border-gold transition-all"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                     Filters
                   </button>
                   
-                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest hidden sm:inline-block">Sort:</span>
+                  <span className="text-[11px] font-bold text-muted uppercase tracking-widest hidden sm:inline-block">Sort:</span>
                   <select
-                    className="bg-white border border-gray-300 text-gray-900 text-xs font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none block px-4 py-2 cursor-pointer"
+                    className="bg-background border border-border text-foreground text-xs font-bold rounded-none focus:border-gold outline-none block px-4 py-2 cursor-pointer"
                     value={sortParam}
                     onChange={(e) => updateFilters("sort", e.target.value)}
                   >
@@ -436,11 +433,11 @@ function HomeContent() {
                     <option value="lowest_price">Lowest Price</option>
                     <option value="highest_price">Highest Price</option>
                   </select>
-                  <div className="border border-gray-200 ml-2 rounded-lg p-1 bg-white hidden sm:flex gap-1">
-                    <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                  <div className="border border-border ml-2 rounded-none p-1 bg-background hidden sm:flex gap-1">
+                    <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-none ${viewMode === 'grid' ? 'bg-primary text-white' : 'text-muted hover:text-foreground'}`}>
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" /></svg>
                     </button>
-                    <button onClick={() => setViewMode('list')} className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                    <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-none ${viewMode === 'list' ? 'bg-primary text-white' : 'text-muted hover:text-foreground'}`}>
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z" /></svg>
                     </button>
                   </div>
@@ -451,8 +448,8 @@ function HomeContent() {
               {(minPrice || maxPrice) && (
                 <div className="flex flex-wrap gap-2 mb-6">
                   {(minPrice || maxPrice) && (
-                    <button onClick={() => { updateFilters('minPrice', ''); updateFilters('maxPrice', ''); setLocalMin(''); setLocalMax(''); }} className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 border border-gray-200 rounded-full text-[10px] font-bold text-gray-600 uppercase tracking-widest hover:bg-gray-200 transition">
-                      ₹{minPrice || 0} - ₹{maxPrice || 'Any'} <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    <button onClick={() => { updateFilters('minPrice', ''); updateFilters('maxPrice', ''); setLocalMin(''); setLocalMax(''); }} className="flex items-center gap-1.5 px-3 py-1 bg-background border border-border rounded-none text-[10px] font-bold text-foreground uppercase tracking-widest hover:border-gold transition">
+                      ₹{minPrice || 0} - ₹{maxPrice || 'Any'} <svg className="w-3 h-3 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                   )}
                 </div>

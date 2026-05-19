@@ -7,17 +7,18 @@
 
 .image-slot {
   aspect-ratio: 1;
-  border-radius: 1rem;
-  border: 2px dashed #e5e7eb;
+  border-radius: 0px;
+  border: 1px dashed var(--border, #e5e7eb);
   position: relative;
   overflow: hidden;
-  background: #f9fafb;
+  background: var(--surface, #f9fafb);
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background-color 0.2s;
 }
 
 .image-slot:hover {
-  border-color: #3b82f6;
+  border-color: #b8860b;
+  background: rgba(184, 134, 11, 0.03);
 }
 
 .image-slot img {
@@ -30,16 +31,21 @@
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   color: white;
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: 50%;
+  border-radius: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
   cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.image-slot .remove-btn:hover {
+  background: #b8860b;
 }
 
 /* Hide Number Input Arrows */
@@ -56,7 +62,7 @@ input[type=number] {
 
 .price-input-container {
   background: white;
-  border-radius: 2rem;
+  border-radius: 0px;
   padding: 3rem;
   border: 1px solid #f3f4f6;
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
@@ -64,8 +70,8 @@ input[type=number] {
 }
 
 .price-input-container:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.1);
+  border-color: #b8860b;
+  box-shadow: 0 20px 40px -10px rgba(184, 134, 11, 0.1);
   transform: translateY(-2px);
 }
 

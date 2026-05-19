@@ -33,25 +33,25 @@ export default function ComparePage() {
           </div>
           <button 
             onClick={clearCompare}
-            className="text-xs font-black uppercase tracking-widest text-red-500 bg-red-50 px-6 py-3 rounded-full border border-red-100 hover:bg-red-100 transition-colors"
+            className="text-xs font-black uppercase tracking-widest text-red-500 bg-rose-50 px-6 py-3 rounded-none border border-rose-100 hover:bg-rose-100 transition-colors"
           >
             Clear All
           </button>
         </div>
 
         {comparedProducts.length === 0 ? (
-          <div className="bg-surface rounded-3xl p-20 text-center border border-border shadow-sm">
-            <div className="w-20 h-20 bg-blue-50 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="bg-surface rounded-none p-20 text-center border border-border shadow-none">
+            <div className="w-20 h-20 bg-gold/5 text-gold border border-gold/10 rounded-none flex items-center justify-center mx-auto mb-6">
               <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
             </div>
             <h2 className="text-2xl font-serif font-bold tracking-wide text-foreground mb-2">No watches selected</h2>
             <p className="text-muted mb-8 max-w-md mx-auto">Add watches from the marketplace to compare their specs, prices, and conditions side-by-side.</p>
-            <Link href="/" className="bg-primary text-white px-10 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-100 hover:-translate-y-1 transition-all">
+            <Link href="/" className="bg-black text-white px-10 py-4 rounded-none font-black text-sm uppercase tracking-widest hover:bg-gold hover:text-black transition-all">
               Go to Marketplace
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-3xl border border-border shadow-xl bg-surface">
+          <div className="overflow-x-auto rounded-none border border-border bg-surface">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-background/50">
@@ -61,7 +61,7 @@ export default function ComparePage() {
                       <div className="relative group">
                         <button 
                           onClick={() => removeFromCompare(p.id)}
-                          className="absolute -top-4 -right-4 bg-surface text-muted hover:text-red-500 rounded-full shadow-md border border-border p-1.5 transition-all z-10"
+                          className="absolute -top-4 -right-4 bg-surface text-muted hover:text-red-500 rounded-none shadow-none border border-border p-1.5 transition-all z-10"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
@@ -73,7 +73,7 @@ export default function ComparePage() {
                           />
                         </div>
                         <h3 className="font-bold text-foreground line-clamp-2 h-12 leading-tight mb-4">{p.title}</h3>
-                        <Link href={`/products/${p.id}`} className="block text-center bg-primary text-white py-3 rounded-none font-black text-[11px] uppercase tracking-widest hover:bg-blue-700 transition">
+                        <Link href={`/products/${p.id}`} className="block text-center bg-black text-white py-3 rounded-none font-black text-[11px] uppercase tracking-widest hover:bg-gold hover:text-black transition">
                           View Details
                         </Link>
                       </div>

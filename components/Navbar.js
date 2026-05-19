@@ -201,207 +201,125 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`bg-surface dark:bg-[#050505] sticky top-0 z-[100] border-b border-border dark:border-neutral-800 transition-shadow duration-300 ${scrolled ? 'shadow-md dark:shadow-neutral-900' : ''}`}>
-        {/* Top Utility Bar */}
-        <div className="hidden md:flex bg-primary text-white text-[11px] font-medium">
-          <div className="max-w-[1300px] w-full mx-auto px-4 py-1.5 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-gold rounded-full animate-pulse"></span>
+      <header className={`sticky top-0 z-[100] transition-all duration-300 ${scrolled ? 'bg-background/95 backdrop-blur-md shadow-sm border-b border-border' : 'bg-background border-b border-border'}`}>
+        {/* Concierge Top Bar */}
+        <div className="hidden md:flex bg-primary text-white text-[10px] font-bold tracking-widest uppercase">
+          <div className="max-w-[1400px] w-full mx-auto px-6 py-2 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <span className="text-gold">WatchCollectorHUB Concierge</span>
+              <span className="opacity-40">|</span>
               {user ? (
-                <span>Welcome back, <strong>{user.name}</strong></span>
+                <span>Welcome, <span className="text-gold">{user.name}</span></span>
               ) : (
-                <span>
-                  <Link href="/login" className="underline hover:text-gold">Sign in</Link>
-                  {" "}or{" "}
-                  <Link href="/register" className="underline hover:text-gold">Register</Link>
-                </span>
+                <span className="opacity-80">Authentic · Verified · Trusted</span>
               )}
             </div>
-            <div className="flex items-center gap-5">
-              <span className="opacity-60">Authentic Â· Verified Â· Trusted</span>
-              {user && (
-                <button onClick={handleLogout} className="hover:text-gold transition-colors">Logout</button>
-              )}
-              {user?.role === "admin" && (
-                <Link href="/admin" className="text-gold font-bold">Admin Panel</Link>
+            <div className="flex items-center gap-6">
+              {user ? (
+                <>
+                  <Link href="/profile" className="hover:text-gold transition-colors">My Collection</Link>
+                  <Link href="/messages" className="hover:text-gold transition-colors">Messages {unreadMessagesCount > 0 && <span className="text-gold">({unreadMessagesCount})</span>}</Link>
+                  <div className="relative">
+                    <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="hover:text-gold transition-colors flex items-center gap-1">
+                      Alerts {unreadNotificationsCount > 0 && <span className="w-1.5 h-1.5 bg-rose-500 rounded-full inline-block ml-1"></span>}
+                    </button>
+                    {notificationsOpen && (
+                      <>
+                        <div className="fixed inset-0 z-[110]" onClick={() => setNotificationsOpen(false)}></div>
+                        <div className="absolute right-0 mt-3 w-80 bg-background text-foreground shadow-2xl border border-border z-[120] overflow-hidden normal-case tracking-normal">
+                          <div className="p-4 border-b border-border flex justify-between items-center">
+                            <h3 className="font-serif font-bold text-sm tracking-wide">Notifications</h3>
+                            {unreadNotificationsCount > 0 && (
+                              <button onClick={handleMarkAllRead} className="text-[10px] text-gold uppercase tracking-widest font-bold">Mark Read</button>
+                            )}
+                          </div>
+                          <div className="max-h-[300px] overflow-y-auto">
+                            {notifications.length === 0 ? (
+                              <div className="p-8 text-center text-muted text-xs">No alerts found.</div>
+                            ) : (
+                              notifications.map((n) => (
+                                <div 
+                                  key={n.id} 
+                                  onClick={() => { handleMarkRead(n.id); if (n.link) router.push(n.link); setNotificationsOpen(false); }}
+                                  className={`p-4 border-b border-gray-50 hover:bg-surface cursor-pointer transition-colors ${!n.is_read ? 'bg-blue-50/10' : ''}`}
+                                >
+                                  <p className="font-serif text-[13px] mb-1 text-foreground">{n.title}</p>
+                                  <p className="text-muted text-[11px] leading-relaxed">{n.message}</p>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {user.role === "admin" && <Link href="/admin" className="text-gold">Admin Panel</Link>}
+                  <button onClick={handleLogout} className="hover:text-gold transition-colors">Logout</button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="hover:text-gold transition-colors">Sign In</Link>
+                  <Link href="/register" className="hover:text-gold transition-colors">Register</Link>
+                </>
               )}
             </div>
           </div>
         </div>
 
         {/* Main Header */}
-        <div className="max-w-[1300px] mx-auto px-4 py-3 md:py-4 flex items-center gap-3 md:gap-6">
+        <div className="max-w-[1400px] mx-auto px-6 py-5 flex items-center justify-between">
           <WCHLogo />
-
-          {/* Desktop Search */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center border border-border rounded-none overflow-hidden h-11 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary bg-background max-w-2xl transition-colors">
-            <div className="flex-1 flex items-center px-4">
-              <svg className="w-4 h-4 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                ref={searchRef}
-                type="text"
-                placeholder="Search watches, brands, models..."
-                style={{ border: 'none', outline: 'none', boxShadow: 'none', backgroundColor: 'transparent' }}
-                className="w-full px-3 outline-none text-[13px] font-medium text-foreground placeholder:text-muted ring-0 focus:ring-0 focus:outline-none"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <button type="submit" className="bg-primary hover:bg-primary-light text-white px-8 h-full font-bold text-xs uppercase tracking-widest transition-colors">
-              Search
+          
+          {/* Centered Elegance Search */}
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-lg mx-10 items-center border-b border-border hover:border-gold focus-within:border-gold transition-colors h-10 group">
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Search timepieces, brands, references..."
+              style={{ border: 'none', outline: 'none', boxShadow: 'none', backgroundColor: 'transparent' }}
+              className="w-full px-2 outline-none text-[13px] font-medium text-foreground placeholder:text-muted ring-0 focus:ring-0 focus:outline-none"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button type="submit" className="text-muted group-hover:text-gold focus:text-gold transition-colors p-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             </button>
           </form>
 
-          {/* Desktop Right Nav */}
-          <nav className="hidden md:flex items-center gap-1">
-
-            <Link href="/sell" onClick={(e) => requireAuth(e, '/sell')} className="px-3 py-2 text-[12px] font-semibold text-muted dark:text-muted hover:text-primary dark:hover:text-primary-light hover:bg-background dark:hover:bg-neutral-800 rounded-none transition-all whitespace-nowrap">
-              Sell
+          {/* Right Actions */}
+          <div className="hidden md:flex items-center gap-8">
+            <Link href="/watchlist" onClick={(e) => requireAuth(e, '/watchlist')} className="relative text-muted hover:text-gold transition-colors flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+              Wishlist
+              {watchlistCount > 0 && <span className="absolute -top-1.5 -right-2 bg-gold text-white text-[8px] px-1 rounded-full">{watchlistCount}</span>}
             </Link>
-            <Link href="/profile" className="px-3 py-2 text-[12px] font-semibold text-muted hover:text-primary hover:bg-background rounded-none transition-all">
-              Profile
+            <Link href="/sell" onClick={(e) => requireAuth(e, '/sell')} className="bg-primary text-white border border-primary hover:bg-transparent hover:text-primary transition-colors px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-sm hover:shadow-none">
+              Submit Asset
             </Link>
-            {user && (
-              <div className="relative">
-                <button 
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className={`p-2 rounded-none transition-all relative ${notificationsOpen ? 'bg-background text-primary' : 'text-muted hover:text-primary hover:bg-background'}`}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  {unreadNotificationsCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full"></span>
-                  )}
-                </button>
-
-                {notificationsOpen && (
-                  <>
-                    <div className="fixed inset-0 z-[110]" onClick={() => setNotificationsOpen(false)}></div>
-                    <div className="absolute right-0 mt-2 w-80 bg-surface rounded-none shadow-2xl border border-border z-[120] overflow-hidden slide-in-top">
-                      <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-background/50">
-                        <h3 className="font-bold text-foreground text-sm">Notifications</h3>
-                        {unreadNotificationsCount > 0 && (
-                          <button onClick={handleMarkAllRead} className="text-[11px] font-bold text-primary hover:underline">Mark all read</button>
-                        )}
-                      </div>
-                      <div className="max-h-[400px] overflow-y-auto">
-                        {notifications.length === 0 ? (
-                          <div className="p-8 text-center">
-                            <div className="w-12 h-12 bg-background rounded-full flex items-center justify-center mx-auto mb-3">
-                              <svg className="w-6 h-6 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                              </svg>
-                            </div>
-                            <p className="text-muted text-xs font-medium">No notifications yet</p>
-                          </div>
-                        ) : (
-                          notifications.map((n) => (
-                            <div 
-                              key={n.id} 
-                              onClick={() => {
-                                handleMarkRead(n.id);
-                                if (n.link) router.push(n.link);
-                                setNotificationsOpen(false);
-                              }}
-                              className={`p-4 border-b border-gray-50 hover:bg-background cursor-pointer transition-colors relative ${!n.is_read ? 'bg-blue-50/30' : ''}`}
-                            >
-                              <div className="flex gap-3">
-                                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-primary' : 'bg-transparent'}`}></div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-foreground text-xs mb-0.5">{n.title}</p>
-                                  <p className="text-muted text-[11px] leading-relaxed line-clamp-2">{n.message}</p>
-                                  <p className="text-[10px] text-muted mt-1 uppercase font-bold tracking-wider">
-                                    {new Date(n.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                      <Link href="/profile" onClick={() => setNotificationsOpen(false)} className="block p-3 text-center text-[11px] font-bold text-muted hover:text-primary bg-background/30 border-t border-gray-50">
-                        View All Activity
-                      </Link>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-            {user && (
-              <Link href="/messages" className="px-3 py-2 text-[12px] font-semibold text-muted hover:text-primary hover:bg-background rounded-none transition-all flex items-center gap-1.5">
-                Messages
-                {unreadMessagesCount > 0 && (
-                  <span className="bg-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
-                )}
-              </Link>
-            )}
-            {/* Watchlist Icon */}
-            <Link href="/watchlist" onClick={(e) => requireAuth(e, '/watchlist')} className="relative p-2 text-muted hover:text-rose-500 hover:bg-rose-50 rounded-none transition-all">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-              {watchlistCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[16px] text-center">
-                  {watchlistCount > 9 ? '9+' : watchlistCount}
-                </span>
-              )}
-            </Link>
-          </nav>
-
-          {/* Mobile Right: Watchlist + Hamburger */}
-          <div className="flex md:hidden items-center gap-1.5 sm:gap-2 ml-auto">
-            <button onClick={toggleTheme} className="p-1.5 sm:p-2 text-muted dark:text-muted">
-              {theme === "dark" ? (
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-              ) : (
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-              )}
-            </button>
-            <Link href="/watchlist" className="relative p-1.5 sm:p-2 text-muted dark:text-muted">
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-              {watchlistCount > 0 && (
-                <span className="absolute top-0.5 right-0.5 bg-rose-500 text-white text-[8px] font-black px-1 py-0.5 rounded-full min-w-[14px] text-center">{watchlistCount}</span>
-              )}
-            </Link>
-            {user && (
-              <Link href="/messages" className="relative p-1.5 sm:p-2 text-muted">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                {unreadMessagesCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 bg-primary text-white text-[8px] font-black px-1 py-0.5 rounded-full min-w-[14px] text-center">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
-                )}
-              </Link>
-            )}
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="p-1.5 sm:p-2 text-muted hover:bg-background rounded-none ml-1"
-              aria-label="Open menu"
-            >
-              <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
           </div>
 
+          {/* Mobile Right */}
+          <div className="flex md:hidden items-center gap-3">
+             <button
+               onClick={() => setMobileOpen(true)}
+               className="p-2 text-foreground"
+             >
+               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
+             </button>
+          </div>
         </div>
 
-        {/* Categories Bar (Desktop) */}
-        <div className="hidden md:flex border-t border-border dark:border-neutral-800 bg-surface dark:bg-[#050505]">
-          <div className="max-w-[1300px] w-full mx-auto px-4 flex items-center gap-1 overflow-x-auto scrollbar-hide py-1">
+        {/* Categories Bar */}
+        <div className="hidden md:block border-t border-border">
+          <div className="max-w-[1400px] mx-auto px-6 flex justify-between items-center py-4">
             {categories.map((cat) => (
               <Link
                 key={cat.href}
                 href={cat.href}
-                className={`whitespace-nowrap px-4 py-2 text-[11px] font-semibold uppercase tracking-wider rounded-none transition-all ${
+                className={`text-[12px] font-serif uppercase tracking-[0.2em] transition-colors hover:text-gold ${
                   pathname === cat.href || (cat.href !== "/" && pathname.startsWith(cat.href.split("?")[0]))
-                    ? 'text-primary bg-blue-50'
-                    : 'text-muted hover:text-primary hover:bg-background'
+                    ? 'text-gold'
+                    : 'text-foreground'
                 }`}
               >
                 {cat.label}
