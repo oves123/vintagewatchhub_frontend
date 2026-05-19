@@ -203,10 +203,10 @@ export default function Navbar() {
     <>
       <header className={`bg-surface dark:bg-[#050505] sticky top-0 z-[100] border-b border-border dark:border-neutral-800 transition-shadow duration-300 ${scrolled ? 'shadow-md dark:shadow-neutral-900' : ''}`}>
         {/* Top Utility Bar */}
-        <div className="hidden md:flex bg-primary dark:bg-[#003620] text-white text-[11px] font-medium">
+        <div className="hidden md:flex bg-primary text-white text-[11px] font-medium">
           <div className="max-w-[1300px] w-full mx-auto px-4 py-1.5 flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-[#b8860b] rounded-full animate-pulse"></span>
+              <span className="w-1.5 h-1.5 bg-gold rounded-full animate-pulse"></span>
               {user ? (
                 <span>Welcome back, <strong>{user.name}</strong></span>
               ) : (
@@ -234,7 +234,7 @@ export default function Navbar() {
           <WCHLogo />
 
           {/* Desktop Search */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center border border-border rounded-none overflow-hidden h-11 focus-within:border-[#1e3a5f] focus-within:ring-2 focus-within:ring-blue-50 bg-background max-w-2xl">
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center border border-border rounded-none overflow-hidden h-11 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 bg-background max-w-2xl">
             <div className="flex-1 flex items-center px-4">
               <svg className="w-4 h-4 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -248,7 +248,7 @@ export default function Navbar() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <button type="submit" className="bg-primary hover:bg-[#2e538a] text-white px-6 h-full font-bold text-xs uppercase tracking-wider transition-colors">
+            <button type="submit" className="bg-primary hover:bg-primary-light text-white px-6 h-full font-bold text-xs uppercase tracking-wider transition-colors">
               Search
             </button>
           </form>

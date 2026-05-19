@@ -580,8 +580,8 @@ function AdminPageContent() {
         {/* Content */}
         <main className="p-6 lg:p-8 max-w-[1400px] mx-auto">
           <div className="mb-6">
-            <h1 className="text-2xl font-black text-foreground">{TAB_LABELS[activeTab]}</h1>
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">WatchCollectorHUB Admin Panel Â· Full Access</p>
+            <h1 className="text-3xl font-serif text-foreground tracking-wide">{TAB_LABELS[activeTab]}</h1>
+            <p className="text-[10px] font-bold text-gold uppercase tracking-widest mt-1">WatchCollectorHUB Admin Panel · Full Access</p>
           </div>
 
           {activeTab === "overview" && (

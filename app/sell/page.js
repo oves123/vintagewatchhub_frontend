@@ -580,11 +580,14 @@ export default function SellPage() {
          <Navbar />
 
          <main className="max-w-4xl mx-auto px-4 py-8">
+            <h1 className="text-2xl sm:text-3xl font-serif text-foreground uppercase tracking-widest text-center mt-3 mb-1">
+              {step === 1 && "Submit an Asset"}
+              {step === 2 && "Visual Authentication"}
+              {step === 3 && "Valuation & Sales Format"}
+              {step === 4 && "Shipping & Protocol"}
+            </h1>
 
             <div className="mb-10">
-               <h1 className="text-4xl font-serif tracking-wide text-foreground leading-tight">Create Listing</h1>
-               <p className="text-muted font-medium text-sm mt-2">Professional marketplace standards for collectors.</p>
-               
                {productStatus === 'rejected' && rejectionReason && (
                   <div className="mt-6 p-5 bg-rose-50 border border-rose-100 rounded-2xl animate-in slide-in-from-top-2 duration-500">
                      <div className="flex items-center gap-2 mb-2">
@@ -618,7 +621,7 @@ export default function SellPage() {
                </div>
             </div>
 
-            <div className="bg-surface border border-border shadow-2xl dark:shadow-neutral-900 overflow-hidden min-h-[500px]">
+            <div className="max-w-4xl mx-auto bg-background border border-border shadow-sm p-6 sm:p-10 mb-20 fade-up">
                <div className="p-8 md:p-14">
 
                   {/* STEP 1: Basics */}
@@ -655,7 +658,7 @@ export default function SellPage() {
                            <button
                               onClick={nextStep}
                               disabled={!formData.title || !formData.category_id}
-                              className="bg-primary text-white px-10 py-4 font-bold text-[13px] uppercase tracking-widest hover:bg-primary-light transition-all disabled:opacity-20 shadow-lg shadow-primary/20"
+                              className="bg-primary text-white px-10 py-4 font-bold text-[13px] uppercase tracking-widest hover:bg-primary-light transition-all disabled:opacity-20 shadow-sm rounded-none"
                            >
                               Continue
                            </button>

@@ -1,30 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  /* Premium Light Mode Palette (Rolex Inspired) */
+  /* Premium Light Mode Palette (Inspired by Chrono24 / Omega) */
   --background: #ffffff;
   --foreground: #111827;
-  --primary: #006039; /* Rolex Green */
-  --primary-light: #007a4a;
-  --gold: #b8860b;
-  --gold-light: #daa520;
-  --surface: #f9fafb;
-  --border: #e5e7eb;
-  --muted: #6b7280;
-  --radius: 0px; /* Sharp, elegant edges for luxury feel */
+  --primary: #0a192f; /* Deep Navy Blue */
+  --primary-light: #172a45;
+  --gold: #c5a059; /* Elegant Champagne Gold */
+  --gold-light: #d8b87a;
+  --surface: #f4f6f8;
+  --border: #e2e8f0;
+  --muted: #64748b;
+  --radius: 0px; /* Sharp, elegant edges */
 }
 
 /* Dark Mode Palette */
 .dark {
-  --background: #050505; /* Deep space black */
-  --foreground: #e5e5e5;
-  --primary: #006039; /* Keep the green accent */
-  --primary-light: #007a4a;
-  --gold: #a37d34;
-  --gold-light: #c29845;
-  --surface: #111111;
-  --border: #262626;
-  --muted: #a3a3a3;
+  --background: #060b11; /* Extremely deep blue/black */
+  --foreground: #f8fafc;
+  --primary: #112240;
+  --primary-light: #1e3a5f;
+  --gold: #b38d46;
+  --gold-light: #c5a059;
+  --surface: #0a1120;
+  --border: #1e293b;
+  --muted: #94a3b8;
 }
 
 @theme inline {

@@ -181,28 +181,31 @@ function HomeContent() {
 
       {/* Hero Section - Only show when NOT searching/filtering */}
       {!isCatalogView && (
-        <section className="bg-surface border-b border-border overflow-hidden relative">
-          <div className="max-w-[1300px] mx-auto px-5 py-12 md:py-20 flex flex-col md:flex-row items-center gap-10 md:gap-16">
-            <div className="w-full md:w-1/2 space-y-6 text-center md:text-left z-10">
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold font-serif text-foreground leading-tight tracking-tight">
-                Premium Marketplace for <span className="text-primary dark:text-primary-light italic">Timepiece</span> <span className="text-gold">Collectors</span>.
-              </h2>
-              <p className="text-muted text-base md:text-lg font-medium max-w-md mx-auto md:mx-0 leading-relaxed tracking-wide">
-                The leading destination for authentic vintage watches and enthusiast collectibles.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start pt-4">
-                <Link href="/?catalog=true#market" className="bg-primary text-white px-8 py-4 font-bold text-xs uppercase tracking-widest hover:bg-primary-light transition shadow-lg">Discover</Link>
-                <Link href="/sell" className="bg-transparent border border-foreground text-foreground px-8 py-4 font-bold text-xs uppercase tracking-widest hover:bg-foreground hover:text-background transition shadow-sm">Sell Your Watch</Link>
-              </div>
+        <section className="bg-background relative border-b border-border">
+          <div className="max-w-[1300px] mx-auto px-5 py-20 md:py-32 flex flex-col items-center text-center">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-primary uppercase tracking-[0.2em] mb-4">
+              Vintage Watch Hub
+            </h1>
+            <p className="text-[11px] md:text-xs font-bold text-gold uppercase tracking-[0.3em] mb-12">
+              Made By Hand For Every Kind Of Wrist
+            </p>
+            
+            <div className="w-full max-w-4xl aspect-[21/9] md:aspect-[3/1] relative mb-12 group overflow-hidden">
+              <img
+                src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg"
+                className="w-full h-full object-cover mix-blend-multiply transition-transform duration-1000 group-hover:scale-105"
+                alt="Luxury Watch Collection"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
             </div>
-            <div className="w-full md:w-1/2 relative">
-              <div className="w-full aspect-square md:aspect-[4/3] bg-background rounded-none overflow-hidden border border-border shadow-2xl dark:shadow-neutral-900 relative group">
-                <img
-                  src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg"
-                  className="w-full h-full object-contain mix-blend-multiply p-10 md:p-16 transition-transform duration-700 group-hover:scale-105"
-                  alt="Hero Watch"
-                />
-              </div>
+
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <Link href="/?catalog=true#market" className="bg-primary text-white px-10 py-4 font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-primary-light transition-colors">
+                Discover The Collection
+              </Link>
+              <Link href="/sell" className="bg-transparent border border-primary text-primary px-10 py-4 font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-primary hover:text-white transition-colors">
+                Sell A Timepiece
+              </Link>
             </div>
           </div>
         </section>

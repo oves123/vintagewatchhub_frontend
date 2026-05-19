@@ -115,7 +115,7 @@ export default function ProductCard({ product, horizontal = false }) {
 
   if (horizontal) {
     return (
-      <div className="bg-surface rounded-none border border-border overflow-hidden hover:shadow-2xl dark:hover:shadow-neutral-900 transition-all duration-500 group flex flex-col sm:flex-row mb-6 fade-up">
+      <div className="bg-background rounded-none border border-border overflow-hidden hover:border-primary transition-all duration-500 group flex flex-col sm:flex-row mb-6 fade-up">
         <Link href={`/products/${product.id}`} className="block w-full sm:w-48 md:w-64 aspect-[4/3] sm:aspect-square bg-gray-50 dark:bg-neutral-900 flex-shrink-0 relative overflow-hidden">
           {isVideo(images[currentImageIndex]?.url) ? (
             <div className="w-full h-full bg-gray-900 flex items-center justify-center">
@@ -164,7 +164,7 @@ export default function ProductCard({ product, horizontal = false }) {
         <div className="p-5 sm:p-7 flex-grow flex flex-col justify-between">
           <div>
             <Link href={`/products/${product.id}`}>
-              <h3 className="text-xl font-medium text-foreground tracking-wide leading-snug hover:text-gold transition-colors line-clamp-2">
+              <h3 className="text-xl font-serif text-foreground tracking-wide leading-snug hover:text-gold transition-colors line-clamp-2">
                 {product.title}
               </h3>
             </Link>
@@ -214,7 +214,7 @@ export default function ProductCard({ product, horizontal = false }) {
   }
 
   return (
-    <div className="bg-surface rounded-none border border-border overflow-hidden hover:shadow-2xl dark:hover:shadow-neutral-900 transition-all duration-500 group flex flex-col h-full fade-up">
+    <div className="bg-background rounded-none border border-border overflow-hidden hover:border-primary transition-all duration-500 group flex flex-col h-full fade-up">
       <Link href={`/products/${product.id}`} className="block aspect-[5/4] bg-gray-50 dark:bg-neutral-900 relative overflow-hidden">
         {isVideo(images[currentImageIndex]?.url) ? (
           <div className="w-full h-full bg-gray-900 flex items-center justify-center">
@@ -271,7 +271,7 @@ export default function ProductCard({ product, horizontal = false }) {
 
       <div className="p-5 flex-grow flex flex-col">
         <Link href={`/products/${product.id}`}>
-          <h3 className="font-medium tracking-wide text-foreground line-clamp-2 hover:text-gold transition-colors h-[2.5rem] text-[15px] leading-tight">
+          <h3 className="font-serif tracking-wide text-foreground line-clamp-2 hover:text-gold transition-colors h-[2.5rem] text-[16px] leading-tight">
             {product.title}
           </h3>
         </Link>

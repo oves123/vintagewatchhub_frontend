@@ -562,7 +562,7 @@ export default function ProductPage({ params }) {
   if (!product) return <div className="min-h-screen bg-surface"><Navbar /><div className="flex items-center justify-center h-[60vh]"><div className="animate-pulse text-primary font-black uppercase tracking-widest text-xs">Decrypting Asset...</div></div></div>;
 
   return (
-    <div className="bg-background min-h-screen pb-20 font-sans text-foreground transition-colors duration-500">
+    <div className="bg-background min-h-screen pb-20 text-foreground transition-colors duration-500">
       <ProfileOnboardingModal 
          isOpen={showOnboarding} 
          onClose={() => setShowOnboarding(false)} 
@@ -578,13 +578,13 @@ export default function ProductPage({ params }) {
           <span className="text-foreground truncate font-semibold">{product.title}</span>
         </nav>
 
-        <div className="bg-surface rounded-none shadow-xl shadow-gray-200/50 border border-border overflow-hidden">
+        <div className="bg-background rounded-none border-t border-b md:border border-border overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             
             {/* Gallery */}
             <div className="lg:col-span-6 p-6 md:p-10 border-r border-border bg-background/10">
               <div 
-                className="aspect-square bg-surface rounded-none border border-border shadow-sm overflow-hidden relative group/gallery"
+                className="aspect-square bg-background rounded-none border border-border overflow-hidden relative group/gallery"
                 onMouseMove={mediaItems[selectedImage]?.type === 'image' ? handleMouseMove : null}
                 onMouseLeave={() => setZoom({ ...zoom, show: false })}
               >
