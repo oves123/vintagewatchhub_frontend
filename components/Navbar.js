@@ -234,7 +234,7 @@ export default function Navbar() {
           <WCHLogo />
 
           {/* Desktop Search */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center border border-border rounded-none overflow-hidden h-11 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 bg-background max-w-2xl">
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center border border-border rounded-none overflow-hidden h-11 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary bg-background max-w-2xl transition-colors">
             <div className="flex-1 flex items-center px-4">
               <svg className="w-4 h-4 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -243,12 +243,13 @@ export default function Navbar() {
                 ref={searchRef}
                 type="text"
                 placeholder="Search watches, brands, models..."
-                className="w-full px-3 bg-transparent outline-none text-[13px] font-medium text-muted placeholder:text-muted"
+                style={{ border: 'none', outline: 'none', boxShadow: 'none', backgroundColor: 'transparent' }}
+                className="w-full px-3 outline-none text-[13px] font-medium text-foreground placeholder:text-muted ring-0 focus:ring-0 focus:outline-none"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <button type="submit" className="bg-primary hover:bg-primary-light text-white px-6 h-full font-bold text-xs uppercase tracking-wider transition-colors">
+            <button type="submit" className="bg-primary hover:bg-primary-light text-white px-8 h-full font-bold text-xs uppercase tracking-widest transition-colors">
               Search
             </button>
           </form>
