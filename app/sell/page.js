@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Navbar from "../../components/Navbar";
 import { useRouter } from "next/navigation";
-import { getCategories, createProduct, updateProduct, API_URL, API_BASE_URL } from "../../services/api";
+import { getCategories, createProduct, updateProduct, API_URL, API_BASE_URL, getUserProfile } from "../../services/api";
 import { Camera, RefreshCw, X, Circle } from "lucide-react";
 import ProfileOnboardingModal from "../../components/ProfileOnboardingModal";
 import "./sell.css";
@@ -159,11 +159,7 @@ export default function SellPage() {
       const parsedUser = user ? JSON.parse(user) : null;
       const userId = parsedUser?.id || parsedUser?._id;
       if (userId) {
-         const token = localStorage.getItem("token");
-         fetch(`${API_URL}/user/profile/${userId}`, {
-           headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
-         })
-           .then(res => res.json())
+         getUserProfile(userId)
            .then(data => {
               if (data && data.id) {
                  setCurrentUser(data);
