@@ -1,4 +1,4 @@
-import { Inter, Playfair_Display } from "next/font/google";
+import { Inter, Playfair_Display, Domine } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -10,6 +10,12 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
 });
+
+const domine = Domine({
+  subsets: ["latin"],
+  variable: "--font-domine",
+});
+
 
 export const metadata = {
   title: "WatchCollectorHub | The Ultimate Pre-Owned Watch Marketplace",
@@ -25,7 +31,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${playfair.variable} font-sans bg-background text-foreground antialiased transition-colors duration-500`}
+        className={`${inter.variable} ${playfair.variable} ${domine.variable} font-sans bg-background text-foreground antialiased transition-colors duration-500`}
       >
         <ThemeProvider>
           <ComparisonProvider>

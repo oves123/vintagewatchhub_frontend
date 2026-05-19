@@ -474,7 +474,7 @@ function AdminPageContent() {
   }
 
   return (
-    <div className="flex bg-[#f8fafc] min-h-screen text-foreground font-sans antialiased">
+    <div className="flex bg-[#f8fafc] min-h-screen text-foreground antialiased">
       <AdminSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
