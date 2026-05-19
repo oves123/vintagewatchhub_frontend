@@ -4,7 +4,7 @@ import { useEffect, useState, use, useMemo } from "react";
 import Navbar from "../../../components/Navbar";
 import ProductCard from "../../../components/ProductCard";
 import Link from "next/link";
-import { API_URL, API_BASE_URL, createChat, getSellerReviews, createReport } from "../../../services/api";
+import { API_URL, API_BASE_URL, createChat, getSellerReviews, createReport, getUserProfile } from "../../../services/api";
 import { useRouter } from "next/navigation";
 import socket from "../../../services/socket";
 import ProfileOnboardingModal from "../../../components/ProfileOnboardingModal";
@@ -70,11 +70,7 @@ export default function ProductPage({ params }) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
       if (parsedUser.id) {
-        const token = localStorage.getItem("token");
-        fetch(`${API_URL}/user/profile/${parsedUser.id}`, {
-          headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
-        })
-          .then(res => res.json())
+        getUserProfile(parsedUser.id)
           .then(data => {
              // Only update state if we got a valid user back (not an error object)
              if (data && data.id) {
