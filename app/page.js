@@ -16,6 +16,10 @@ function HomeContent() {
   const [newArrivals, setNewArrivals] = useState([]);
   const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -74,16 +78,24 @@ function HomeContent() {
         return res.json();
       })
       .then((data) => {
-        if (!Array.isArray(data)) {
+        // Handle both paginated { products, total, pages } and legacy plain array
+        const items = Array.isArray(data) ? data : (data.products || []);
+        const total = data.total ?? items.length;
+        const pages = data.pages ?? 1;
+
+        if (!Array.isArray(items)) {
           console.error("Expected array from API, got:", data);
           setProducts([]);
           return;
         }
 
-        setProducts(data);
+        setProducts(items);
+        setTotalProducts(total);
+        setTotalPages(pages);
+        setCurrentPage(1);
 
         if (!search && !category) {
-          const sortedData = [...data].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          const sortedData = [...items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
           const mix = [];
           const usedCats = new Set();
 
@@ -107,13 +119,13 @@ function HomeContent() {
 
           setFeaturedSelection(mix);
 
-          let preOwnedExcellent = data.filter(p =>
+          let preOwnedExcellent = items.filter(p =>
             p.category_name?.toLowerCase().includes("pre-owned") &&
             JSON.stringify(p.condition_details || {}).toLowerCase().includes("excellent")
           );
 
           if (preOwnedExcellent.length === 0) {
-            preOwnedExcellent = data.filter(p => p.category_name?.toLowerCase().includes("pre-owned"));
+            preOwnedExcellent = items.filter(p => p.category_name?.toLowerCase().includes("pre-owned"));
           }
 
           setNewArrivals(preOwnedExcellent.sort((a, b) => b.id - a.id).slice(0, 4));
@@ -448,6 +460,41 @@ function HomeContent() {
                   <ProductCard key={p.id} product={p} horizontal={viewMode === 'list'} />
                 ))}
               </div>
+
+              {/* Load More */}
+              {currentPage < totalPages && (
+                <div className="flex justify-center mt-12">
+                  <button
+                    onClick={async () => {
+                      setLoadingMore(true);
+                      const nextPage = currentPage + 1;
+                      const moreParams = new URLSearchParams();
+                      if (search) moreParams.append("search", search);
+                      if (category) moreParams.append("category", category);
+                      if (brand) moreParams.append("brand", brand);
+                      if (minPrice) moreParams.append("minPrice", minPrice);
+                      if (maxPrice) moreParams.append("maxPrice", maxPrice);
+                      if (conditionParam) moreParams.append("condition", conditionParam);
+                      if (formatParam) moreParams.append("format", formatParam);
+                      if (sortParam) moreParams.append("sort", sortParam);
+                      if (strapParam) moreParams.append("strap_type", strapParam);
+                      moreParams.append("page", nextPage);
+                      try {
+                        const res = await fetch(`${API_URL}/products?${moreParams.toString()}`);
+                        const data = await res.json();
+                        const newItems = Array.isArray(data) ? data : (data.products || []);
+                        setProducts(prev => [...prev, ...newItems]);
+                        setCurrentPage(nextPage);
+                      } catch (e) { console.error(e); }
+                      setLoadingMore(false);
+                    }}
+                    disabled={loadingMore}
+                    className="px-12 py-4 bg-foreground text-background text-[11px] font-black uppercase tracking-widest hover:bg-primary transition disabled:opacity-50"
+                  >
+                    {loadingMore ? "Loading..." : `Load More — ${totalProducts - products.length} remaining`}
+                  </button>
+                </div>
+              )}
 
               {products.length === 0 && (
                 <div className="bg-surface p-20 text-center border border-border shadow-sm">

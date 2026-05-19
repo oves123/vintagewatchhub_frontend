@@ -4,6 +4,25 @@ import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import { API_BASE_URL, API_URL } from "../services/api";
 
+// ── Module-level cache prevents N+1 watchlist fetches when many cards render ──
+// All ProductCards on the same page share this single cached response.
+const _watchlistCache = new Map(); // key: userId, value: { data, ts }
+const CACHE_TTL_MS = 30_000; // 30 seconds
+
+async function getCachedWatchlist(userId) {
+  const cached = _watchlistCache.get(userId);
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.data;
+  const res = await fetch(`${API_URL}/watchlist/${userId}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  _watchlistCache.set(userId, { data: Array.isArray(data) ? data : [], ts: Date.now() });
+  return _watchlistCache.get(userId).data;
+}
+
+function invalidateWatchlistCache(userId) {
+  _watchlistCache.delete(userId);
+}
+
 export default function ProductCard({ product, horizontal = false }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
@@ -52,15 +71,10 @@ export default function ProductCard({ product, horizontal = false }) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setIsOwner(parseInt(product.seller_id) === parseInt(parsedUser.id));
-        fetch(`${API_URL}/watchlist/${parsedUser.id}`)
-          .then(res => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.json();
-          })
+        // Use module-level cache — all cards on page share ONE watchlist fetch
+        getCachedWatchlist(parsedUser.id)
           .then(data => {
-            if (Array.isArray(data)) {
-              setIsInWatchlist(data.some(item => item.product_id === parseInt(product.id)));
-            }
+            setIsInWatchlist(data.some(item => item.product_id === parseInt(product.id)));
           })
           .catch(err => console.error("Failed to fetch watchlist:", err));
       } catch (e) {
@@ -90,6 +104,8 @@ export default function ProductCard({ product, horizontal = false }) {
 
       if (res.ok) {
         setIsInWatchlist(!isInWatchlist);
+        // Invalidate cache so the next render sees fresh data
+        invalidateWatchlistCache(user.id);
         window.dispatchEvent(new Event("watchlistUpdated"));
       }
     } catch (err) {

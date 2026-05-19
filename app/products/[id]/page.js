@@ -199,8 +199,9 @@ export default function ProductPage({ params }) {
       fetch(url)
         .then((res) => res.json())
         .then((data) => {
-          // Filter out current product and duplicates, limit to 4
-          const filtered = data.filter(p => p.id != id);
+          // Handle both paginated { products } shape and legacy plain array
+          const items = Array.isArray(data) ? data : (data.products || []);
+          const filtered = items.filter(p => p.id != id);
           setRelatedProducts(filtered.slice(0, 4));
         });
     }

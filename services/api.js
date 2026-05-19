@@ -85,7 +85,10 @@ export const deleteProduct = async (id) => {
 };
 
 export const getMyListings = async (userId) => {
-  const res = await fetch(`${API_URL}/products/my-listings/${userId}`);
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/products/my-listings/${userId}`, {
+    headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
+  });
   return res.json();
 };
 
@@ -170,9 +173,13 @@ export const getWatchVault = async (userId) => {
 };
 
 export const addToVault = async (data) => {
+  const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/user/vault/add`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    },
     body: JSON.stringify(data)
   });
   return res.json();
@@ -180,53 +187,66 @@ export const addToVault = async (data) => {
 
 // Chat System
 export const createChat = async (product_id, buyer_id, seller_id) => {
+  const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/chat/init`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) },
     body: JSON.stringify({ product_id, buyer_id, seller_id })
   });
   return res.json();
 };
 
 export const getUserChats = async (userId) => {
-  const res = await fetch(`${API_URL}/chat/user/${userId}`);
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/chat/user/${userId}`, {
+    headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
+  });
   return res.json();
 };
 
 export const getChatMessages = async (chatId) => {
-  const res = await fetch(`${API_URL}/chat/messages/${chatId}`);
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/chat/messages/${chatId}`, {
+    headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
+  });
   return res.json();
 };
 
 export const sendChatMessage = async (chat_id, sender_id, message, type = 'text', metadata = {}) => {
+  const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/chat/message`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) },
     body: JSON.stringify({ chat_id, sender_id, message, type, metadata })
   });
   return res.json();
 };
 
 export const updateMessageStatus = async (messageId, status) => {
+  const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/chat/message/${messageId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) },
     body: JSON.stringify({ metadata: { status } })
   });
   return res.json();
 };
 
 export const markChatAsRead = async (chatId, userId) => {
+  const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/chat/${chatId}/read`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) },
     body: JSON.stringify({ userId })
   });
   return res.json();
 };
 
 export const getTotalUnreadCount = async (userId) => {
-  const res = await fetch(`${API_URL}/chat/unread/count/${userId}`);
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/chat/unread/count/${userId}`, {
+    headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
+  });
   return res.json();
 };
 
