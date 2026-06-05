@@ -6,7 +6,7 @@ import ProductCard from "../../../components/ProductCard";
 import OptimizedImage from "../../../components/OptimizedImage";
 import Breadcrumbs from "../../../components/Breadcrumbs";
 import Link from "next/link";
-import { API_URL, API_BASE_URL, createChat, getSellerReviews, createReport, getUserProfile } from "../../../services/api";
+import { API_URL, API_BASE_URL, createChat, getSellerReviews, createReport, getUserProfile, getHeaders, extractList } from "../../../services/api";
 import { useRouter } from "next/navigation";
 import socket from "../../../services/socket";
 import ProfileOnboardingModal from "../../../components/ProfileOnboardingModal";
@@ -96,11 +96,12 @@ export default function ProductPage({ params }) {
           .catch(console.error);
       }
 
-      fetch(`${API_URL}/watchlist/${parsedUser.id}`)
+      fetch(`${API_URL}/watchlist/${parsedUser.id}`, { headers: getHeaders() })
         .then(res => res.json())
         .then(data => {
-          if (Array.isArray(data)) {
-            setIsInWatchlist(data.some(item => item.product_id === parseInt(id)));
+          const list = extractList(data);
+          if (Array.isArray(list)) {
+            setIsInWatchlist(list.some(item => item.product_id === parseInt(id)));
           }
         })
         .catch(err => console.error("Failed to fetch watchlist:", err));
@@ -271,7 +272,7 @@ export default function ProductPage({ params }) {
       const endpoint = isInWatchlist ? "remove" : "add";
       const res = await fetch(`${API_URL}/watchlist/${endpoint}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getHeaders(),
         body: JSON.stringify({ user_id: user.id, product_id: parseInt(id) }),
       });
       if (res.ok) {

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { getCategories, createProduct, updateProduct, API_URL, API_BASE_URL, getUserProfile } from "../../services/api";
 import { Camera, RefreshCw, X, Circle } from "lucide-react";
 import ProfileOnboardingModal from "../../components/ProfileOnboardingModal";
+import Breadcrumbs from "../../components/Breadcrumbs";
 import "./sell.css";
 
 export default function SellPage() {
