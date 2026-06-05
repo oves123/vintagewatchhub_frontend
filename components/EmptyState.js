@@ -11,34 +11,41 @@ export default function EmptyState({
   onAction,
 }) {
   return (
-    <div className="bg-surface rounded-xl p-8 md:p-12 text-center border border-border shadow-none">
-      {icon && (
-        <div className="w-20 h-20 bg-gold/5 text-gold border border-gold/10 rounded-xl flex items-center justify-center mx-auto mb-6">
-          {icon}
-        </div>
-      )}
-      <h3 className="text-xl font-serif font-bold text-foreground mb-2">
-        {title}
-      </h3>
-      {description && (
-        <p className="text-muted mb-8 max-w-md mx-auto">{description}</p>
-      )}
-      {actionLabel &&
-        (actionHref ? (
-          <Link
-            href={actionHref}
-            className="gold-sweep inline-flex items-center gap-2 px-8 py-4 font-black text-xs uppercase tracking-widest"
-          >
-            {actionLabel}
-          </Link>
-        ) : onAction ? (
-          <button
-            onClick={onAction}
-            className="gold-sweep inline-flex items-center gap-2 px-8 py-4 font-black text-xs uppercase tracking-widest"
-          >
-            {actionLabel}
-          </button>
-        ) : null)}
+    <div className="bg-background rounded-none p-12 md:p-20 text-center border-2 border-dashed border-border shadow-sm relative overflow-hidden group">
+      {/* Subtle Background Pattern / Glow */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface opacity-50"></div>
+      
+      <div className="relative z-10 flex flex-col items-center">
+        {icon && (
+          <div className="w-24 h-24 bg-surface text-muted border border-border rounded-full flex items-center justify-center mb-8 transform group-hover:scale-105 transition-transform duration-500 shadow-xl">
+            {icon}
+          </div>
+        )}
+        <h3 className="text-3xl font-serif font-black text-foreground mb-3 tracking-tight">
+          {title}
+        </h3>
+        {description && (
+          <p className="text-sm font-medium text-muted mb-10 max-w-md mx-auto leading-relaxed">
+            {description}
+          </p>
+        )}
+        {actionLabel &&
+          (actionHref ? (
+            <Link
+              href={actionHref}
+              className="inline-block px-10 py-4 bg-foreground text-background font-black text-[11px] uppercase tracking-widest hover:bg-gold transition-colors duration-300 shadow-2xl"
+            >
+              {actionLabel}
+            </Link>
+          ) : onAction ? (
+            <button
+              onClick={onAction}
+              className="inline-block px-10 py-4 bg-foreground text-background font-black text-[11px] uppercase tracking-widest hover:bg-gold transition-colors duration-300 shadow-2xl"
+            >
+              {actionLabel}
+            </button>
+          ) : null)}
+      </div>
     </div>
   );
 }

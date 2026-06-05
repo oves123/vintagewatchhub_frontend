@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Breadcrumbs from "../../components/Breadcrumbs";
@@ -29,7 +29,7 @@ export default function WatchlistPage() {
       setUser(parsedUser);
       if (uid) {
         Promise.all([
-          fetch(`${API_URL}/watchlist/${uid}`, { headers: getHeaders() }).then(r => r.json().then(d => extractList(d))),
+          fetch(`${API_URL}/watchlist/${uid}?t=${Date.now()}`, { headers: getHeaders(), cache: 'no-store' }).then(r => r.json().then(d => extractList(d))),
           getFolders(uid)
         ]).then(([data, folderData]) => {
           setWatchlist(Array.isArray(data) ? data : []);

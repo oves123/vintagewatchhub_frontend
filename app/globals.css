@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FAFAFA;
-  --foreground: #1F2937;
+  --background: #FFFFFF;
+  --foreground: #000000;
   --primary: #0F1A2E;
   --primary-light: #1A2D4A;
   --gold: #C9A96E;
   --gold-dark: #A67C2E;
   --gold-light: #D4BC8A;
-  --surface: #F5F5F4;
+  --surface: #F9FAFB;
   --border: #E5E1DB;
-  --muted: #78716C;
+  --muted: #4B5563;
   --radius: 12px;
   --radius-sm: 8px;
   --radius-lg: 16px;
@@ -158,6 +158,35 @@ body {
 }
 .gold-underline:hover::after {
   width: 100%;
+}
+
+/* Button Shine Effect */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -200%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  transition: all 0.75s ease;
+}
+.btn-shine:hover::after {
+  animation: shine 1.5s ease-out forwards;
+}
+@keyframes shine {
+  0% { left: -200%; }
+  100% { left: 200%; }
 }
 
 /* Card glow */

@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import socket from "../../../services/socket";
 import ProfileOnboardingModal from "../../../components/ProfileOnboardingModal";
 import { ShieldCheck, Truck, Clock, CheckCircle, ArrowLeft, ExternalLink, Info, X, Camera, Send, FileText, Edit2 } from "lucide-react";
+import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
 
 
 export default function ProductPage({ params }) {
@@ -58,6 +59,18 @@ export default function ProductPage({ params }) {
   // UX State
   const [toast, setToast] = useState(null);
   const [showDealSecured, setShowDealSecured] = useState(false);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const { scrollY } = useScroll();
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    // Show sticky bar after scrolling past the main buy buttons (approx 800px)
+    if (latest > 800 && !showStickyBar) {
+      setShowStickyBar(true);
+    } else if (latest <= 800 && showStickyBar) {
+      setShowStickyBar(false);
+    }
+  });
   
   const showToast = (message, type = 'success', duration = 4500) => {
     setToast({ message, type });
@@ -579,6 +592,53 @@ export default function ProductPage({ params }) {
         { label: product.title },
       ]} />
 
+      {/* Sticky Conversion Bar */}
+      <AnimatePresence>
+        {showStickyBar && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] p-4 md:p-6"
+          >
+            <div className="max-w-[1500px] mx-auto flex items-center justify-between gap-4">
+              <div className="hidden md:flex items-center gap-4">
+                <div className="w-12 h-12 relative rounded overflow-hidden border border-border">
+                  <OptimizedImage src={mediaItems[0]?.url} alt={product.title} fill className="object-cover" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground line-clamp-1">{product.brand} {product.title}</h3>
+                  <p className="text-xs text-muted font-medium">₹{parseFloat(product?.price || 0).toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="flex-1 md:flex-none flex items-center gap-3">
+                <div className="flex-1 md:hidden">
+                   <p className="text-sm font-bold text-foreground">₹{parseFloat(product?.price || 0).toLocaleString()}</p>
+                   <p className="text-[10px] text-muted truncate">{product.title}</p>
+                </div>
+                {isSeller ? (
+                  <Link href={`/sell?edit=${product.id}`} className="px-6 py-3 bg-emerald-600 text-white rounded font-bold text-xs uppercase tracking-widest hover:bg-emerald-700 whitespace-nowrap">Manage</Link>
+                ) : (
+                  <>
+                    {product.allow_buy_now && bidHistory.length === 0 && (
+                      <button onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow} className="flex-1 md:flex-none px-6 py-3 bg-foreground text-background rounded font-bold text-xs uppercase tracking-widest hover:bg-gold hover:text-white transition whitespace-nowrap btn-shine">
+                        {product.shipping_type === 'contact' ? 'Discuss' : 'Buy Now'}
+                      </button>
+                    )}
+                    {product.allow_auction && (
+                      <button onClick={() => setShowBidModal(true)} disabled={timeLeft === "AUCTION ENDED"} className="flex-1 md:flex-none px-6 py-3 bg-amber-600 text-white rounded font-bold text-xs uppercase tracking-widest hover:bg-amber-700 disabled:opacity-50 whitespace-nowrap btn-shine">
+                        Place Bid
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <main className="max-w-[1500px] mx-auto px-0 lg:px-4 py-0 lg:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-12">
             
@@ -940,8 +1000,8 @@ export default function ProductPage({ params }) {
                 { l: "Movement", v: product.movement_type }
               ].map((s, i) => (
                 <div key={i} className="p-8 border-b border-gray-50 md:border-r hover:bg-background transition-colors">
-                   <p className="text-[11px] font-bold text-muted uppercase tracking-widest mb-1.5">{s.l}</p>
-                   <p className="text-base font-bold text-foreground uppercase">{s.v || "N/A"}</p>
+                   <p className="text-[11px] font-bold text-muted uppercase tracking-widest mb-2">{s.l}</p>
+                   <p className="text-xl font-serif text-foreground capitalize">{s.v || "N/A"}</p>
                 </div>
               ))}
            </div>
@@ -967,11 +1027,15 @@ export default function ProductPage({ params }) {
               {activeTab === "description" && (
                 <div className="animate-in fade-in duration-500">
                     {product.description ? (
-                       <p className="text-base font-medium text-muted leading-relaxed whitespace-pre-wrap">{product.description}</p>
+                       <div className="prose prose-lg max-w-none">
+                         <p className="text-lg md:text-xl font-serif text-foreground/80 leading-loose whitespace-pre-wrap first-letter:text-7xl first-letter:font-black first-letter:text-foreground first-letter:float-left first-letter:mr-4 first-letter:mt-2 first-letter:leading-none">
+                           {product.description}
+                         </p>
+                       </div>
                     ) : (
-                       <div className="p-6 border border-dashed border-border rounded-none text-center">
-                          <p className="text-[11px] font-bold text-muted uppercase tracking-widest mb-1.5">No Description Provided</p>
-                          <p className="text-sm font-medium text-muted italic">The seller has not provided any additional context or provenance details for this asset.</p>
+                       <div className="p-12 border border-dashed border-border text-center bg-surface/50">
+                          <p className="text-[11px] font-black text-muted uppercase tracking-widest mb-2">No Description Provided</p>
+                          <p className="text-sm font-serif italic text-muted">The seller has not provided any additional context or provenance details for this asset.</p>
                        </div>
                     )}
                 </div>

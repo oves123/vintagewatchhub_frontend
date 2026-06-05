@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
       next: { revalidate: 60 }, // Cache for 60s on the CDN edge
     });
 
-    if (!res.ok) return { title: "Product | Vintage Watch Hub" };
+    if (!res.ok) return { title: "Product | Aera" };
 
     const product = await res.json();
 
@@ -27,8 +27,8 @@ export async function generateMetadata({ params }) {
         : `${API_BASE_URL}/uploads/${rawImg}`
       : null;
 
-    const title       = `${product.title} | Vintage Watch Hub`;
-    const description = (product.description || "Premium vintage watch available on Vintage Watch Hub.").slice(0, 160);
+    const title       = `${product.title} | Aera`;
+    const description = (product.description || "Premium vintage watch available on Aera.").slice(0, 160);
     const brand       = product.item_specifics?.brand;
     const price       = product.allow_auction
       ? product.current_bid || product.starting_bid
@@ -62,7 +62,7 @@ export async function generateMetadata({ params }) {
       },
     };
   } catch {
-    return { title: "Product | Vintage Watch Hub" };
+    return { title: "Product | Aera" };
   }
 }
 

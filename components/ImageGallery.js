@@ -6,6 +6,15 @@ import OptimizedImage from "./OptimizedImage";
 export default function ImageGalleryLightbox({ images, startIndex = 0, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const [zoom, setZoom] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+
+  const handleMouseMove = (e) => {
+    if (!zoom) return;
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setMousePos({ x, y });
+  };
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -64,21 +73,40 @@ export default function ImageGalleryLightbox({ images, startIndex = 0, onClose }
           </svg>
         </button>
 
-        <div className={`w-full h-full flex items-center justify-center p-8 transition-transform duration-200 ${zoom ? 'cursor-zoom-out scale-150' : 'cursor-zoom-in'}`}
-             onClick={() => setZoom(!zoom)}>
+        <div 
+          className={`w-full h-full flex items-center justify-center p-8 transition-transform duration-200 ${zoom ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+          onClick={() => {
+            setZoom(!zoom);
+            if (!zoom) setMousePos({ x: 50, y: 50 });
+          }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setMousePos({ x: 50, y: 50 })}
+        >
           {current.type === "video" ? (
-            <video src={current.url} className="max-w-full max-h-full" controls autoPlay />
+            <video src={current.url} className={`max-w-full max-h-full transition-transform duration-200 ${zoom ? 'scale-[2.5]' : 'scale-100'}`} controls autoPlay />
           ) : (
-            <OptimizedImage
-              src={current.url}
-              alt={`Product image ${currentIndex + 1} of ${images.length}`}
-              fill
-              size="large"
-              className="object-contain"
-              priority
-            />
+            <div 
+              className="relative w-full h-full transition-all duration-200 ease-out"
+              style={zoom ? {
+                transform: 'scale(2.5)',
+                transformOrigin: `${mousePos.x}% ${mousePos.y}%`
+              } : {
+                transform: 'scale(1)',
+                transformOrigin: '50% 50%'
+              }}
+            >
+              <OptimizedImage
+                src={current.url}
+                alt={`Product image ${currentIndex + 1} of ${images.length}`}
+                fill
+                size="large"
+                className="object-contain"
+                priority
+              />
+            </div>
           )}
         </div>
+
 
         <button
           onClick={() => setCurrentIndex((i) => (i < images.length - 1 ? i + 1 : 0))}

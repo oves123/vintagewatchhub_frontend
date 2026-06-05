@@ -25,7 +25,7 @@ export const metadata = {
 
 import TermsGuard from "../components/TermsGuard";
 import { ComparisonProvider } from "../context/ComparisonContext";
-import ComparisonDrawer from "../components/ComparisonDrawer";
+
 import { RecentlyViewedProvider } from "../context/RecentlyViewedContext";
 import { ToastProvider } from "../context/ToastContext";
 import ToastContainer from "../components/ToastContainer";
@@ -62,7 +62,7 @@ export default function RootLayout({ children }) {
         <RecentlyViewedProvider>
           <ComparisonProvider>
             <ToastProvider>
-              <ComparisonDrawer />
+
               <ToastContainer />
               <TermsGuard>
               <ErrorBoundary>

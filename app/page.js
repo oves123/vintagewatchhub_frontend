@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProductCard from "../components/ProductCard";
+import { ProductGridSkeleton } from "../components/Skeleton";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { API_URL } from "../services/api";
@@ -20,6 +21,7 @@ function HomeContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -56,6 +58,7 @@ function HomeContent() {
   };
 
   useEffect(() => {
+    setIsLoading(true);
     let url = `${API_URL}/products`;
     const params = new URLSearchParams();
     if (search) params.append("search", search);
@@ -134,6 +137,9 @@ function HomeContent() {
       .catch((err) => {
         console.error("Products fetch error:", err);
         setProducts([]);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
 
     // Fetch categories for sidebar
@@ -179,37 +185,6 @@ function HomeContent() {
     <div className="bg-background min-h-screen flex flex-col transition-colors duration-500">
       <Navbar />
 
-      {/* Hero Section - Cinematic */}
-      {!isCatalogView && (
-        <section className="bg-background relative w-full h-[90vh] min-h-[600px] border-b border-border flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 z-0">
-            <img
-              src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg"
-              alt="Luxury Vintage Watch"
-              className="w-full h-full object-cover scale-105 opacity-40 mix-blend-luminosity transform duration-[20s] hover:scale-110"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/10 to-background"></div>
-          </div>
-          
-          <div className="relative z-10 w-full max-w-[1300px] mx-auto px-5 text-center flex flex-col items-center mt-16">
-            <h1 className="text-5xl md:text-7xl lg:text-[7rem] font-black text-foreground uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl mix-blend-plus-lighter">
-              Heritage <br/> <span className="text-gold font-serif italic lowercase font-light tracking-normal">masterpieces.</span>
-            </h1>
-            <p className="text-xs md:text-sm font-bold text-muted uppercase tracking-[0.4em] mb-12 max-w-xl text-balance">
-              Curated by experts. Acquired by connoisseurs. Discover the world's most significant horological assets.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link href="/?catalog=true#market" className="gold-sweep px-12 py-5 font-black text-[11px] uppercase tracking-[0.25em] shadow-2xl backdrop-blur-md text-white">
-                Enter The Vault
-              </Link>
-              <Link href="/sell" className="bg-surface/50 border border-border/50 backdrop-blur-md text-foreground px-12 py-5 font-bold text-[11px] uppercase tracking-[0.25em] hover:bg-surface hover:border-gold/30 transition-all duration-300">
-                Consign an Asset
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Brand Quick Links - New Section */}
       {!isCatalogView && brands.length > 0 && (
@@ -255,9 +230,13 @@ function HomeContent() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {featuredSelection.map(p => (
-                    <ProductCard key={p.id} product={p} />
-                  ))}
+                  {isLoading ? (
+                    <ProductGridSkeleton count={4} />
+                  ) : (
+                    featuredSelection.map(p => (
+                      <ProductCard key={p.id} product={p} />
+                    ))
+                  )}
                 </div>
               </section>
             )}
@@ -272,9 +251,13 @@ function HomeContent() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {newArrivals.map(p => (
-                    <ProductCard key={p.id} product={p} />
-                  ))}
+                  {isLoading ? (
+                    <ProductGridSkeleton count={4} />
+                  ) : (
+                    newArrivals.map(p => (
+                      <ProductCard key={p.id} product={p} />
+                    ))
+                  )}
                 </div>
               </section>
             )}
@@ -284,22 +267,31 @@ function HomeContent() {
         {isCatalogView && (
           <div className="flex flex-col lg:flex-row gap-8">
 
-            {/* Detailed Filters - Drawer on Mobile */}
+            {/* Off-canvas Filter Drawer */}
             <aside className={`
-              fixed inset-0 z-[110] lg:relative lg:inset-auto lg:z-auto
-              ${showMobileFilters ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-              transition-transform duration-300 lg:transition-none
-              w-full lg:w-64 flex-shrink-0 bg-surface lg:bg-transparent overflow-y-auto lg:overflow-visible
+              fixed inset-0 z-[110]
+              ${showMobileFilters ? 'pointer-events-auto' : 'pointer-events-none'}
             `}>
-              {/* Mobile Header for Filters */}
-              <div className="flex lg:hidden items-center justify-between p-6 border-b border-border sticky top-0 bg-surface z-10">
+              {/* Overlay */}
+              <div 
+                className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${showMobileFilters ? 'opacity-100' : 'opacity-0'}`} 
+                onClick={() => setShowMobileFilters(false)}
+              />
+              
+              {/* Drawer Content */}
+              <div className={`
+                absolute right-0 top-0 bottom-0 w-full sm:w-96 bg-surface shadow-2xl flex flex-col
+                transition-transform duration-300 ${showMobileFilters ? 'translate-x-0' : 'translate-x-full'}
+              `}>
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-surface z-10">
                 <h3 className="text-lg font-serif text-foreground tracking-widest">Filter Assets</h3>
                 <button onClick={() => setShowMobileFilters(false)} className="p-2 text-muted hover:text-foreground">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
 
-              <div className="p-6 lg:p-0 space-y-8">
+              <div className="flex-1 overflow-y-auto p-6 space-y-8">
                 {/* Category Filter */}
                 <div>
                   <h3 className="font-serif text-xs font-bold text-foreground mb-4 uppercase tracking-[0.15em]">Category</h3>
@@ -391,8 +383,8 @@ function HomeContent() {
 
               </div>
 
-              {/* Mobile Footer for Filters */}
-              <div className="lg:hidden p-6 border-t border-border bg-background">
+              {/* Drawer Footer */}
+              <div className="p-6 border-t border-border bg-background">
                  <button 
                   onClick={() => setShowMobileFilters(false)}
                   className="w-full py-4 bg-primary text-white border border-primary hover:bg-transparent hover:text-primary rounded-none font-bold text-[10px] uppercase tracking-[0.2em] transition"
@@ -401,6 +393,7 @@ function HomeContent() {
                  </button>
               </div>
 
+              </div>
             </aside>
 
             {/* Results Area */}
@@ -414,10 +407,10 @@ function HomeContent() {
                   </h2>
                 </div>
                 <div className="flex items-center gap-3">
-                  {/* Mobile Filter Toggle */}
+                  {/* Filter Toggle Button */}
                   <button 
                     onClick={() => setShowMobileFilters(true)}
-                    className="lg:hidden flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-none text-[10px] font-bold uppercase tracking-widest text-foreground hover:border-gold transition-all"
+                    className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-none text-[10px] font-bold uppercase tracking-widest text-foreground hover:border-gold transition-all"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                     Filters
@@ -455,56 +448,62 @@ function HomeContent() {
                 </div>
               )}
 
-              <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6' : 'grid-cols-1 gap-4'}`}>
-                {products.map(p => (
-                  <ProductCard key={p.id} product={p} horizontal={viewMode === 'list'} />
-                ))}
-              </div>
-
-              {/* Load More */}
-              {currentPage < totalPages && (
-                <div className="flex justify-center mt-12">
-                  <button
-                    onClick={async () => {
-                      setLoadingMore(true);
-                      const nextPage = currentPage + 1;
-                      const moreParams = new URLSearchParams();
-                      if (search) moreParams.append("search", search);
-                      if (category) moreParams.append("category", category);
-                      if (brand) moreParams.append("brand", brand);
-                      if (minPrice) moreParams.append("minPrice", minPrice);
-                      if (maxPrice) moreParams.append("maxPrice", maxPrice);
-                      if (conditionParam) moreParams.append("condition", conditionParam);
-                      if (formatParam) moreParams.append("format", formatParam);
-                      if (sortParam) moreParams.append("sort", sortParam);
-                      if (strapParam) moreParams.append("strap_type", strapParam);
-                      moreParams.append("page", nextPage);
-                      try {
-                        const res = await fetch(`${API_URL}/products?${moreParams.toString()}`);
-                        const data = await res.json();
-                        const newItems = Array.isArray(data) ? data : (data.products || []);
-                        setProducts(prev => [...prev, ...newItems]);
-                        setCurrentPage(nextPage);
-                      } catch (e) { console.error(e); }
-                      setLoadingMore(false);
-                    }}
-                    disabled={loadingMore}
-                    className="px-12 py-4 bg-foreground text-background text-[11px] font-black uppercase tracking-widest hover:bg-primary transition disabled:opacity-50"
-                  >
-                    {loadingMore ? "Loading..." : `Load More — ${totalProducts - products.length} remaining`}
-                  </button>
-                </div>
-              )}
-
-              {products.length === 0 && (
-                <div className="bg-surface p-20 text-center border border-border shadow-sm">
-                  <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              {/* Load More & Products Grid */}
+              <div className="mt-8">
+                {isLoading ? (
+                  <ProductGridSkeleton count={8} />
+                ) : products.length > 0 ? (
+                  <>
+                    <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6' : 'grid-cols-1 gap-4'}`}>
+                      {products.map(p => (
+                        <ProductCard key={p.id} product={p} horizontal={viewMode === 'list'} viewMode={viewMode} />
+                      ))}
+                    </div>
+                    
+                    {currentPage < totalPages && (
+                      <div className="flex justify-center mt-12">
+                        <button
+                          onClick={async () => {
+                            setLoadingMore(true);
+                            const nextPage = currentPage + 1;
+                            const moreParams = new URLSearchParams();
+                            if (search) moreParams.append("search", search);
+                            if (category) moreParams.append("category", category);
+                            if (brand) moreParams.append("brand", brand);
+                            if (minPrice) moreParams.append("minPrice", minPrice);
+                            if (maxPrice) moreParams.append("maxPrice", maxPrice);
+                            if (conditionParam) moreParams.append("condition", conditionParam);
+                            if (formatParam) moreParams.append("format", formatParam);
+                            if (sortParam) moreParams.append("sort", sortParam);
+                            if (strapParam) moreParams.append("strap_type", strapParam);
+                            moreParams.append("page", nextPage);
+                            try {
+                              const res = await fetch(`${API_URL}/products?${moreParams.toString()}`);
+                              const data = await res.json();
+                              const newItems = Array.isArray(data) ? data : (data.products || []);
+                              setProducts(prev => [...prev, ...newItems]);
+                              setCurrentPage(nextPage);
+                            } catch (e) { console.error(e); }
+                            setLoadingMore(false);
+                          }}
+                          disabled={loadingMore}
+                          className="px-12 py-4 bg-foreground text-background text-[11px] font-black uppercase tracking-widest hover:bg-primary transition disabled:opacity-50"
+                        >
+                          {loadingMore ? "Loading..." : `Load More \u2014 ${totalProducts - products.length} remaining`}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="bg-surface p-20 text-center border border-border shadow-sm">
+                    <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-6">
+                      <svg className="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                    <h3 className="text-xl font-serif text-foreground">No Listings Found</h3>
+                    <p className="text-sm text-muted font-medium mt-2">Try adjusting your filters or searching for something else.</p>
                   </div>
-                  <h3 className="text-xl font-serif text-foreground">No Listings Found</h3>
-                  <p className="text-sm text-muted font-medium mt-2">Try adjusting your filters or searching for something else.</p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         )}

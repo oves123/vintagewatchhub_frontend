@@ -56,7 +56,10 @@ export default function Navbar() {
   const fetchWatchlistCount = async (userId) => {
     if (!userId) return;
     try {
-      const res = await fetch(`${API_URL}/watchlist/${userId}`, { headers: getHeaders() });
+      const res = await fetch(`${API_URL}/watchlist/${userId}?t=${Date.now()}`, { 
+        headers: getHeaders(),
+        cache: 'no-store'
+      });
       if (res.ok) {
         const data = await res.json();
         setWatchlistCount(data.length);
@@ -202,9 +205,9 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="relative z-[100] bg-background border-b border-border">
+      <header className="sticky top-0 z-[100] bg-background/80 backdrop-blur-lg border-b border-border/50">
         {/* Concierge Top Bar */}
-        <div className="hidden md:flex bg-primary text-white text-[10px] font-bold tracking-widest uppercase overflow-hidden max-h-10">
+        <div className="hidden md:flex bg-primary text-white text-[10px] font-bold tracking-widest uppercase z-[110]">
           <div className="max-w-[1400px] w-full mx-auto px-6 py-2 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <span className="text-gold">Aera Concierge</span>
