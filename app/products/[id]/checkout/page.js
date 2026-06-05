@@ -1,11 +1,14 @@
 "use client";
 import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Truck, Clock, CheckCircle, ArrowLeft, ExternalLink, Info } from "lucide-react";
+import { ShieldCheck, Truck, Clock, CheckCircle, ArrowLeft, ExternalLink, Info, CreditCard, MapPin, Lock, Package } from "lucide-react";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import CheckoutStepper from "@/components/CheckoutStepper";
 import Navbar from "@/components/Navbar";
+import OptimizedImage from "@/components/OptimizedImage";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000/api";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:5000";
+import { API_URL, API_BASE_URL } from "@/services/api";
+const STEPS = ["Review Order", "Payment", "Confirmation"];
 
 export default function CheckoutPage({ params: paramsPromise }) {
   const params = use(paramsPromise);
@@ -16,6 +19,13 @@ export default function CheckoutPage({ params: paramsPromise }) {
   const [platformSettings, setPlatformSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSecuring, setIsSecuring] = useState(false);
+  const [step, setStep] = useState(0);
+  const [confirmed, setConfirmed] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [appliedCoupon, setAppliedCoupon] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [couponApplying, setCouponApplying] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -31,21 +41,43 @@ export default function CheckoutPage({ params: paramsPromise }) {
           fetch(`${API_URL}/products/${id}`),
           fetch(`${API_URL}/user/terms`)
         ]);
-        
-        const productData = await productRes.json();
-        const settingsData = await settingsRes.json();
-        
-        setProduct(productData);
-        setPlatformSettings(settingsData);
+        setProduct(await productRes.json());
+        setPlatformSettings(await settingsRes.json());
       } catch (err) {
         console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [id, router]);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode || !user) return;
+    setCouponApplying(true);
+    setCouponError("");
+    try {
+      const res = await fetch(`${API_URL}/features/coupons/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+        body: JSON.stringify({ code: couponCode, cart_value: totalAmount, user_id: user.id })
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setCouponDiscount(data.discount);
+        setAppliedCoupon(data.code);
+        setCouponError("");
+      } else {
+        setCouponError(data.error || "Invalid coupon");
+        setCouponDiscount(0);
+        setAppliedCoupon("");
+      }
+    } catch (e) {
+      setCouponError("Failed to validate coupon");
+    } finally {
+      setCouponApplying(false);
+    }
+  };
 
   const handleConfirmPurchase = async () => {
     setIsSecuring(true);
@@ -54,193 +86,320 @@ export default function CheckoutPage({ params: paramsPromise }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${localStorage.getItem("token")}`
         },
         body: JSON.stringify({
           product_id: parseInt(id),
-          buyer_id: user.id
+          buyer_id: user.id,
+          coupon_code: appliedCoupon || undefined,
+          discount_amount: couponDiscount > 0 ? couponDiscount : undefined
         })
       });
       const data = await res.json();
       if (res.ok) {
-        // Success!
-        alert("Deal Secured! You will now be redirected to your profile to complete the payment.");
-        router.push("/profile?tab=buying");
+        setConfirmed(true);
+        setStep(2);
       } else {
         alert(data.message || "Failed to secure deal.");
+        setIsSecuring(false);
       }
     } catch (err) {
       alert("Error securing deal. Please try again.");
-    } finally {
       setIsSecuring(false);
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-surface flex items-center justify-center font-black uppercase tracking-[0.3em] text-[10px] text-primary animate-pulse">Authenticating Transaction Node...</div>;
-  if (!product) return <div className="min-h-screen bg-surface flex items-center justify-center font-black uppercase tracking-[0.3em] text-[10px] text-red-500">Asset Data Missing</div>;
+  if (loading) return (
+    <div className="bg-background min-h-screen flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex items-center justify-center">
+        <div className="watch-crown-loader">
+          <svg className="w-8 h-8 crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 2L15 8H9L12 2Z" /><path d="M12 6V12" />
+            <rect x="8" y="12" width="8" height="8" rx="1" />
+          </svg>
+          <span className="tick"></span><span className="tick"></span><span className="tick"></span>
+          <span className="ml-3 text-xs font-black uppercase tracking-widest text-muted">Loading</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!product) return (
+    <div className="bg-background min-h-screen flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-xs font-black uppercase tracking-widest text-rose-500">Asset Data Missing</p>
+      </div>
+    </div>
+  );
 
   const itemPrice = parseFloat(product.buy_it_now_price || product.price);
   const shippingFee = product.shipping_type === 'fixed' ? parseFloat(product.shipping_fee || 0) : 0;
   const buyerCommissionRate = parseFloat(platformSettings?.buyer_commission_rate || 0);
   const buyerCommissionFee = itemPrice * (buyerCommissionRate / 100);
   const totalAmount = itemPrice + shippingFee + buyerCommissionFee;
+  const totalAfterDiscount = totalAmount - couponDiscount;
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-[#1a1a1a] font-sans pb-20">
+    <div className="bg-background min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="max-w-5xl mx-auto px-4 py-12">
-        <div className="flex items-center gap-4 mb-10">
-           <button onClick={() => window.close()} className="p-3 bg-surface border border-border rounded-full hover:bg-background transition shadow-sm">
-              <ArrowLeft className="w-5 h-5" />
-           </button>
-           <div>
-              <h1 className="text-3xl font-black uppercase tracking-tight text-foreground">Confirm Acquisition</h1>
-              <p className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mt-1">Reviewing transaction details for Asset #D-{id}</p>
-           </div>
+      <main className="max-w-4xl mx-auto px-4 py-10 w-full">
+        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Checkout' }]} />
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <button onClick={() => step === 0 ? router.back() : setStep(step - 1)} className="p-2.5 bg-background border border-border hover:border-gold transition-colors">
+            <ArrowLeft className="w-4 h-4 text-foreground" />
+          </button>
+          <div>
+            <h1 className="section-title text-2xl">Checkout</h1>
+            <p className="label-engraved mt-0.5">Asset #D-{id}</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-           {/* Left Column: Summary */}
-           <div className="lg:col-span-7 space-y-8">
-              <div className="bg-surface rounded-[32px] border border-border shadow-xl shadow-gray-200/40 p-8">
-                 <div className="flex gap-8">
-                    <div className="w-32 h-32 bg-background rounded-none overflow-hidden flex-shrink-0 border border-border">
-                       <img 
-                         src={product.images?.[0] ? (product.images[0].startsWith('http') ? product.images[0] : `${API_BASE_URL}/uploads/${product.images[0]}`) : '/placeholder.png'} 
-                         className="w-full h-full object-cover"
-                         alt={product.title}
-                       />
+        <CheckoutStepper currentStep={step + 1} steps={STEPS} />
+
+        {step === 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="lg:col-span-3 space-y-6">
+              {/* Item Summary */}
+              <div className="bg-background border border-border p-6 card-glow">
+                <h3 className="font-bold text-foreground text-sm mb-4 flex items-center gap-2">
+                  <Package className="w-4 h-4 text-gold" /> Item Details
+                </h3>
+                <div className="flex gap-5">
+                  <div className="w-24 h-24 bg-background border border-border flex-shrink-0 overflow-hidden relative">
+                    <OptimizedImage
+                      src={product.images?.[0] ? (product.images[0].startsWith('http') ? product.images[0] : `${API_BASE_URL}/uploads/${product.images[0]}`) : '/placeholder.png'}
+                      alt={product.title}
+                      fill
+                      className="object-contain p-2"
+                      size="small"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p className="label-engraved">{product.category || 'Luxury Asset'}</p>
+                    <h2 className="font-serif text-lg text-foreground leading-tight mt-1">{product.title}</h2>
+                    <div className="flex gap-2 mt-2">
+                      <span className="text-xs font-bold text-muted uppercase tracking-widest border border-border px-2 py-0.5">{product.condition_code || 'Pre-owned'}</span>
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50/50 border border-emerald-200/50 px-2 py-0.5 flex items-center gap-1">
+                        <ShieldCheck className="w-2.5 h-2.5" /> Verified
+                      </span>
                     </div>
-                    <div className="flex-1">
-                       <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{product.category || 'Luxury Asset'}</p>
-                       <h2 className="text-xl font-bold uppercase tracking-tight text-foreground leading-tight mb-3">{product.title}</h2>
-                       <div className="flex flex-wrap gap-2">
-                          <span className="px-3 py-1 bg-background rounded-none text-[9px] font-bold uppercase tracking-widest text-muted border border-border">{product.condition_code || 'Pre-owned'}</span>
-                          <span className="px-3 py-1 bg-emerald-50 rounded-none text-[9px] font-bold uppercase tracking-widest text-emerald-600 border border-emerald-100 flex items-center gap-1">
-                             <ShieldCheck className="w-3 h-3" /> Hub Verified
-                          </span>
-                       </div>
-                    </div>
-                 </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="bg-surface rounded-[32px] border border-border shadow-xl shadow-gray-200/40 p-8">
-                 <h3 className="text-sm font-black uppercase tracking-widest text-foreground mb-6 flex items-center gap-2">
-                    <Truck className="w-4 h-4 text-muted" /> Fulfillment Destination
-                 </h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                       <p className="text-[10px] font-black text-muted uppercase tracking-widest">Registered Shipping Address</p>
-                       <div className="p-5 bg-background rounded-none border border-border">
-                          <p className="text-sm font-bold text-foreground">{user?.name}</p>
-                          <p className="text-xs text-muted mt-2 leading-relaxed">{user?.address}</p>
-                          <p className="text-xs text-muted">{user?.city}, {user?.state} - {user?.pincode}</p>
-                          <p className="text-xs font-bold text-primary mt-3">{user?.phone}</p>
-                       </div>
-                    </div>
-                    <div className="flex flex-col justify-center">
-                       <div className="p-5 bg-blue-50/50 rounded-none border border-blue-100">
-                          <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                             <Clock className="w-3.5 h-3.5" /> Shipping Guarantee
-                          </p>
-                          <p className="text-[11px] text-blue-800 font-medium leading-relaxed">
-                             Once confirmed, the seller is required to ship this item within 48-72 hours. Your funds will be held securely in escrow until you confirm receipt.
-                          </p>
-                       </div>
-                    </div>
-                 </div>
+              {/* Shipping Address */}
+              <div className="bg-background border border-border p-6 card-glow">
+                <h3 className="font-bold text-foreground text-sm mb-4 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-gold" /> Shipping Address
+                </h3>
+                <div className="bg-background border border-border p-5">
+                  <p className="font-bold text-foreground">{user?.name}</p>
+                  <p className="text-sm text-muted mt-1.5 leading-relaxed">{user?.address || 'No address on file'}</p>
+                  <p className="text-sm text-muted">{user?.city}{user?.city && user?.state ? ', ' : ''}{user?.state} {user?.pincode}</p>
+                  <p className="text-sm font-bold text-gold-dark mt-2">{user?.phone}</p>
+                </div>
+                <p className="text-xs text-muted mt-3 flex items-center gap-1">
+                  <Info className="w-3 h-3" />
+                  Seller ships within 48-72 hours of payment confirmation
+                </p>
               </div>
 
-              <div className="bg-emerald-600 rounded-[32px] p-8 text-white shadow-xl shadow-emerald-100">
-                 <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-surface/20 rounded-none flex items-center justify-center backdrop-blur-md">
-                       <ShieldCheck className="w-6 h-6" />
-                    </div>
-                    <div>
-                       <h3 className="text-lg font-bold uppercase tracking-tight">Buyer Protection Enabled</h3>
-                       <p className="text-[11px] opacity-80 mt-1 font-medium leading-relaxed">
-                          This acquisition is fully protected by the Watch Collector Hub escrow system. Sellers only receive payouts after you authenticate the delivery.
-                       </p>
-                    </div>
-                 </div>
+              {/* Protection */}
+              <div className="border border-gold/20 bg-gold/[0.02] p-5">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="w-5 h-5 text-gold mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-bold text-foreground text-sm">Buyer Protection Active</p>
+                    <p className="text-xs text-muted mt-1">Your payment is held in escrow until you confirm receipt and authenticate the timepiece.</p>
+                  </div>
+                </div>
               </div>
-           </div>
+            </div>
 
-           {/* Right Column: Totals & Action */}
-           <div className="lg:col-span-5">
-              <div className="bg-surface rounded-[32px] border-2 border-black shadow-2xl shadow-gray-200 p-8 sticky top-32">
-                 <h3 className="text-sm font-black uppercase tracking-widest text-foreground mb-8 border-b border-border pb-4">Transaction Summary</h3>
-                 
-                 <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                       <p className="text-[11px] font-bold text-muted uppercase tracking-widest">Asset Value</p>
-                       <p className="text-base font-black text-foreground">₹{itemPrice.toLocaleString()}</p>
+            {/* Sidebar Summary */}
+            <div className="lg:col-span-2">
+              <div className="bg-background border border-border p-6 sticky top-28 card-glow">
+                <h3 className="font-bold text-foreground text-sm mb-6 pb-4 border-b border-border flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-gold" /> Order Summary
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted uppercase tracking-widest font-bold">Asset Price</span>
+                    <span className="text-sm font-bold text-foreground">₹{itemPrice.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted uppercase tracking-widest font-bold">Shipping</span>
+                    <span className="text-sm font-bold text-foreground">{shippingFee > 0 ? `₹${shippingFee.toLocaleString()}` : 'FREE'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted uppercase tracking-widest font-bold">Buyer Premium ({buyerCommissionRate}%)</span>
+                    <span className="text-sm font-bold text-foreground">₹{buyerCommissionFee.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted uppercase tracking-widest font-bold">Authentication</span>
+                    <span className="text-sm font-bold text-emerald-600">Included</span>
+                  </div>
+                  {/* Coupon Code */}
+                  <div className="pt-2">
+                    <div className="flex gap-2">
+                      <input
+                        value={couponCode}
+                        onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="COUPON CODE"
+                        className="flex-1 px-3 py-2 bg-background border border-border text-xs font-bold uppercase tracking-widest outline-none"
+                      />
+                      <button
+                        onClick={handleApplyCoupon}
+                        disabled={!couponCode || couponApplying}
+                        className="px-4 py-2 bg-black text-white rounded-lg text-xs font-black uppercase tracking-widest disabled:opacity-50 hover:bg-primary"
+                      >
+                        {couponApplying ? '...' : 'Apply'}
+                      </button>
                     </div>
-                    <div className="flex justify-between items-center">
-                       <div className="flex items-center gap-1.5">
-                          <p className="text-[11px] font-bold text-muted uppercase tracking-widest">Shipping Fee</p>
-                          <Info className="w-3 h-3 text-muted" />
-                       </div>
-                       <p className="text-base font-bold text-foreground">{shippingFee > 0 ? `₹${shippingFee.toLocaleString()}` : 'FREE'}</p>
-                    </div>
-                    <div className="flex justify-between items-center">
-                       <div className="flex items-center gap-1.5">
-                          <p className="text-[11px] font-bold text-muted uppercase tracking-widest">Buyer Premium ({buyerCommissionRate}%)</p>
-                          <Info className="w-3 h-3 text-muted" />
-                       </div>
-                       <p className="text-base font-bold text-foreground">₹{buyerCommissionFee.toLocaleString()}</p>
-                    </div>
-                    <div className="flex justify-between items-center">
-                       <div className="flex items-center gap-1.5">
-                          <p className="text-[11px] font-bold text-muted uppercase tracking-widest">Hub Authentication</p>
-                          <span className="px-2 py-0.5 bg-emerald-50 text-[8px] font-black text-emerald-600 rounded uppercase">Included</span>
-                       </div>
-                       <p className="text-base font-bold text-emerald-600">₹0</p>
-                    </div>
+                    {couponError && <p className="text-xs text-red-500 font-bold mt-1">{couponError}</p>}
+                    {couponDiscount > 0 && (
+                      <div className="flex justify-between mt-2 text-emerald-600">
+                        <span className="text-xs font-bold uppercase tracking-widest">Discount ({appliedCoupon})</span>
+                        <span className="text-sm font-bold">-₹{couponDiscount.toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="pt-4 border-t border-border flex justify-between items-end">
+                    <span className="text-xs text-muted uppercase tracking-widest font-black">Total</span>
+                    <span className="price-serif text-2xl">₹{totalAfterDiscount.toLocaleString()}</span>
+                  </div>
+                </div>
 
-                    <div className="pt-8 border-t border-dashed border-border mt-8">
-                       <div className="flex justify-between items-end mb-8">
-                          <div>
-                             <p className="text-[10px] font-black text-muted uppercase tracking-[0.3em]">Total Acquisition Cost</p>
-                             <p className="text-[8px] font-bold text-muted uppercase mt-1 italic">Exclusive of any local delivery taxes</p>
-                          </div>
-                          <p className="text-4xl font-black text-foreground tracking-tighter">₹{totalAmount.toLocaleString()}</p>
-                       </div>
+                <button
+                  onClick={() => setStep(1)}
+                  className="gold-sweep w-full mt-6 py-4 text-sm font-black uppercase tracking-widest"
+                >
+                  Continue to Payment
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-                       <button 
-                         onClick={handleConfirmPurchase}
-                         disabled={isSecuring}
-                         className={`w-full py-6 rounded-none text-[12px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl ${isSecuring ? 'bg-background text-muted' : 'bg-black text-white hover:bg-primary shadow-blue-100 active:scale-[0.98]'}`}
-                       >
-                          {isSecuring ? (
-                             <span className="animate-pulse">Securing Asset...</span>
-                          ) : (
-                             <>
-                                <span>Confirm & Secure Asset</span>
-                                <CheckCircle className="w-5 h-5" />
-                             </>
-                          )}
-                       </button>
+        {step === 1 && (
+          <div className="max-w-lg mx-auto space-y-6">
+            <div className="bg-background border border-border p-6 card-glow">
+              <h3 className="font-bold text-foreground text-sm mb-6 flex items-center gap-2">
+                <Lock className="w-4 h-4 text-gold" /> Secure Payment
+              </h3>
 
-                       <p className="text-[9px] text-center text-muted font-bold uppercase tracking-widest mt-6 leading-relaxed">
-                          By clicking above, you agree to secure this asset. You will have 24 hours to complete the payment via the dashboard.
-                       </p>
-                    </div>
-                 </div>
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center gap-4 p-4 border border-border hover:border-gold/30 transition-colors cursor-pointer bg-background">
+                  <div className="w-10 h-10 bg-gold/10 border border-gold/20 flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 text-gold" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-foreground text-sm">Hub Escrow</p>
+                    <p className="text-xs text-muted">Secure escrow-backed transaction</p>
+                  </div>
+                  <div className="w-5 h-5 rounded-full border-2 border-gold flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 rounded-full bg-gold"></div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 p-4 border border-border opacity-50 cursor-not-allowed bg-background">
+                  <div className="w-10 h-10 bg-background border border-border flex items-center justify-center">
+                    <CreditCard className="w-5 h-5 text-muted" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-foreground text-sm">Pay Online (Razorpay)</p>
+                    <p className="text-xs text-muted">Credit/Debit card, UPI, Net Banking</p>
+                  </div>
+                  <span className="text-xs font-black text-gold-dark uppercase tracking-widest border border-gold/20 px-1.5 py-0.5">Proceed via Dashboard</span>
+                </div>
               </div>
 
-              <div className="mt-8 px-4 flex items-center gap-3 justify-center">
-                 <div className="flex -space-x-2">
-                    {[1,2,3].map(i => (
-                       <div key={i} className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[8px] font-bold">U{i}</div>
-                    ))}
-                 </div>
-                 <p className="text-[9px] font-bold text-muted uppercase tracking-widest">14 other collectors viewed this today</p>
+              <div className="bg-surface/50 border border-border p-4 mb-6">
+                <div className="flex justify-between items-center">
+                   <span className="text-sm text-muted uppercase tracking-widest font-bold">Total Due</span>
+                   <span className="price-serif text-xl">₹{totalAfterDiscount.toLocaleString()}</span>
+                </div>
               </div>
-           </div>
-        </div>
-      </div>
+
+              <button
+                onClick={handleConfirmPurchase}
+                disabled={isSecuring}
+                className={`gold-sweep w-full py-4 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 ${isSecuring ? 'opacity-50' : ''}`}
+              >
+                {isSecuring ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+                      <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                    </svg>
+                    Securing Asset...
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4" />
+                    Confirm & Secure Asset — ₹{totalAmount.toLocaleString()}
+                  </>
+                )}
+              </button>
+
+              <p className="text-xs text-center text-muted font-bold uppercase tracking-widest mt-4">
+                Funds held in escrow until you confirm receipt
+              </p>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="max-w-lg mx-auto text-center">
+            <div className="bg-background border border-border p-10 card-glow">
+              <div className="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-10 h-10 text-emerald-500" />
+              </div>
+              <h2 className="section-title text-2xl mb-2">Deal Secured!</h2>
+              <p className="text-muted text-sm mb-6">
+                Your acquisition of <span className="font-bold text-foreground">{product.title}</span> has been initiated.
+              </p>
+              
+              <div className="bg-surface/50 border border-border p-5 mb-6 text-left">
+                <h4 className="font-bold text-foreground text-xs mb-3 uppercase tracking-widest">Next Steps</h4>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-2 text-sm text-muted">
+                    <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">1</span></span>
+                    Complete payment via the Buyer Hub within 24 hours
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-muted">
+                    <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">2</span></span>
+                    Seller ships the timepiece within 48-72 hours
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-muted">
+                    <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">3</span></span>
+                    Inspect and confirm receipt to release payment
+                  </li>
+                </ul>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => router.push("/profile?tab=buying")}
+                  className="gold-sweep w-full py-4 text-sm font-black uppercase tracking-widest"
+                >
+                  Go to Buyer Hub
+                </button>
+                <button
+                  onClick={() => router.push("/")}
+                  className="gold-sweep-outline w-full py-4 text-sm font-black uppercase tracking-widest"
+                >
+                  Continue Browsing
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

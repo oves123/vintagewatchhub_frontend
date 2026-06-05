@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import WCHLogo from "../../components/WCHLogo";
 import { useRouter } from "next/navigation";
 import { registerUser } from "../../services/api";
 
@@ -46,26 +47,14 @@ export default function RegisterPage() {
     <div className="bg-background min-h-screen font-sans antialiased text-foreground flex flex-col justify-between">
       {/* Header */}
       <header className="px-6 py-5 bg-background border-b border-border flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="16" cy="18" r="12" stroke="#1e3a5f" strokeWidth="2"/>
-            <circle cx="16" cy="18" r="8" stroke="#b8860b" strokeWidth="1.5"/>
-            <line x1="16" y1="10" x2="16" y2="18" stroke="#1e3a5f" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="16" y1="18" x2="21" y2="18" stroke="#b8860b" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M10 6 L12 3 L14 5 L16 2 L18 5 L20 3 L22 6 Z" fill="#b8860b"/>
-            <circle cx="16" cy="18" r="1.5" fill="#1e3a5f"/>
-          </svg>
-          <span className="font-serif font-black tracking-widest text-foreground text-[16px] sm:text-[18px] leading-none">
-            Watch<span className="text-gold italic font-light">Collector</span><span className="text-gold">HUB</span>
-          </span>
-        </Link>
+        <WCHLogo />
         <p className="text-xs font-serif uppercase tracking-widest text-muted">
            Member? <Link href="/login" className="text-gold hover:text-gold/80 transition-colors underline font-bold">Sign In</Link>
         </p>
       </header>
       
       <main className="flex-grow flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[440px] bg-background rounded-none border border-border p-8 sm:p-12">
+        <div className="w-full max-w-[440px] bg-background rounded-xl border border-border p-8 sm:p-12">
           <div className="mb-10 text-center">
             <h1 className="text-2xl font-serif uppercase tracking-[0.2em] text-foreground mb-3">Register</h1>
             <p className="text-xs text-muted font-medium">Join our global community of collectors</p>
@@ -85,7 +74,7 @@ export default function RegisterPage() {
               <input
                 type="text"
                 required
-                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-none outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
+                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-lg outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
                 placeholder=" "
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -103,7 +92,7 @@ export default function RegisterPage() {
               <input
                 type="email"
                 required
-                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-none outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
+                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-lg outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
                 placeholder=" "
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -121,7 +110,7 @@ export default function RegisterPage() {
               <input
                 type="password"
                 required
-                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-none outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
+                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-lg outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
                 placeholder=" "
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -137,7 +126,7 @@ export default function RegisterPage() {
 
             <div className="relative">
               <select
-                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-none outline-none focus:border-gold transition-all peer appearance-none text-[13px] text-foreground"
+                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-lg outline-none focus:border-gold transition-all peer appearance-none text-[13px] text-foreground"
                 value={formData.seller_type}
                 onChange={(e) => setFormData({...formData, seller_type: e.target.value})}
                 id="seller_type"
@@ -161,7 +150,7 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   required
-                  className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-none outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
+                  className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-lg outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
                   placeholder=" "
                   value={formData.gst_number}
                   onChange={(e) => setFormData({...formData, gst_number: e.target.value})}
@@ -176,14 +165,14 @@ export default function RegisterPage() {
               </div>
             )}
 
-            <p className="text-[10px] text-muted leading-relaxed">
+            <p className="text-xs text-muted leading-relaxed">
               By selecting **Create account**, you agree to our <span className="text-gold font-bold underline cursor-pointer">User Agreement</span> and acknowledge reading our <span className="text-gold font-bold underline cursor-pointer">Privacy Notice</span>.
             </p>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-black text-white border border-black hover:bg-gold hover:text-black transition-all duration-300 rounded-none font-serif uppercase tracking-[0.2em] text-[11px] font-bold disabled:opacity-50 mt-6"
+              className="w-full py-4 bg-black text-white border border-black hover:bg-gold hover:text-black transition-all duration-300 rounded-lg font-serif uppercase tracking-[0.2em] text-sm font-bold disabled:opacity-50 mt-6"
             >
               {loading ? "Enrolling..." : "Create Account"}
             </button>
@@ -196,7 +185,7 @@ export default function RegisterPage() {
       </main>
 
       <footer className="py-8 border-t border-border text-center bg-background">
-        <p className="text-[10px] font-serif uppercase tracking-widest text-muted">&copy; 2026 WatchCollectorHub Inc. All Rights Reserved.</p>
+        <p className="text-xs font-serif uppercase tracking-widest text-muted">&copy; 2026 Aera Inc. All Rights Reserved.</p>
       </footer>
     </div>
   );

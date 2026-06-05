@@ -1,46 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { 
-  LayoutDashboard, Users, Package, LogOut,
-  ChevronRight, ShieldCheck, Menu, X, ShoppingCart,
-  MessageSquare, CreditCard, Settings, Gavel, BarChart3
-} from "lucide-react";
-
-function WCHLogo() {
-  return (
-    <div className="flex items-center gap-2 flex-shrink-0">
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="18" r="12" stroke="#1e3a5f" strokeWidth="2"/>
-        <circle cx="16" cy="18" r="8" stroke="#b8860b" strokeWidth="1.5"/>
-        <line x1="16" y1="10" x2="16" y2="18" stroke="#1e3a5f" strokeWidth="2" strokeLinecap="round"/>
-        <line x1="16" y1="18" x2="21" y2="18" stroke="#b8860b" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M10 6 L12 3 L14 5 L16 2 L18 5 L20 3 L22 6 Z" fill="#b8860b"/>
-        <circle cx="16" cy="18" r="1.5" fill="#1e3a5f"/>
-      </svg>
-      <div className="flex flex-col leading-none">
-        <span className="font-bold tracking-tight text-foreground text-[16px]">
-          Watch<span className="text-primary">Collector</span><span className="text-gold font-black">HUB</span>
-        </span>
-        <span className="text-[9px] font-bold text-muted uppercase tracking-widest mt-0.5">Admin Panel</span>
-      </div>
-    </div>
-  );
-}
+import WCHLogo from "./WCHLogo";
+import { LayoutDashboard, Users, Package, ShoppingCart, Tags, CreditCard, Gavel, ShieldCheck, MessageSquare, BarChart3, Settings, ChevronRight, X, LogOut } from "lucide-react";
 
 export default function AdminSidebar({ activeTab, setActiveTab, adminUser, onLogout, isOpen, setIsOpen, unreadMessagesCount }) {
   const menuItems = [
-    { id: "overview",  label: "Dashboard",        icon: LayoutDashboard },
-    { id: "users",     label: "User Management",  icon: Users            },
-    { id: "products",  label: "Listings",         icon: Package          },
-    { id: "orders",    label: "Orders",           icon: ShoppingCart     },
-    { id: "escrow",    label: "Escrow & Payouts", icon: CreditCard       },
-    { id: "auctions",  label: "Auctions",          icon: Gavel            },
-    { id: "bids",      label: "Bid History",       icon: Gavel            },
-    { id: "reports",   label: "Reports",          icon: ShieldCheck      },
-    { id: "chats",     label: "Chats & Messages", icon: MessageSquare    },
-    { id: "financials", label: "Financial Audit", icon: BarChart3       },
-    { id: "settings",  label: "Platform Protocol", icon: Settings         },
+    { id: "overview",    label: "Dashboard",           icon: LayoutDashboard },
+    { id: "users",       label: "User Management",     icon: Users            },
+    { id: "products",    label: "Listings",            icon: Package          },
+    { id: "orders",      label: "Orders",              icon: ShoppingCart     },
+    { id: "categories",  label: "Categories & Brands", icon: Tags             },
+    { id: "escrow",      label: "Escrow & Payouts",    icon: CreditCard       },
+    { id: "auctions",    label: "Auctions",             icon: Gavel            },
+    { id: "bids",        label: "Bid History",          icon: Gavel            },
+    { id: "disputes",    label: "Disputes",             icon: ShieldCheck      },
+    { id: "coupons",     label: "Coupons",              icon: Tags             },
+    { id: "verification",label: "Verification",          icon: ShieldCheck      },
+    { id: "featured",    label: "Promotions",            icon: Package          },
+    { id: "reports",     label: "Reports",             icon: ShieldCheck      },
+    { id: "chats",       label: "Chats & Messages",    icon: MessageSquare    },
+    { id: "financials",  label: "Financial Audit",     icon: BarChart3        },
+    { id: "audit",       label: "Admin Audit Log",     icon: ShieldCheck      },
+    { id: "settings",    label: "Platform Protocol",    icon: Settings         },
   ];
 
   const handleTabClick = (id) => {
@@ -61,22 +43,19 @@ export default function AdminSidebar({ activeTab, setActiveTab, adminUser, onLog
         
         {/* Header */}
         <div className="p-6 border-b border-border flex items-center justify-between">
-          <Link href="/" className="block">
-            <WCHLogo />
-          </Link>
-          <button onClick={() => setIsOpen(false)} className="lg:hidden p-1.5 text-muted hover:text-foreground rounded-none">
+          <WCHLogo showAdminLabel />
+          <button onClick={() => setIsOpen(false)} className="lg:hidden p-1.5 text-muted hover:text-foreground rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center">
             <X size={18} />
           </button>
         </div>
 
         {/* Nav */}
         <div className="flex-grow overflow-y-auto p-4 space-y-1">
-          <p className="px-3 text-[9px] font-black text-muted uppercase tracking-[0.25em] mb-3 mt-2">Navigation</p>
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => handleTabClick(item.id)}
-              className={`w-full group flex items-center justify-between px-3 py-2.5 rounded-none text-[12px] font-bold tracking-tight transition-all ${
+              className={`w-full group flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold tracking-tight transition-all ${
                 activeTab === item.id
                   ? "bg-primary text-white shadow-lg"
                   : "text-muted hover:bg-blue-50 hover:text-primary"
@@ -87,9 +66,9 @@ export default function AdminSidebar({ activeTab, setActiveTab, adminUser, onLog
                 <span>{item.label}</span>
               </div>
               {activeTab === item.id
-                ? <div className="w-1.5 h-1.5 rounded-full bg-[#b8860b]" />
+                ? null
                 : item.id === "chats" && unreadMessagesCount > 0 ? (
-                  <span className="bg-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
+                  <span className="bg-primary text-white text-xs font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
                 ) : (
                   <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 text-muted transition-all" />
                 )
@@ -98,36 +77,19 @@ export default function AdminSidebar({ activeTab, setActiveTab, adminUser, onLog
           ))}
         </div>
 
-        {/* Security badge */}
-        <div className="px-4 pb-2">
-          <div className="bg-blue-50 rounded-none p-4 border border-blue-100">
-            <div className="flex items-center gap-2 mb-1">
-              <ShieldCheck size={13} className="text-primary" />
-              <span className="text-[9px] font-black text-primary uppercase tracking-widest">Secured Session</span>
-            </div>
-            <p className="text-[10px] font-bold text-muted leading-snug">All actions are audit-logged.</p>
-          </div>
+        <div className="px-4 pb-2 border-t border-border pt-4">
+          <p className="text-xs font-bold text-primary">Admin Panel</p>
+          <p className="text-xs mt-0.5">{adminUser?.name || "Administrator"}</p>
         </div>
 
         {/* User footer */}
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-3 mb-3 p-3 bg-background rounded-none">
-            <div className="w-9 h-9 rounded-none bg-primary flex items-center justify-center font-black text-white text-sm uppercase">
-              {adminUser?.name?.[0] || "A"}
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-[12px] font-black text-foreground truncate">{adminUser?.name || "Administrator"}</p>
-              <div className="flex items-center gap-1 mt-0.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <p className="text-[9px] text-muted font-bold uppercase tracking-widest">Admin</p>
-              </div>
-            </div>
-          </div>
+        <div className="p-4 border-t border-border flex items-center justify-between">
+          <p className="text-xs font-bold text-muted">{adminUser?.name || "Administrator"}</p>
           <button
             onClick={onLogout}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-none text-[11px] font-black text-muted hover:text-rose-600 hover:bg-rose-50 transition-all border border-transparent hover:border-rose-100"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-muted hover:text-rose-600 hover:bg-rose-50 transition-all"
           >
-            <LogOut size={15} />
+            <LogOut size={14} />
             <span>Sign Out</span>
           </button>
         </div>

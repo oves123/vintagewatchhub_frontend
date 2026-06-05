@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, Fragment, Suspense, useMemo } from "react";
-import { Image, X, PlayCircle, Search, MoreVertical, Send, Smile, Paperclip } from "lucide-react";
+import { X, PlayCircle, Search, MoreVertical, Send, Smile, Paperclip } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import Breadcrumbs from "../../components/Breadcrumbs";
 import Navbar from "../../components/Navbar";
 import { 
   getUserChats, 
@@ -25,6 +26,7 @@ import {
   API_BASE_URL 
 } from "../../services/api";
 import { CheckCircle, Truck, Info, AlertCircle, Package, Clock } from "lucide-react";
+import OptimizedImage from "../../components/OptimizedImage";
 import socket from "../../services/socket";
 import "./messages.css";
 
@@ -45,6 +47,8 @@ function MessagesContent() {
   const [quickReplies, setQuickReplies] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [typingUsers, setTypingUsers] = useState({});
+  const typingTimeoutRef = useRef(null);
   
   const messagesEndRef = useRef(null);
   const containerRef = useRef(null);
@@ -52,6 +56,8 @@ function MessagesContent() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [showDealModal, setShowDealModal] = useState(false);
   const [finalPrice, setFinalPrice] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [confirmingDeal, setConfirmingDeal] = useState(false);
   const [offerCounterForm, setOfferCounterForm] = useState({ offerId: null, amount: "" });
   const [currentDeal, setCurrentDeal] = useState(null);
   const [trackingInfo, setTrackingInfo] = useState({ courier: "", number: "" });
@@ -98,6 +104,7 @@ function MessagesContent() {
       if (msg.chat_id === activeChat?.id) {
         setMessages((prev) => [...prev, msg]);
         handleMarkAsRead(activeChat.id);
+        socket.emit("messageDelivered", { messageId: msg.id, chatId: msg.chat_id });
       } else {
         setChats(prev => prev.map(c => 
           c.id === msg.chat_id ? { 
@@ -110,8 +117,31 @@ function MessagesContent() {
       }
     };
 
+    const handleUserTyping = ({ chatId, userId }) => {
+      if (activeChat?.id === chatId && userId !== user?.id) {
+        setTypingUsers(prev => ({ ...prev, [chatId]: userId }));
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+          setTypingUsers(prev => ({ ...prev, [chatId]: null }));
+        }, 3000);
+      }
+    };
+
+    const handleUserStoppedTyping = ({ chatId, userId }) => {
+      setTypingUsers(prev => ({ ...prev, [chatId]: null }));
+    };
+
+    const handleMessageStatus = ({ messageId, status }) => {
+      setMessages(prev => prev.map(m =>
+        m.id === messageId ? { ...m, status } : m
+      ));
+    };
+
     socket.on("userStatus", handleUserStatus);
     socket.on("newMessage", handleNewMessage);
+    socket.on("userTyping", handleUserTyping);
+    socket.on("userStoppedTyping", handleUserStoppedTyping);
+    socket.on("messageStatus", handleMessageStatus);
 
     return () => {
       socket.off("userStatus", handleUserStatus);
@@ -155,9 +185,10 @@ function MessagesContent() {
   const loadChats = async () => {
     try {
       const data = await getUserChats(user.id);
-      setChats(data);
+      setChats(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
+      setChats([]);
     }
   };
 
@@ -219,12 +250,13 @@ function MessagesContent() {
     if (e) e.preventDefault();
     if (!newMessage.trim() || !activeChat) return;
 
+    setSendingMessage(true);
     try {
       const res = await sendChatMessage(activeChat.id, user.id, newMessage);
       if (res.id) {
         setMessages([...messages, res]);
         setNewMessage("");
-        loadChats(); // Refresh last message in sidebar
+        loadChats();
       } else if (res.error) {
         showToast(res.error, "error");
       }
@@ -232,6 +264,8 @@ function MessagesContent() {
       console.error("Error sending message:", err);
       const errorMsg = err.response?.data?.error || err.message || "Failed to send message";
       showToast(errorMsg, "error");
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -252,7 +286,7 @@ function MessagesContent() {
   };
 
   const handleMakeOffer = async () => {
-    const amount = prompt("Enter your offer amount (â‚¹):");
+    const amount = prompt("Enter your offer amount (₹):");
     if (amount && !isNaN(amount)) {
       try {
         const res = await createOffer({
@@ -260,11 +294,11 @@ function MessagesContent() {
           buyer_id: user.id,
           seller_id: activeChat.buyer_id === user.id ? activeChat.seller_id : activeChat.buyer_id,
           amount: parseFloat(amount),
-          message: `I'd like to offer â‚¹${amount}`
+          message: `I'd like to offer ₹${amount}`
         });
 
         if (res.offer) {
-          sendQuickMessage(`OFFER: â‚¹${amount}`, 'offer', { amount: parseFloat(amount), status: 'pending', offer_id: res.offer.id });
+          sendQuickMessage(`OFFER: ₹${amount}`, 'offer', { amount: parseFloat(amount), status: 'pending', offer_id: res.offer.id });
           showToast("Offer sent successfully!");
         } else {
           showToast(res.message || "Failed to make offer", "error");
@@ -291,7 +325,7 @@ function MessagesContent() {
 
         // If it's a counter, send an interactive offer message instead of text
         if (status === 'countered') {
-           await sendQuickMessage(`COUNTER OFFER: â‚¹${parseFloat(counterAmount).toLocaleString()}`, 'offer', { 
+           await sendQuickMessage(`COUNTER OFFER: ₹${parseFloat(counterAmount).toLocaleString()}`, 'offer', { 
              amount: parseFloat(counterAmount), 
              status: 'countered', 
              offer_id: offerId 
@@ -321,11 +355,13 @@ function MessagesContent() {
   };
 
   const handleConfirmDirectDeal = async () => {
+    if (confirmingDeal) return;
     if (!finalPrice || isNaN(finalPrice)) {
       showToast("Please enter a valid price", "error");
       return;
     }
 
+    setConfirmingDeal(true);
     try {
       const res = await confirmDirectDeal(activeChat.id, user.id, finalPrice);
       if (res.deal) {
@@ -339,6 +375,8 @@ function MessagesContent() {
     } catch (err) {
       console.error(err);
       showToast("An error occurred", "error");
+    } finally {
+      setConfirmingDeal(false);
     }
   };
 
@@ -381,14 +419,15 @@ function MessagesContent() {
     });
   }, [chats, searchQuery, user]);
 
-  if (!user) return <div className="min-h-screen bg-surface"><Navbar /><div className="flex items-center justify-center h-[60vh] gap-3"><div className="animate-spin h-5 w-5 border-2 border-gold border-t-transparent rounded-none"></div><span className="text-muted font-bold uppercase tracking-widest text-[10px]">Authenticating Session...</span></div></div>;
+  if (!user) return <div className="min-h-screen bg-surface"><Navbar /><div className="flex items-center justify-center h-[60vh] gap-3"><div className="animate-spin h-5 w-5 border-2 border-gold border-t-transparent rounded-lg"></div><span className="text-muted font-bold uppercase tracking-widest text-xs">Authenticating Session...</span></div></div>;
 
   return (
     <div className="h-screen bg-[#f4f7f6] flex flex-col font-sans overflow-hidden">
       <Navbar />
       
-      <div className="flex-grow flex overflow-hidden lg:p-4 p-0">
-        <main className="flex-grow flex overflow-hidden bg-surface shadow-none rounded-none lg:rounded-none max-w-[1400px] mx-auto w-full border border-border overflow-hidden">
+      <div className="flex-grow flex flex-col overflow-hidden lg:p-4 p-0">
+        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Messages' }]} />
+        <main className="flex-grow flex overflow-hidden bg-surface shadow-none rounded-xl lg:rounded-xl max-w-[1400px] mx-auto w-full border border-border">
           
           {/* SIDEBAR: EBAY/OLX STYLE */}
           <aside className={`w-full md:w-[350px] lg:w-[380px] flex flex-col border-r border-border bg-surface shrink-0 ${mobileShowChat ? 'hidden md:flex' : 'flex'}`}>
@@ -401,7 +440,7 @@ function MessagesContent() {
                     placeholder={labels.chat_search_placeholder || "Search or start new chat"} 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-background border border-transparent focus:bg-surface focus:border-gold rounded-none py-2.5 pl-10 pr-4 text-sm outline-none transition-all"
+                    className="w-full bg-background border border-transparent focus:bg-surface focus:border-gold rounded-lg py-2.5 pl-10 pr-4 text-sm outline-none transition-all"
                   />
                </div>
             </div>
@@ -409,7 +448,7 @@ function MessagesContent() {
             <div className="flex-grow overflow-y-auto custom-scrollbar">
                {filteredChats.length === 0 ? (
                  <div className="p-12 text-center">
-                    <div className="w-16 h-16 bg-background rounded-none border border-border flex items-center justify-center mx-auto mb-4">
+                     <div className="w-16 h-16 bg-background rounded-xl border border-border flex items-center justify-center mx-auto mb-4">
                        <Search className="text-muted w-8 h-8" />
                     </div>
                     <p className="text-sm font-semibold text-muted">{labels.chat_no_conversations || "No conversations found"}</p>
@@ -430,17 +469,17 @@ function MessagesContent() {
                         className={`group px-4 py-4 flex gap-3 cursor-pointer transition-all border-b border-gray-50/50 ${isActive ? "bg-gold/5 border-gold/20" : "hover:bg-background"}`}
                       >
                          <div className="relative shrink-0">
-                            <div className="w-12 h-12 rounded-none overflow-hidden border border-border bg-background uppercase font-black text-muted flex items-center justify-center text-lg">
-                               {otherAvatar ? (
-                                 <img src={otherAvatar.startsWith('http') ? otherAvatar : `${API_BASE_URL}/uploads/${otherAvatar}`} className="w-full h-full object-cover" />
-                               ) : otherName?.[0]}
+                             <div className="w-12 h-12 rounded-xl overflow-hidden border border-border bg-background uppercase font-black text-muted flex items-center justify-center text-lg relative">
+                                {otherAvatar ? (
+                                   <OptimizedImage src={otherAvatar.startsWith('http') ? otherAvatar : `${API_BASE_URL}/uploads/${otherAvatar}`} alt={`${otherName || 'User'} avatar`} fill className="object-cover" size="thumbnail" />
+                                ) : otherName?.[0]}
                             </div>
-                            {isOnline && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-none shadow-sm" />}
+                             {isOnline && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-lg shadow-sm" />}
                          </div>
                          <div className="flex-grow min-w-0">
                             <div className="flex justify-between items-start mb-0.5">
                                <h3 className="text-[15px] font-bold text-foreground truncate tracking-tight">{otherName}</h3>
-                               <span className="text-[10px] font-semibold text-muted uppercase">
+                               <span className="text-xs font-semibold text-muted uppercase">
                                   {chat.last_message_at ? new Date(chat.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
                                </span>
                             </div>
@@ -448,13 +487,13 @@ function MessagesContent() {
                                <p className={`text-xs truncate ${isUnread ? "font-bold text-foreground" : "text-muted"}`}>
                                   {chat.last_message || labels.chat_active_listing_discussion || "Active discussion"}
                                </p>
-                               {isUnread && <div className="bg-primary text-white min-w-[18px] h-[18px] rounded-none flex items-center justify-center text-[10px] font-bold px-1">{chat.unread_count}</div>}
+                                {isUnread && <div className="bg-primary text-white min-w-[18px] h-[18px] rounded-lg flex items-center justify-center text-xs font-bold px-1">{chat.unread_count}</div>}
                             </div>
                             <Link href={`/products/${chat.product_id}`} className="mt-2 flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity hover:underline">
-                               <div className="w-5 h-5 rounded-none overflow-hidden bg-background shrink-0">
-                                  <img src={chat.product_image?.startsWith('http') ? chat.product_image : `${API_BASE_URL}/uploads/${chat.product_image}`} className="w-full h-full object-cover" />
-                               </div>
-                               <span className="text-[10px] font-bold text-muted truncate uppercase tracking-tighter">{chat.product_title}</span>
+                               <div className="w-5 h-5 rounded-lg overflow-hidden bg-background shrink-0 relative">
+                                    <OptimizedImage src={chat.product_image?.startsWith('http') ? chat.product_image : `${API_BASE_URL}/uploads/${chat.product_image}`} alt={chat.product_title || 'Product'} fill className="object-cover" size="thumbnail" />
+                                </div>
+                               <span className="text-xs font-bold text-muted truncate uppercase tracking-tighter">{chat.product_title}</span>
                             </Link>
                          </div>
                       </div>
@@ -471,41 +510,41 @@ function MessagesContent() {
                 {/* MODERN HEADER */}
                 <header className="h-[75px] border-b border-border px-3 md:px-6 flex items-center justify-between bg-surface/80 backdrop-blur-md sticky top-0 z-30">
                    <div className="flex items-center gap-4 min-w-0">
-                      <button onClick={() => setMobileShowChat(false)} className="md:hidden p-2 hover:bg-background rounded-none transition-colors">
-                         <X className="w-5 h-5 text-muted" />
-                      </button>
+<button onClick={() => setMobileShowChat(false)} className="md:hidden p-2 hover:bg-background rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
+                          <X className="w-5 h-5 text-muted" />
+                       </button>
                       
                       <div className="relative shrink-0">
-                         <div className="w-10 h-10 rounded-none overflow-hidden border border-border bg-background font-bold text-muted flex items-center justify-center">
-                            {(activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar) ? (
-                              <img src={(activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar).startsWith('http') ? (activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar) : `${API_BASE_URL}/uploads/${activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar}`} className="w-full h-full object-cover" />
-                            ) : (activeChat.buyer_id === user.id ? activeChat.seller_name : activeChat.buyer_name)?.[0]}
+                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-border bg-background font-bold text-muted flex items-center justify-center relative">
+                             {(activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar) ? (
+                                <OptimizedImage src={(activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar).startsWith('http') ? (activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar) : `${API_BASE_URL}/uploads/${activeChat.buyer_id === user.id ? activeChat.seller_avatar : activeChat.buyer_avatar}`} alt={`${activeChat.buyer_id === user.id ? activeChat.seller_name : activeChat.buyer_name} avatar`} fill className="object-cover" size="thumbnail" />
+                             ) : (activeChat.buyer_id === user.id ? activeChat.seller_name : activeChat.buyer_name)?.[0]}
                          </div>
                          {onlineUsers.has(activeChat.buyer_id === user.id ? activeChat.seller_id : activeChat.buyer_id) && (
-                           <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-none shadow-sm" />
+                           <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-lg shadow-sm" />
                          )}
                       </div>
 
                       <div className="min-w-0 flex-shrink">
                          <div className="flex items-center gap-1.5 md:gap-2">
                            <h3 className="font-bold text-[14px] md:text-[16px] text-foreground truncate tracking-tight">{activeChat.buyer_id === user.id ? activeChat.seller_name : activeChat.buyer_name}</h3>
-                           <span className={`text-[8px] md:text-[10px] font-black uppercase px-1.5 md:px-2 py-0.5 rounded-none ${onlineUsers.has(activeChat.buyer_id === user.id ? activeChat.seller_id : activeChat.buyer_id) ? "bg-emerald-50 text-emerald-600" : "bg-background text-muted"}`}>
+                            <span className={`text-xs md:text-xs font-black uppercase px-1.5 md:px-2 py-0.5 rounded-lg ${onlineUsers.has(activeChat.buyer_id === user.id ? activeChat.seller_id : activeChat.buyer_id) ? "bg-emerald-50 text-emerald-600" : "bg-background text-muted"}`}>
                               {onlineUsers.has(activeChat.buyer_id === user.id ? activeChat.seller_id : activeChat.buyer_id) ? (labels.chat_online_status || "Online") : (labels.chat_offline_status || "Offline")}
                            </span>
                          </div>
                          <div className="flex items-center gap-1 mt-0.5 overflow-hidden">
-                            <span className="hidden sm:inline text-[10px] md:text-[11px] font-bold text-muted uppercase tracking-tight">{labels.chat_discussing_prefix || "Discussing:"}</span>
-                            <Link href={`/products/${activeChat.product_id}`} className="text-[10px] md:text-[11px] font-black text-gold uppercase tracking-tight hover:underline cursor-pointer truncate max-w-[100px] sm:max-w-none">
-                               {activeChat.product_title} - â‚¹{parseFloat(activeChat.product_price || 0).toLocaleString()}
+                            <span className="hidden sm:inline text-xs md:text-sm font-bold text-muted uppercase tracking-tight">{labels.chat_discussing_prefix || "Discussing:"}</span>
+                            <Link href={`/products/${activeChat.product_id}`} className="text-xs md:text-sm font-black text-gold uppercase tracking-tight hover:underline cursor-pointer truncate max-w-[100px] sm:max-w-none">
+                               {activeChat.product_title} - ₹{parseFloat(activeChat.product_price || 0).toLocaleString()}
                             </Link>
                          </div>
                       </div>
                    </div>
 
                         <div className="flex items-center gap-1.5 md:gap-4 shrink-0">
-                           <button className="p-1 text-muted hover:text-foreground transition-colors">
-                              <MoreVertical className="w-4 h-4 md:w-5 h-5" />
-                           </button>
+                            <button className="p-1 text-muted hover:text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
+                               <MoreVertical className="w-4 h-4 md:w-5 md:h-5" />
+                            </button>
                         </div>
                 </header>
 
@@ -523,7 +562,7 @@ function MessagesContent() {
                       <Fragment key={msg.id || i}>
                         {showDate && (
                            <div className="flex justify-center my-6">
-                              <span className="px-4 py-1.5 bg-surface border border-border rounded-none text-[10px] font-black text-muted uppercase tracking-[0.2em] shadow-sm">
+                              <span className="px-4 py-1.5 bg-surface border border-border rounded-lg text-xs font-black text-muted uppercase tracking-[0.2em] shadow-sm">
                                  {new Date(msg.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                               </span>
                            </div>
@@ -532,7 +571,7 @@ function MessagesContent() {
                         <div className={`flex ${isOwn ? "justify-end" : "justify-start"} animate-in slide-in-from-bottom-2 duration-300`}>
                            <div className={`max-w-[75%] md:max-w-[60%] flex flex-col ${isOwn ? "items-end" : "items-start"}`}>
                               
-                              <div className={`rounded-none p-3.5 shadow-sm relative group overflow-hidden ${
+                              <div className={`rounded-lg p-3.5 shadow-sm relative group overflow-hidden ${
                                 isOwn ? "bg-black text-white rounded-tr-none" : "bg-surface border border-border text-foreground rounded-tl-none"
                               }`}>
                                  
@@ -540,18 +579,18 @@ function MessagesContent() {
                                  {msg.type === 'offer' ? (
                                     <div className="space-y-4 min-w-[200px]">
                                        <div className="flex items-center gap-3">
-                                          <div className={`w-8 h-8 rounded-none flex items-center justify-center ${isOwn ? "bg-surface/10" : "bg-gold/5"}`}>
-                                             <Send className={`w-4 h-4 ${isOwn ? "text-white" : "text-gold"}`} ordnance="4" />
+                                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isOwn ? "bg-surface/10" : "bg-gold/5"}`}>
+                                             <Send className={`w-4 h-4 ${isOwn ? "text-white" : "text-gold"}`} size={16} />
                                           </div>
-                                          <span className="text-[11px] font-black uppercase tracking-widest">
+                                          <span className="text-sm font-black uppercase tracking-widest">
                                               {msg.metadata?.status === 'countered' 
                                                 ? (isOwn ? "COUNTER OFFER SENT" : "COUNTER OFFER RECEIVED")
                                                 : (isOwn ? "OFFER SENT" : "OFFER RECEIVED")}
                                            </span>
                                        </div>
                                        <div className="space-y-1">
-                                          <p className={`text-2xl font-black ${isOwn ? "text-white" : "text-foreground"}`}>â‚¹{msg.metadata?.amount?.toLocaleString()}</p>
-                                          <p className={`text-xs ${isOwn ? "text-muted" : "text-muted"}`}>{msg.message || `OFFER: â‚¹${msg.metadata?.amount}`}</p>
+                                          <p className={`text-2xl font-black ${isOwn ? "text-white" : "text-foreground"}`}>₹{msg.metadata?.amount?.toLocaleString()}</p>
+                                          <p className={`text-xs ${isOwn ? "text-muted" : "text-muted"}`}>{msg.message || `OFFER: ₹${msg.metadata?.amount}`}</p>
                                        </div>
                                        {(!isOwn && msg.metadata?.offer_id && (msg.metadata?.status === 'pending' || msg.metadata?.status === 'countered')) && (
                                           <div className="space-y-3 mt-4">
@@ -562,7 +601,7 @@ function MessagesContent() {
                                                       placeholder="Counter amount..."
                                                       value={offerCounterForm.amount}
                                                       onChange={(e) => setOfferCounterForm({...offerCounterForm, amount: e.target.value})}
-                                                      className={`w-full border rounded-none px-4 py-2 text-xs font-bold outline-none transition-all ${
+                                                      className={`w-full border rounded-lg px-4 py-2 text-xs font-bold outline-none transition-all ${
                                                         isOwn ? 'bg-surface/10 border-white/20 text-white focus:border-white' : 'bg-background border-border text-foreground focus:border-gold'
                                                       }`}
                                                       autoFocus
@@ -574,15 +613,15 @@ function MessagesContent() {
                                                             handleOfferResponseInChat(msg.metadata.offer_id, 'countered', msg.id, offerCounterForm.amount);
                                                             setOfferCounterForm({ offerId: null, amount: "" });
                                                          }}
-                                                         className={`flex-1 py-2 rounded-none text-[9px] font-black uppercase tracking-widest transition ${
-                                                           isOwn ? 'bg-surface text-black hover:bg-background' : 'bg-black text-white hover:bg-gray-800'
-                                                         }`}
-                                                      >
-                                                         Send
-                                                      </button>
-                                                      <button 
-                                                         onClick={() => setOfferCounterForm({ offerId: null, amount: "" })}
-                                                         className={`flex-1 border py-2 rounded-none text-[9px] font-bold uppercase tracking-widest transition ${
+                                                          className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition ${
+                                                            isOwn ? 'bg-surface text-black hover:bg-background' : 'bg-black text-white hover:bg-gray-800'
+                                                          }`}
+                                                       >
+                                                          Send
+                                                       </button>
+                                                       <button 
+                                                          onClick={() => setOfferCounterForm({ offerId: null, amount: "" })}
+                                                          className={`flex-1 border py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition ${
                                                            isOwn ? 'border-white/20 text-white/60 hover:bg-surface/5' : 'border-border text-muted hover:bg-background'
                                                          }`}
                                                       >
@@ -593,15 +632,15 @@ function MessagesContent() {
                                              ) : (
                                                <div className="flex flex-col gap-2 p-1">
                                                   <div className="flex gap-2">
-                                                     <button 
-                                                       onClick={() => handleOfferResponseInChat(msg.metadata.offer_id, 'accepted', msg.id)} 
-                                                       className="flex-1 bg-emerald-600 text-white py-2 rounded-none text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition shadow-sm"
-                                                     >
-                                                       Accept
-                                                     </button>
-                                                     <button 
-                                                       onClick={() => setOfferCounterForm({ offerId: msg.metadata.offer_id, amount: "" })} 
-                                                       className={`flex-1 border py-2 rounded-none text-[10px] font-black uppercase tracking-wider transition shadow-sm ${
+                                                      <button 
+                                                        onClick={() => handleOfferResponseInChat(msg.metadata.offer_id, 'accepted', msg.id)} 
+                                                        className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-xs font-black uppercase tracking-wider hover:bg-emerald-700 transition shadow-sm"
+                                                      >
+                                                        Accept
+                                                      </button>
+                                                      <button 
+                                                        onClick={() => setOfferCounterForm({ offerId: msg.metadata.offer_id, amount: "" })} 
+                                                        className={`flex-1 border py-2 rounded-lg text-xs font-black uppercase tracking-wider transition shadow-sm ${
                                                           isOwn ? 'bg-surface/10 text-white border-white/20 hover:bg-surface/20' : 'bg-background text-foreground border-border hover:bg-background'
                                                        }`}
                                                      >
@@ -609,9 +648,9 @@ function MessagesContent() {
                                                      </button>
                                                   </div>
                                                   {msg.metadata?.status !== 'countered' && (
-                                                   <button 
-                                                     onClick={() => handleOfferResponseInChat(msg.metadata.offer_id, 'declined', msg.id)} 
-                                                     className={`w-full py-2 rounded-none text-[10px] font-black uppercase tracking-wider transition shadow-sm ${
+                                                    <button 
+                                                      onClick={() => handleOfferResponseInChat(msg.metadata.offer_id, 'declined', msg.id)} 
+                                                      className={`w-full py-2 rounded-lg text-xs font-black uppercase tracking-wider transition shadow-sm ${
                                                         isOwn ? 'bg-rose-50/10 text-rose-200 border border-rose-100/20 hover:bg-rose-100/20' : 'bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100'
                                                      }`}
                                                   >
@@ -623,7 +662,7 @@ function MessagesContent() {
                                           </div>
                                        )}
                                        {(msg.metadata?.status && msg.metadata.status !== 'pending' && msg.metadata.status !== 'countered') && (
-                                          <div className={`mt-3 p-2.5 rounded-none text-center text-[10px] font-black uppercase tracking-widest border ${
+                                          <div className={`mt-3 p-2.5 rounded-lg text-center text-xs font-black uppercase tracking-widest border ${
                                              msg.metadata.status === 'accepted' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 
                                              'bg-rose-500/10 border-rose-500/20 text-rose-400'
                                           }`}>
@@ -632,18 +671,18 @@ function MessagesContent() {
                                        )}
                                     </div>
                                  ) : msg.type === 'system_deal' ? (
-                                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-none p-4 flex items-center gap-4 min-w-[280px]">
-                                       <div className="w-10 h-10 bg-emerald-100 rounded-none flex items-center justify-center shrink-0">
+                                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 flex items-center gap-4 min-w-[280px]">
+                                       <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center shrink-0">
                                           <Package className="w-5 h-5 text-emerald-600" />
                                        </div>
                                        <div>
-                                          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Deal Confirmed</p>
+                                          <p className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-1">Deal Confirmed</p>
                                           <p className="text-[13px] font-bold text-foreground">{msg.message}</p>
                                        </div>
                                     </div>
                                  ) : msg.type === 'image' || msg.type === 'video' ? (
                                     <div 
-                                      className="relative rounded-none overflow-hidden cursor-pointer"
+                                      className="relative rounded-lg overflow-hidden cursor-pointer"
                                       onClick={() => setSelectedImage(msg.message.startsWith('http') ? msg.message : `${API_BASE_URL}/uploads/${msg.message}`)}
                                     >
                                        {msg.type === 'video' ? (
@@ -652,7 +691,7 @@ function MessagesContent() {
                                              <PlayCircle className="absolute w-12 h-12 text-white shadow-2xl" />
                                           </div>
                                        ) : (
-                                          <img src={msg.message.startsWith('http') ? msg.message : `${API_BASE_URL}/uploads/${msg.message}`} className="max-w-full max-h-[300px] object-cover" />
+                                           <OptimizedImage src={msg.message.startsWith('http') ? msg.message : `${API_BASE_URL}/uploads/${msg.message}`} alt="Shared image" fill className="max-w-full max-h-[300px] object-cover" size="medium" />
                                        )}
                                     </div>
                                  ) : (
@@ -667,11 +706,11 @@ function MessagesContent() {
                               </div>
 
                               <div className="mt-1.5 flex items-center gap-2 px-1">
-                                 <span className="text-[9px] font-black text-muted uppercase tracking-wider">
+                                 <span className="text-xs font-black text-muted uppercase tracking-wider">
                                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                  </span>
                                  {isOwn && (
-                                    <span className={`text-[10px] ${msg.is_read ? "text-gold" : "text-gray-200"}`}>
+                                    <span className={`text-xs ${msg.is_read ? "text-gold" : "text-gray-200"}`}>
                                        {msg.is_read ? "✓✓" : "✓"}
                                     </span>
                                  )}
@@ -693,14 +732,14 @@ function MessagesContent() {
                         <button 
                           key={reply.id} 
                           onClick={() => sendQuickMessage(reply.text)}
-                          className="whitespace-nowrap px-4 py-2 bg-background hover:bg-gold/5 border border-border rounded-none text-[11px] font-bold text-muted transition-all uppercase tracking-wider"
+                          className="whitespace-nowrap px-4 py-2 bg-background hover:bg-gold/5 border border-border rounded-lg text-sm font-bold text-muted transition-all uppercase tracking-wider"
                         >
                            {reply.text}
                         </button>
                       ))}
                    </div>
 
-                   <form onSubmit={handleSendMessage} className="relative flex items-end gap-3 bg-background rounded-none p-2 pr-4 border border-border focus-within:border-gold transition-all focus-within:bg-surface">
+                    <form onSubmit={handleSendMessage} className="relative flex items-end gap-3 bg-background rounded-xl p-2 pr-4 border border-border focus-within:border-gold transition-all focus-within:bg-surface">
                       <div className="flex items-center shrink-0 h-[46px]">
                          <button 
                            type="button" 
@@ -712,28 +751,39 @@ function MessagesContent() {
                          <input type="file" hidden ref={fileInputRef} onChange={handleMediaUpload} accept="image/*,video/*" />
                       </div>
 
-                      <textarea 
-                        rows="1"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder={labels.chat_type_placeholder || "Type a message..."}
-                        className="w-full bg-transparent border-none outline-none py-3.5 text-[14px] text-foreground placeholder:text-muted resize-none max-h-[150px] custom-scrollbar"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                             e.preventDefault();
-                             handleSendMessage();
-                          }
-                        }}
-                      />
+                       <textarea 
+                         rows="1"
+                         value={newMessage}
+                         onChange={(e) => {
+                           setNewMessage(e.target.value);
+                           if (e.target.value && activeChat) {
+                             socket.emit("typing", { chatId: activeChat.id, userId: user?.id });
+                           } else if (activeChat) {
+                             socket.emit("stopTyping", { chatId: activeChat.id, userId: user?.id });
+                           }
+                         }}
+                         placeholder={labels.chat_type_placeholder || "Type a message..."}
+                         className="w-full bg-transparent border-none outline-none py-3.5 text-[14px] text-foreground placeholder:text-muted resize-none max-h-[150px] custom-scrollbar"
+                         onKeyDown={(e) => {
+                           if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                              if (activeChat) socket.emit("stopTyping", { chatId: activeChat.id, userId: user?.id });
+                           }
+                         }}
+                         onBlur={() => {
+                           if (activeChat) socket.emit("stopTyping", { chatId: activeChat.id, userId: user?.id });
+                         }}
+                       />
 
                       <div className="flex items-center shrink-0 h-[46px]">
-                         <button 
-                           type="submit" 
-                           disabled={!newMessage.trim()}
-                           className="w-10 h-10 bg-black text-white rounded-none flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:scale-100"
-                         >
-                            <Send className="w-5 h-5 ml-0.5" />
-                         </button>
+                          <button 
+                            type="submit" 
+                            disabled={sendingMessage || !newMessage.trim()}
+                              className="min-w-[44px] min-h-[44px] bg-black text-white rounded-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:scale-100"
+                           >
+                              {sendingMessage ? <span className="text-xs font-bold">...</span> : <Send className="w-5 h-5 ml-0.5" />}
+                          </button>
                       </div>
                    </form>
                 </div>
@@ -741,18 +791,18 @@ function MessagesContent() {
               </Fragment>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center p-12 lg:p-24 bg-background/20">
-                 <div className="w-24 h-24 bg-gold/5 border border-gold/10 rounded-none flex items-center justify-center mb-8 animate-in fade-in zoom-in duration-700">
+                 <div className="w-24 h-24 bg-gold/5 border border-gold/10 rounded-xl flex items-center justify-center mb-8 animate-in fade-in zoom-in duration-700">
                     <Send className="w-10 h-10 text-gold transform -rotate-12" />
                  </div>
                  <h3 className="text-3xl font-black text-foreground tracking-tight mb-4 uppercase">{labels.chat_empty_state_title || "Marketplace Conversations"}</h3>
                  <p className="text-sm font-medium text-muted max-w-[450px] leading-relaxed mb-10">
                     {labels.chat_empty_state_desc || "Manage your discussions professionally within the collector hub."}
                  </p>
-                 <div className="flex items-center gap-3 px-6 py-3 bg-surface border border-border rounded-none shadow-sm animate-in slide-in-from-bottom-5 duration-700 delay-200">
-                    <div className="w-6 h-6 bg-emerald-100 rounded-none flex items-center justify-center">
+                 <div className="flex items-center gap-3 px-6 py-3 bg-surface border border-border rounded-lg shadow-sm animate-in slide-in-from-bottom-5 duration-700 delay-200">
+                    <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center">
                        <Smile className="w-3.5 h-3.5 text-emerald-600" />
                     </div>
-                    <span className="text-[11px] font-black text-muted uppercase tracking-widest">{labels.chat_encryption_notice || "End-to-end encrypted"}</span>
+                    <span className="text-sm font-black text-muted uppercase tracking-widest">{labels.chat_encryption_notice || "End-to-end encrypted"}</span>
                  </div>
               </div>
             )}
@@ -786,29 +836,29 @@ function MessagesContent() {
       `}</style>
       
       {/* MEDIA VIEWER */}
-      {selectedImage && (
-        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-300">
-           <button 
-             onClick={() => setSelectedImage(null)} 
-             className="absolute top-6 right-6 p-3 bg-surface/10 hover:bg-surface/20 text-white rounded-full transition-all z-[110]"
-           >
-             <X size={24} />
-           </button>
-           
-           {(selectedImage.toLowerCase().endsWith('.mp4') || selectedImage.toLowerCase().endsWith('.mov') || selectedImage.toLowerCase().endsWith('.webm')) ? (
-              <video src={selectedImage} controls autoPlay className="max-w-full max-h-[90vh] rounded-none shadow-2xl" />
-           ) : (
-              <img src={selectedImage} className="max-w-full max-h-[90vh] object-contain rounded-none shadow-2xl" alt="View" />
-           )}
+        {selectedImage && (
+         <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-300 relative">
+            <button 
+              onClick={() => setSelectedImage(null)} 
+              className="absolute top-6 right-6 p-3 bg-surface/10 hover:bg-surface/20 text-white rounded-full transition-all z-[110]"
+            >
+              <X size={24} />
+            </button>
+            
+            {(selectedImage.toLowerCase().endsWith('.mp4') || selectedImage.toLowerCase().endsWith('.mov') || selectedImage.toLowerCase().endsWith('.webm')) ? (
+              <video src={selectedImage} controls autoPlay className="max-w-full max-h-[90vh] rounded-lg shadow-2xl" />
+            ) : (
+              <OptimizedImage src={selectedImage} alt="Enlarged shared media" fill className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" size="large" priority />
+            )}
         </div>
       )}
       
       {/* DEAL CONFIRMATION MODAL */}
       {showDealModal && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-           <div className="bg-surface rounded-none border border-border w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+           <div className="bg-surface rounded-xl border border-border w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
               <div className="p-8">
-                 <div className="w-16 h-16 bg-emerald-50 rounded-none flex items-center justify-center mb-6">
+                 <div className="w-16 h-16 bg-emerald-50 rounded-lg flex items-center justify-center mb-6">
                     <CheckCircle className="w-8 h-8 text-emerald-600" />
                  </div>
                  <h3 className="text-2xl font-black text-foreground mb-2 uppercase tracking-tight">Confirm Deal</h3>
@@ -816,12 +866,12 @@ function MessagesContent() {
                  
                  <div className="space-y-6">
                     <div>
-                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-2 block">Agreed Price (₹)</label>
+                       <label className="text-xs font-black uppercase tracking-[0.2em] text-muted mb-2 block">Agreed Price (₹)</label>
                        <input 
                          type="number"
                          value={finalPrice}
                          onChange={(e) => setFinalPrice(e.target.value)}
-                         className="w-full bg-background border border-border focus:border-gold focus:bg-surface rounded-none p-4 text-xl font-black outline-none transition-all"
+                          className="w-full bg-background border border-border focus:border-gold focus:bg-surface rounded-lg p-4 text-xl font-black outline-none transition-all"
                          placeholder="0.00"
                        />
                     </div>
@@ -829,16 +879,17 @@ function MessagesContent() {
                     <div className="flex gap-4">
                        <button 
                          onClick={() => setShowDealModal(false)}
-                         className="flex-grow py-4 rounded-none text-[11px] font-black uppercase tracking-widest text-muted hover:bg-background transition-all"
-                       >
-                          Cancel
-                       </button>
-                       <button 
-                         onClick={handleConfirmDirectDeal}
-                         className="flex-grow py-4 bg-emerald-600 text-white rounded-none text-[11px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-none"
-                       >
-                          Finalize Deal
-                       </button>
+                          className="flex-grow py-4 rounded-lg text-sm font-black uppercase tracking-widest text-muted hover:bg-background transition-all"
+                        >
+                           Cancel
+                        </button>
+                         <button 
+                           onClick={handleConfirmDirectDeal}
+                           disabled={confirmingDeal}
+                           className="flex-grow py-4 bg-emerald-600 text-white rounded-lg text-sm font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-none disabled:opacity-50"
+                        >
+                           {confirmingDeal ? 'Confirming...' : 'Finalize Deal'}
+                        </button>
                     </div>
                  </div>
               </div>
@@ -850,7 +901,7 @@ function MessagesContent() {
       {acceptedOverlay && (
         <div className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-500">
           <div className="text-center space-y-6 animate-in zoom-in-95 duration-500">
-            <div className="w-24 h-24 bg-emerald-500 rounded-none flex items-center justify-center mx-auto shadow-none">
+            <div className="w-24 h-24 bg-emerald-500 rounded-xl flex items-center justify-center mx-auto shadow-none">
               <CheckCircle className="w-12 h-12 text-white" />
             </div>
             <h2 className="text-3xl font-black text-white uppercase tracking-tight">Offer Accepted!</h2>
@@ -861,7 +912,7 @@ function MessagesContent() {
             </p>
             <div className="flex gap-1.5 justify-center mt-4">
               {[0,1,2].map(i => (
-                <div key={i} className="w-2 h-2 bg-emerald-500 rounded-none animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
+                <div key={i} className="w-2 h-2 bg-emerald-500 rounded-lg animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
               ))}
             </div>
           </div>
@@ -870,15 +921,15 @@ function MessagesContent() {
 
       {/* TOAST */}
       {toast && (
-        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500 rounded-none shadow-2xl px-8 py-4 flex items-center gap-4 bg-surface border border-border`}>
-          <div className={`w-8 h-8 rounded-none flex items-center justify-center ${toast.type === "error" ? "bg-red-50" : "bg-emerald-50"}`}>
+        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500 rounded-xl shadow-2xl px-8 py-4 flex items-center gap-4 bg-surface border border-border`}>
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${toast.type === "error" ? "bg-red-50" : "bg-emerald-50"}`}>
              {toast.type === "error" ? (
                 <X className="w-4 h-4 text-red-600" />
              ) : (
                 <Send className="w-4 h-4 text-emerald-600" />
              )}
           </div>
-          <p className="text-[11px] font-black uppercase tracking-widest text-foreground">{toast.message}</p>
+          <p className="text-sm font-black uppercase tracking-widest text-foreground">{toast.message}</p>
         </div>
       )}
     </div>

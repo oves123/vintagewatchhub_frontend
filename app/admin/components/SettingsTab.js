@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { getAdminSettings, updatePlatformSetting } from "../../../services/api";
@@ -57,7 +57,7 @@ export default function SettingsTab() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-primary font-bold uppercase tracking-widest text-[10px]">Accessing Secure Protocol...</div>
+        <div className="animate-pulse text-primary font-bold uppercase tracking-widest text-xs">Accessing Secure Protocol...</div>
       </div>
     );
   }
@@ -67,12 +67,12 @@ export default function SettingsTab() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-black text-foreground uppercase tracking-tight">Platform Settings</h2>
-          <p className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mt-1">Manage global registration protocols and terms</p>
+          <p className="text-xs font-bold text-muted uppercase tracking-[0.2em] mt-1">Manage global registration protocols and terms</p>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-none text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
+          className="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-lg text-sm font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
         >
           <Save size={14} />
           {saving ? "Deploying..." : "Save Settings"}
@@ -80,9 +80,9 @@ export default function SettingsTab() {
       </div>
 
       {message && (
-        <div className={`p-4 rounded-none flex items-center gap-3 animate-in slide-in-from-top-2 duration-300 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'}`}>
+        <div className={`p-4 rounded-xl flex items-center gap-3 animate-in slide-in-from-top-2 duration-300 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'}`}>
           {message.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-          <span className="text-[11px] font-black uppercase tracking-widest">{message.text}</span>
+          <span className="text-sm font-black uppercase tracking-widest">{message.text}</span>
         </div>
       )}
 
@@ -90,7 +90,7 @@ export default function SettingsTab() {
         <div className="xl:col-span-8">
           <div className="bg-surface rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col h-[70vh]">
             <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between bg-background/30">
-               <span className="text-[10px] font-black text-muted uppercase tracking-widest">Protocol Editor (Markdown Supported)</span>
+               <span className="text-xs font-black text-muted uppercase tracking-widest">Protocol Editor (Markdown Supported)</span>
             </div>
             <textarea
               value={settings.terms_and_conditions}
@@ -109,7 +109,7 @@ export default function SettingsTab() {
              </h3>
              <div className="space-y-4">
                <div>
-                 <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-2 block">Seller Commission Rate (%)</label>
+                 <label className="text-xs font-bold text-muted uppercase tracking-widest mb-2 block">Seller Commission Rate (%)</label>
                  <div className="relative">
                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                      <Percent size={14} className="text-muted" />
@@ -121,14 +121,14 @@ export default function SettingsTab() {
                      step="0.1"
                      value={settings.seller_commission_rate}
                      onChange={(e) => setSettings({...settings, seller_commission_rate: e.target.value})}
-                     className="w-full pl-9 pr-4 py-3 bg-background border border-border rounded-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-surface transition-all text-sm font-medium"
+                     className="w-full pl-9 pr-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-surface transition-all text-sm font-medium"
                    />
                  </div>
-                 <p className="text-[10px] text-muted mt-1">Deducted from the seller's final payout.</p>
+                 <p className="text-xs text-muted mt-1">Deducted from the seller's final payout.</p>
                </div>
                
                <div>
-                 <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-2 block">Buyer Commission Rate (%)</label>
+                 <label className="text-xs font-bold text-muted uppercase tracking-widest mb-2 block">Buyer Commission Rate (%)</label>
                  <div className="relative">
                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                      <Percent size={14} className="text-muted" />
@@ -140,14 +140,14 @@ export default function SettingsTab() {
                      step="0.1"
                      value={settings.buyer_commission_rate}
                      onChange={(e) => setSettings({...settings, buyer_commission_rate: e.target.value})}
-                     className="w-full pl-9 pr-4 py-3 bg-background border border-border rounded-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-surface transition-all text-sm font-medium"
+                     className="w-full pl-9 pr-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-surface transition-all text-sm font-medium"
                    />
                  </div>
-                 <p className="text-[10px] text-muted mt-1">Added to the buyer's checkout total.</p>
+                 <p className="text-xs text-muted mt-1">Added to the buyer's checkout total.</p>
                </div>
 
                <div>
-                 <label className="text-[10px] font-bold text-muted uppercase tracking-widest mb-2 block">GST Rate (%)</label>
+                 <label className="text-xs font-bold text-muted uppercase tracking-widest mb-2 block">GST Rate (%)</label>
                  <div className="relative">
                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                      <Percent size={14} className="text-muted" />
@@ -159,10 +159,10 @@ export default function SettingsTab() {
                      step="0.1"
                      value={settings.gst_rate}
                      onChange={(e) => setSettings({...settings, gst_rate: e.target.value})}
-                     className="w-full pl-9 pr-4 py-3 bg-background border border-border rounded-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-surface transition-all text-sm font-medium"
+                     className="w-full pl-9 pr-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-surface transition-all text-sm font-medium"
                    />
                  </div>
-                 <p className="text-[10px] text-muted mt-1">Global GST applied to platform commissions.</p>
+                 <p className="text-xs text-muted mt-1">Global GST applied to platform commissions.</p>
                </div>
              </div>
           </div>
@@ -173,11 +173,11 @@ export default function SettingsTab() {
                 Governance Protocol
              </h3>
              <div className="space-y-4">
-                <div className="flex justify-between items-center py-2 border-b border-white/10 text-[10px] font-bold uppercase tracking-widest">
+                <div className="flex justify-between items-center py-2 border-b border-white/10 text-xs font-bold uppercase tracking-widest">
                    <span className="text-white/40">Encryption</span>
                    <span className="text-emerald-400">Active</span>
                 </div>
-                <div className="flex justify-between items-center py-2 text-[10px] font-bold uppercase tracking-widest text-white">
+                <div className="flex justify-between items-center py-2 text-xs font-bold uppercase tracking-widest text-white">
                    <span className="text-white/40">Audit Logging</span>
                    <span>Enabled</span>
                 </div>

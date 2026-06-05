@@ -4,11 +4,7 @@
  * even though the page.js itself is a client component ("use client").
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL
-  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "")
-  : "http://127.0.0.1:5000";
-
-const API_URL = `${API_BASE}/api`;
+import { API_URL, API_BASE_URL } from "@/services/api";
 
 export async function generateMetadata({ params }) {
   try {
@@ -28,7 +24,7 @@ export async function generateMetadata({ params }) {
     const imageUrl = rawImg
       ? rawImg.startsWith("http")
         ? rawImg
-        : `${API_BASE}/uploads/${rawImg}`
+        : `${API_BASE_URL}/uploads/${rawImg}`
       : null;
 
     const title       = `${product.title} | Vintage Watch Hub`;

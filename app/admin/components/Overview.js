@@ -1,13 +1,13 @@
-"use client";
+﻿"use client";
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, ArrowUpRight, Users, Package, ShoppingCart, Eye, RefreshCw } from "lucide-react";
 
 function Stat({ label, value, sub, color = "#1e3a5f" }) {
   return (
-    <div className="bg-surface rounded-none border border-border p-5 shadow-sm hover:shadow-md transition-shadow">
-      <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-1">{label}</p>
-      <p className="text-2xl font-black text-foreground">{value ?? "â€”"}</p>
-      {sub && <p className="text-[10px] font-bold text-muted mt-1">{sub}</p>}
+    <div className="bg-surface rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-shadow">
+      <p className="text-xs font-bold text-muted uppercase tracking-widest mb-1">{label}</p>
+      <p className="text-2xl font-black text-foreground">{value ?? "—"}</p>
+      {sub && <p className="text-xs font-bold text-muted mt-1">{sub}</p>}
     </div>
   );
 }
@@ -28,13 +28,11 @@ export default function Overview({ stats, analytics, analyticsRange, setAnalytic
     { label: "Live Listings", value: stats?.liveProducts?.toLocaleString() },
     { label: "Pending Review", value: stats?.pendingVerifications?.toLocaleString() },
     { label: "Total Orders", value: stats?.totalOrders?.toLocaleString() },
-    { label: "Gross Turnover", value: `â‚¹${(stats?.grossTurnover || 0).toLocaleString()}` },
-    { label: "Commission Earned", value: `â‚¹${(stats?.commissionEarned || 0).toLocaleString()}` },
-    { label: "Pending Payouts", value: `â‚¹${(stats?.pendingPayouts || 0).toLocaleString()}` },
-    { label: "Market Value", value: `â‚¹${(stats?.totalValue || 0).toLocaleString()}` },
-    { label: "Watchlists", value: stats?.totalWatchlists?.toLocaleString() },
-    { label: "Site Visitors", value: stats?.totalVisitors?.toLocaleString() },
-    { label: "Highest Bid", value: `â‚¹${(stats?.highestBid || 0).toLocaleString()}` },
+    { label: "Gross Turnover", value: `Rs.${(stats?.grossTurnover || 0).toLocaleString()}` },
+    { label: "Commission Earned", value: `Rs.${(stats?.commissionEarned || 0).toLocaleString()}` },
+    { label: "Pending Payouts", value: `Rs.${(stats?.pendingPayouts || 0).toLocaleString()}` },
+    { label: "Market Value", value: `Rs.${(stats?.totalValue || 0).toLocaleString()}` },
+    { label: "Highest Bid", value: `Rs.${(stats?.highestBid || 0).toLocaleString()}` },
     { label: "Active Auctions", value: stats?.activeAuctions?.toLocaleString() },
   ];
 
@@ -46,16 +44,16 @@ export default function Overview({ stats, analytics, analyticsRange, setAnalytic
       </div>
 
       {/* Chart */}
-      <div className="bg-surface rounded-none border border-border p-6 shadow-sm">
+      <div className="bg-surface rounded-xl border border-border p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h3 className="text-lg font-black text-foreground">Platform Activity</h3>
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Users Â· Listings Â· Orders over time</p>
+            <p className="text-xs font-bold text-muted uppercase tracking-widest">Users · Listings · Orders over time</p>
           </div>
-          <div className="flex gap-1 bg-background p-1 rounded-none">
+          <div className="flex gap-1 bg-background p-1 rounded-xl">
             {["7","30","90"].map(d => (
               <button key={d} onClick={() => setAnalyticsRange(d)}
-                className={`px-4 py-2 rounded-none text-[10px] font-black uppercase transition-all ${analyticsRange === d ? "bg-surface text-primary shadow" : "text-muted hover:text-muted"}`}>
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase transition-all ${analyticsRange === d ? "bg-surface text-primary shadow" : "text-muted hover:text-muted"}`}>
                 {d}D
               </button>
             ))}
@@ -82,7 +80,7 @@ export default function Overview({ stats, analytics, analyticsRange, setAnalytic
           {[["#1e3a5f","Users"],["#b8860b","Listings"],["#10b981","Orders"]].map(([c,l]) => (
             <div key={l} className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full" style={{background: c}}/>
-              <span className="text-[10px] font-bold text-muted uppercase tracking-wider">{l}</span>
+              <span className="text-xs font-bold text-muted uppercase tracking-wider">{l}</span>
             </div>
           ))}
         </div>
@@ -96,11 +94,11 @@ export default function Overview({ stats, analytics, analyticsRange, setAnalytic
           { label: "Review Pending", desc: `${stats?.pendingVerifications || 0} listings waiting`, tab: "products", icon: Package, color: "bg-amber-50 text-amber-700 border-amber-100" },
           { label: "Manage Users", desc: `${stats?.totalUsers || 0} accounts`, tab: "users", icon: Users, color: "bg-blue-50 text-primary border-blue-100" },
           { label: "View Orders", desc: `${stats?.totalOrders || 0} total`, tab: "orders", icon: ShoppingCart, color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-          { label: "Escrow & Payouts", desc: `â‚¹${(stats?.pendingPayouts || 0).toLocaleString()} pending`, tab: "escrow", icon: TrendingUp, color: "bg-rose-50 text-rose-700 border-rose-100" },
+          { label: "Escrow & Payouts", desc: `Rs.${(stats?.pendingPayouts || 0).toLocaleString()} pending`, tab: "escrow", icon: TrendingUp, color: "bg-rose-50 text-rose-700 border-rose-100" },
         ].map(q => (
-          <button key={q.tab} onClick={() => setActiveTab(q.tab)} className={`flex items-center gap-4 p-5 rounded-none border text-left hover:shadow-md transition-all ${q.color}`}>
+          <button key={q.tab} onClick={() => setActiveTab(q.tab)} className={`flex items-center gap-4 p-5 rounded-xl border text-left hover:shadow-md transition-all ${q.color}`}>
             <q.icon size={22} />
-            <div><p className="font-black text-[13px]">{q.label}</p><p className="text-[10px] font-bold opacity-70 mt-0.5">{q.desc}</p></div>
+            <div><p className="font-black text-[13px]">{q.label}</p><p className="text-xs font-bold opacity-70 mt-0.5">{q.desc}</p></div>
           </button>
         ))}
       </div>

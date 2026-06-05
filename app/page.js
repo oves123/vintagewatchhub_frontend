@@ -179,32 +179,32 @@ function HomeContent() {
     <div className="bg-background min-h-screen flex flex-col transition-colors duration-500">
       <Navbar />
 
-      {/* Hero Section - Only show when NOT searching/filtering */}
+      {/* Hero Section - Cinematic */}
       {!isCatalogView && (
-        <section className="bg-background relative border-b border-border">
-          <div className="max-w-[1300px] mx-auto px-5 py-20 md:py-32 flex flex-col items-center text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-primary uppercase tracking-[0.2em] mb-4">
-              Vintage Watch Hub
+        <section className="bg-background relative w-full h-[90vh] min-h-[600px] border-b border-border flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <img
+              src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg"
+              alt="Luxury Vintage Watch"
+              className="w-full h-full object-cover scale-105 opacity-40 mix-blend-luminosity transform duration-[20s] hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/10 to-background"></div>
+          </div>
+          
+          <div className="relative z-10 w-full max-w-[1300px] mx-auto px-5 text-center flex flex-col items-center mt-16">
+            <h1 className="text-5xl md:text-7xl lg:text-[7rem] font-black text-foreground uppercase tracking-tighter leading-[0.85] mb-6 drop-shadow-2xl mix-blend-plus-lighter">
+              Heritage <br/> <span className="text-gold font-serif italic lowercase font-light tracking-normal">masterpieces.</span>
             </h1>
-            <p className="text-[11px] md:text-xs font-bold text-gold uppercase tracking-[0.3em] mb-12">
-              Made By Hand For Every Kind Of Wrist
+            <p className="text-xs md:text-sm font-bold text-muted uppercase tracking-[0.4em] mb-12 max-w-xl text-balance">
+              Curated by experts. Acquired by connoisseurs. Discover the world's most significant horological assets.
             </p>
             
-            <div className="w-full max-w-4xl aspect-[21/9] md:aspect-[3/1] relative mb-12 group overflow-hidden">
-              <img
-                src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg"
-                className="w-full h-full object-cover mix-blend-multiply transition-transform duration-1000 group-hover:scale-105"
-                alt="Luxury Watch Collection"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Link href="/?catalog=true#market" className="bg-primary text-white px-10 py-4 font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-primary-light transition-colors">
-                Discover The Collection
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link href="/?catalog=true#market" className="gold-sweep px-12 py-5 font-black text-[11px] uppercase tracking-[0.25em] shadow-2xl backdrop-blur-md text-white">
+                Enter The Vault
               </Link>
-              <Link href="/sell" className="bg-transparent border border-primary text-primary px-10 py-4 font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-primary hover:text-white transition-colors">
-                Sell A Timepiece
+              <Link href="/sell" className="bg-surface/50 border border-border/50 backdrop-blur-md text-foreground px-12 py-5 font-bold text-[11px] uppercase tracking-[0.25em] hover:bg-surface hover:border-gold/30 transition-all duration-300">
+                Consign an Asset
               </Link>
             </div>
           </div>
@@ -240,7 +240,7 @@ function HomeContent() {
       )}
 
       {/* Main Container */}
-      <main id="market" className="max-w-[1300px] mx-auto px-4 py-8">
+      <main id="market" className="w-full px-4 sm:px-8 py-8 min-h-screen animate-in fade-in duration-700">
 
         {/* Curated Sections - Only show on Home without filters */}
         {!isCatalogView && (
@@ -511,25 +511,30 @@ function HomeContent() {
 
         {/* Popular Categories */}
         {!isCatalogView && (
-          <section className="mt-20">
-            <div className="flex items-center justify-between mb-10 border-b border-border pb-4">
-              <h2 className="text-3xl font-serif text-foreground tracking-wide">Browse Categories</h2>
+          <section className="mt-32 border-t border-border pt-16">
+            <div className="flex items-end justify-between mb-12">
+              <div>
+                <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Acquisition Verticals</h2>
+                <p className="text-[11px] font-bold text-gold uppercase tracking-[0.2em] mt-2">Explore specific horological categories</p>
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { name: "New Watches", icon: "✨", desc: "Brand new, unworn luxury watches." },
-                { name: "Pre-Owned Watches", icon: "🕰️", desc: "Rare timepieces from across the globe." },
-                { name: "Watch Lots", icon: "📦", desc: "Bulk collections and estate finds." },
-                { name: "Accessories", icon: "🎁", desc: "Premium straps, tools, and storage." },
+                { name: "New Watches", icon: "✨", desc: "Unworn luxury timepieces with original provenance." },
+                { name: "Pre-Owned Watches", icon: "🕰️", desc: "Rare and historically significant finds." },
+                { name: "Watch Lots", icon: "📦", desc: "Curated collections and estate acquisitions." },
+                { name: "Accessories", icon: "🎁", desc: "Premium straps, bespoke tools, and storage." },
               ].map((cat) => (
                 <Link
                   href={`/?category=${cat.name}`}
                   key={cat.name}
-                  className="bg-surface p-10 border border-border hover:shadow-2xl dark:hover:shadow-neutral-900 transition-all duration-500 group"
+                  className="bg-surface/50 p-8 border border-border/50 hover:bg-surface hover:border-gold/30 hover:-translate-y-1 transition-all duration-500 group flex flex-col justify-between min-h-[220px]"
                 >
-                  <span className="text-4xl mb-6 block group-hover:scale-110 group-hover:text-gold transition duration-500 grayscale group-hover:grayscale-0">{cat.icon}</span>
-                  <p className="font-serif tracking-wide text-foreground text-xl mb-2">{cat.name}</p>
-                  <p className="text-sm font-medium text-muted">{cat.desc}</p>
+                  <span className="text-5xl mb-6 block transform group-hover:scale-110 group-hover:rotate-3 transition duration-500 grayscale group-hover:grayscale-0">{cat.icon}</span>
+                  <div>
+                    <p className="font-serif tracking-wide text-foreground text-lg mb-2">{cat.name}</p>
+                    <p className="text-xs font-medium text-muted leading-relaxed">{cat.desc}</p>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -537,14 +542,25 @@ function HomeContent() {
         )}
 
         {/* Promotional Banner */}
-        <section className="mt-24 bg-[#0a0a0a] border border-[#262626] p-10 md:p-20 text-white overflow-hidden relative shadow-2xl">
-          <div className="md:w-2/3 relative z-10">
-            <h2 className="text-4xl md:text-5xl font-bold font-serif mb-6 leading-tight tracking-wide">Join the Hub of Collectors.</h2>
-            <p className="text-neutral-400 text-lg font-medium mb-10 max-w-md leading-relaxed">Start selling your vintage pieces to a dedicated community of enthusiasts. Professional tools for professional sellers.</p>
-            <Link href="/sell" className="bg-primary text-white px-10 py-4 font-bold text-xs uppercase tracking-widest hover:bg-primary-light transition shadow-lg inline-block">List Your Item</Link>
+        <section className="mt-32 mb-16 bg-foreground text-background overflow-hidden relative shadow-2xl">
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
+            <img 
+              src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg" 
+              alt="Promotional background" 
+              className="w-full h-full object-cover -rotate-6 scale-125 grayscale" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/90 to-transparent"></div>
           </div>
-          <div className="absolute right-0 top-0 h-full hidden lg:block opacity-30 mix-blend-screen transition-transform duration-1000 group-hover:scale-110">
-            <img src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg" className="h-full object-cover -rotate-12 scale-150" />
+          <div className="relative z-10 p-12 md:p-24 md:w-2/3">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tighter uppercase leading-[0.9]">
+              Consign With <br/><span className="text-gold font-serif italic font-light lowercase tracking-normal">authority.</span>
+            </h2>
+            <p className="text-background/80 text-sm md:text-base font-medium mb-10 max-w-md leading-relaxed">
+              Unlock the true value of your collection. Start selling your vintage pieces to a dedicated global community of horological enthusiasts.
+            </p>
+            <Link href="/sell" className="gold-sweep px-10 py-5 font-black text-[11px] uppercase tracking-widest shadow-lg inline-block text-white">
+              Request Valuation
+            </Link>
           </div>
         </section>
       </main>

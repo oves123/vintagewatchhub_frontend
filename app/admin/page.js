@@ -1,35 +1,50 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { Menu, RefreshCw, ChevronRight, Bell, X } from "lucide-react";
+import { Menu, RefreshCw, ChevronRight, Bell, X, Users, ShoppingCart, Package, IndianRupee } from "lucide-react";
 import { API_URL, API_BASE_URL, getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "../../services/api";
+import OptimizedImage from "../../components/OptimizedImage";
 import { useSearchParams } from "next/navigation";
 import socket from "../../services/socket";
 
 import AdminSidebar from "../../components/AdminSidebar";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import Overview from "./components/Overview";
 import UserTab from "./components/UserTab";
 import ProductTab from "./components/ProductTab";
 import { OrdersTab, ChatsTab, ReportsTab, EscrowTab, AuctionsTab, BidsTab, FinancialAuditTab } from "./components/OtherTabs";
 import { getAdminFinancialLedger } from "../../services/api";
 import SettingsTab from "./components/SettingsTab";
+import CategoriesTab from "./components/CategoriesTab";
+import AuditLogTab from "./components/AuditLogTab";
 
 const TAB_LABELS = {
   overview: "Dashboard",
   users: "User Management",
   products: "Listings & Approvals",
   orders: "Orders",
+  categories: "Categories & Brands",
   escrow: "Escrow & Payouts",
   auctions: "Auction Oversight",
   bids: "Global Bid History",
+  disputes: "Dispute Management",
+  coupons: "Coupon Engine",
+  verification: "Seller Verification",
+  featured: "Promotional Tools",
   reports: "Reports & Complaints",
   chats: "Chats & Messages",
   financials: "Financial Audit",
+  audit: "Admin Audit Log",
   settings: "Platform Protocol",
 };
 
 function AdminPageContent() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTabState] = useState("overview");
+  const [fetchVersion, setFetchVersion] = useState(0);
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    setFetchVersion(v => v + 1);
+  };
   const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [adminUser, setAdminUser] = useState(null);
@@ -64,6 +79,24 @@ function AdminPageContent() {
   const [notifications, setNotifications] = useState([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   
+  const [confirmDialog, setConfirmDialog] = useState(null);
+
+  // Dispute State
+  const [disputes, setDisputes] = useState([]);
+  const [disputeFilter, setDisputeFilter] = useState("open");
+  const [selectedResolution, setSelectedResolution] = useState("");
+  const [resolutionNotes, setResolutionNotes] = useState("");
+
+  // Coupon State
+  const [coupons, setCoupons] = useState([]);
+  const [showCouponForm, setShowCouponForm] = useState(false);
+  const [couponForm, setCouponForm] = useState({ code: "", type: "percentage", value: "", min_cart_value: "", max_uses: "", expires_at: "" });
+  const [couponCreating, setCouponCreating] = useState(false);
+
+  // Verification State
+  const [verifications, setVerifications] = useState([]);
+  const [verifFilter, setVerifFilter] = useState("all");
+
   // Chat History Modal State
   const [selectedChat, setSelectedChat] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
@@ -77,6 +110,86 @@ function AdminPageContent() {
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
+  };
+
+  // ========== DISPUTE HANDLERS ==========
+  const loadDisputes = async (status) => {
+    try {
+      const res = await fetch(`${API_URL}/features/admin/disputes${status && status !== 'all' ? `?status=${status}` : ''}`, { headers: getHeaders() });
+      const data = await res.json();
+      setDisputes(Array.isArray(data) ? data : []);
+    } catch (e) { setDisputes([]); }
+  };
+  const handleResolveDispute = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/features/admin/disputes/${id}/resolve`, {
+        method: "PATCH", headers: getHeaders(),
+        body: JSON.stringify({ status: selectedResolution, resolution_notes: resolutionNotes, admin_id: adminUser?.id })
+      });
+      if (res.ok) { showToast("Dispute resolved"); loadDisputes(disputeFilter); setSelectedResolution(""); setResolutionNotes(""); }
+    } catch (e) { showToast("Failed to resolve", "error"); }
+  };
+
+  // ========== COUPON HANDLERS ==========
+  const loadCoupons = async () => {
+    try {
+      const res = await fetch(`${API_URL}/features/admin/coupons`, { headers: getHeaders() });
+      const data = await res.json();
+      setCoupons(Array.isArray(data) ? data : []);
+    } catch (e) { setCoupons([]); }
+  };
+  const handleCreateCoupon = async () => {
+    if (couponCreating) return;
+    setCouponCreating(true);
+    try {
+      const res = await fetch(`${API_URL}/features/admin/coupons`, {
+        method: "POST", headers: getHeaders(), body: JSON.stringify(couponForm)
+      });
+      if (res.ok) { showToast("Coupon created!"); setShowCouponForm(false); setCouponForm({ code: "", type: "percentage", value: "", min_cart_value: "", max_uses: "", expires_at: "" }); loadCoupons(); }
+    } catch (e) { showToast("Failed to create coupon", "error"); }
+    finally { setCouponCreating(false); }
+  };
+  const handleToggleCoupon = async (id, is_active) => {
+    try {
+      await fetch(`${API_URL}/features/admin/coupons/${id}`, { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ is_active }) });
+      loadCoupons();
+    } catch (e) { showToast("Failed to update coupon", "error"); }
+  };
+  const handleDeleteCoupon = async (id) => {
+    try {
+      await fetch(`${API_URL}/features/admin/coupons/${id}`, { method: "DELETE", headers: getHeaders() });
+      loadCoupons();
+    } catch (e) { showToast("Failed to delete coupon", "error"); }
+  };
+
+  // ========== VERIFICATION HANDLERS ==========
+  const loadVerifications = async (status) => {
+    try {
+      const res = await fetch(`${API_URL}/features/admin/verifications${status && status !== 'all' ? `?status=${status}` : ''}`, { headers: getHeaders() });
+      const data = await res.json();
+      setVerifications(Array.isArray(data) ? data : []);
+    } catch (e) { setVerifications([]); }
+  };
+  const handleReviewDoc = async (id, status, notes) => {
+    try {
+      await fetch(`${API_URL}/features/admin/verifications/${id}/review`, {
+        method: "PATCH", headers: getHeaders(),
+        body: JSON.stringify({ status, admin_notes: notes, reviewed_by: adminUser?.id })
+      });
+      showToast(`Document ${status}`);
+      loadVerifications(verifFilter);
+    } catch (e) { showToast("Failed to review", "error"); }
+  };
+
+  // ========== FEATURED HANDLERS ==========
+  const handleToggleFeatured = async (id, is_featured) => {
+    try {
+      await fetch(`${API_URL}/features/admin/products/${id}/feature`, {
+        method: "PATCH", headers: getHeaders(), body: JSON.stringify({ is_featured })
+      });
+      showToast(is_featured ? "Product featured!" : "Featured removed");
+      fetchProducts();
+    } catch (e) { showToast("Failed to update", "error"); }
   };
 
   // Handle Tab Deep-linking
@@ -130,7 +243,9 @@ function AdminPageContent() {
       try {
         const u = JSON.parse(storedUser);
         socket.emit("joinUser", u.id);
-      } catch (e) {}
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     return () => {
@@ -150,7 +265,11 @@ function AdminPageContent() {
     if (activeTab === "bids" && bids.length === 0) fetchBids();
     if (activeTab === "reports" && reports.length === 0) fetchReports();
     if (activeTab === "financials" && adminLedger.length === 0) fetchAdminLedger();
-  }, [activeTab]);
+    if (activeTab === "disputes" && disputes.length === 0) loadDisputes("open");
+    if (activeTab === "coupons" && coupons.length === 0) loadCoupons();
+    if (activeTab === "verification" && verifications.length === 0) loadVerifications("all");
+    if (activeTab === "featured") fetchProducts();
+  }, [activeTab, fetchVersion]);
 
   const fetchStats = async () => {
     try {
@@ -179,12 +298,24 @@ function AdminPageContent() {
     } catch {}
   };
 
+  const extractList = (data) => {
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object') {
+      const keys = ['users', 'products', 'orders', 'escrow', 'chats', 'auctions', 'bids', 'reports', 'items', 'data', 'results'];
+      for (const key of keys) {
+        if (Array.isArray(data[key])) return data[key];
+      }
+    }
+    return [];
+  };
+
   const fetchUsers = async () => {
     setTabLoading(true);
     try {
       const res = await fetch(`${API_URL}/admin/users`, { headers: getHeaders() });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.error || `Failed to load users (${res.status})`, "error"); return; }
       const d = await res.json();
-      setUsers(Array.isArray(d) ? d : []);
+      setUsers(extractList(d));
     } catch { showToast("Failed to load users", "error"); }
     finally { setTabLoading(false); }
   };
@@ -193,8 +324,9 @@ function AdminPageContent() {
     setTabLoading(true);
     try {
       const res = await fetch(`${API_URL}/admin/products`, { headers: getHeaders() });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.error || `Failed to load products (${res.status})`, "error"); return; }
       const d = await res.json();
-      setProducts(Array.isArray(d) ? d : []);
+      setProducts(extractList(d));
     } catch { showToast("Failed to load products", "error"); }
     finally { setTabLoading(false); }
   };
@@ -203,8 +335,9 @@ function AdminPageContent() {
     setTabLoading(true);
     try {
       const res = await fetch(`${API_URL}/admin/orders`, { headers: getHeaders() });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.error || `Failed to load orders (${res.status})`, "error"); return; }
       const d = await res.json();
-      setOrders(Array.isArray(d) ? d : []);
+      setOrders(extractList(d));
     } catch { showToast("Failed to load orders", "error"); }
     finally { setTabLoading(false); }
   };
@@ -213,8 +346,9 @@ function AdminPageContent() {
     setTabLoading(true);
     try {
       const res = await fetch(`${API_URL}/admin/escrow`, { headers: getHeaders() });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.error || `Failed to load escrow data (${res.status})`, "error"); return; }
       const d = await res.json();
-      setEscrowDeals(Array.isArray(d) ? d : []);
+      setEscrowDeals(extractList(d));
     } catch { showToast("Failed to load escrow data", "error"); }
     finally { setTabLoading(false); }
   };
@@ -223,8 +357,9 @@ function AdminPageContent() {
     setTabLoading(true);
     try {
       const res = await fetch(`${API_URL}/admin/chats`, { headers: getHeaders() });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.error || `Failed to load chats (${res.status})`, "error"); return; }
       const d = await res.json();
-      setChats(Array.isArray(d) ? d : []);
+      setChats(extractList(d));
     } catch { showToast("Failed to load chats", "error"); }
     finally { setTabLoading(false); }
   };
@@ -233,8 +368,9 @@ function AdminPageContent() {
     setTabLoading(true);
     try {
       const res = await fetch(`${API_URL}/admin/auctions`, { headers: getHeaders() });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.error || `Failed to load auctions (${res.status})`, "error"); return; }
       const d = await res.json();
-      setAuctions(Array.isArray(d) ? d : []);
+      setAuctions(extractList(d));
     } catch { showToast("Failed to load auctions", "error"); }
     finally { setTabLoading(false); }
   };
@@ -243,8 +379,9 @@ function AdminPageContent() {
     setTabLoading(true);
     try {
       const res = await fetch(`${API_URL}/admin/bids`, { headers: getHeaders() });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.error || `Failed to load bid history (${res.status})`, "error"); return; }
       const d = await res.json();
-      setBids(Array.isArray(d) ? d : []);
+      setBids(extractList(d));
     } catch { showToast("Failed to load bid history", "error"); }
     finally { setTabLoading(false); }
   };
@@ -253,8 +390,9 @@ function AdminPageContent() {
     setTabLoading(true);
     try {
       const res = await fetch(`${API_URL}/admin/reports`, { headers: getHeaders() });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.error || `Failed to load reports (${res.status})`, "error"); return; }
       const d = await res.json();
-      setReports(Array.isArray(d) ? d : []);
+      setReports(extractList(d));
     } catch { showToast("Failed to load reports", "error"); }
     finally { setTabLoading(false); }
   };
@@ -308,7 +446,7 @@ function AdminPageContent() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `WatchCollectorHUB_Global_Audit_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `Aera_Global_Audit_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -426,16 +564,23 @@ function AdminPageContent() {
   };
 
   const releasePayoutAdmin = async (id) => {
-    if (!confirm("Are you sure you want to release this payout? This action is irreversible.")) return;
-    try {
-      const res = await fetch(`${API_URL}/admin/deals/${id}/release-payout`, {
-        method: "PATCH",
-        headers: getHeaders()
-      });
-      if (!res.ok) throw new Error("Payout release failed");
-      showToast("Payout released successfully");
-      fetchEscrowDeals(); fetchStats();
-    } catch (e) { showToast(e.message, "error"); }
+    setConfirmDialog({
+      title: "Release payout?",
+      message: "Are you sure you want to release this payout? This action is irreversible.",
+      confirmText: "Release Payout",
+      variant: "danger",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_URL}/admin/deals/${id}/release-payout`, {
+            method: "PATCH",
+            headers: getHeaders()
+          });
+          if (!res.ok) throw new Error("Payout release failed");
+          showToast("Payout released successfully");
+          fetchEscrowDeals(); fetchStats();
+        } catch (e) { showToast(e.message, "error"); }
+      }
+    });
   };
 
   const openChatHistory = async (chat) => {
@@ -450,13 +595,28 @@ function AdminPageContent() {
   };
 
   const refreshAll = () => {
+    if (activeTab === "users") fetchUsers();
+    if (activeTab === "products") fetchProducts();
     if (activeTab === "orders") fetchOrders();
     if (activeTab === "reports") fetchReports();
     if (activeTab === "chats") fetchChats();
     showToast("Data refreshed");
   };
 
-  if (loading) {
+  const totalUsers = stats?.totalUsers ?? users.length ?? 0;
+  const totalProducts = stats?.totalProducts ?? products.length ?? 0;
+  const totalOrders = stats?.totalOrders ?? orders.length ?? 0;
+  const rawRevenue = stats?.totalRevenue ?? (Array.isArray(analytics?.orders) ? analytics.orders.reduce((sum, o) => sum + (parseFloat(o.total_amount ?? o.amount ?? 0) || 0), 0) : 0);
+  const formatRevenue = (val) => `Rs. ${parseFloat(val || 0).toLocaleString()}`;
+
+  const statCards = [
+    { icon: Users, label: "Total Users", value: totalUsers.toLocaleString() },
+    { icon: Package, label: "Total Products", value: totalProducts.toLocaleString() },
+    { icon: ShoppingCart, label: "Total Orders", value: totalOrders.toLocaleString() },
+    { icon: IndianRupee, label: "Total Revenue", value: formatRevenue(rawRevenue) },
+  ];
+
+  if (loading || !adminUser) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
         <div className="flex flex-col items-center gap-5">
@@ -465,8 +625,8 @@ function AdminPageContent() {
             <div className="absolute inset-0 rounded-full border-4 border-[#1e3a5f] border-t-transparent animate-spin"/>
           </div>
           <div className="text-center">
-            <p className="text-[13px] font-black text-foreground">WatchCollectorHUB</p>
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Loading Admin Panel...</p>
+            <p className="text-[13px] font-black text-foreground">Aera</p>
+            <p className="text-xs font-bold text-muted uppercase tracking-widest mt-1">{!adminUser ? 'Authenticating...' : 'Loading Admin Panel...'}</p>
           </div>
         </div>
       </div>
@@ -489,10 +649,10 @@ function AdminPageContent() {
         {/* Header */}
         <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-background rounded-none text-muted hover:bg-background transition-all">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-background rounded-lg text-muted hover:bg-background transition-all">
               <Menu size={20}/>
             </button>
-            <nav className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest">
+            <nav className="flex items-center gap-2 text-sm font-black uppercase tracking-widest">
               <span className="text-muted">Admin</span>
               <ChevronRight size={10} className="text-muted"/>
               <span className="text-primary">{TAB_LABELS[activeTab] || activeTab}</span>
@@ -500,7 +660,7 @@ function AdminPageContent() {
           </div>
           <div className="flex items-center gap-3">
             {stats?.pendingVerifications > 0 && (
-              <button onClick={() => setActiveTab("products")} className="hidden sm:flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all">
+              <button onClick={() => setActiveTab("products")} className="hidden sm:flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-black uppercase tracking-widest hover:bg-amber-100 transition-all">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"/>
                 {stats.pendingVerifications} Pending
               </button>
@@ -510,7 +670,7 @@ function AdminPageContent() {
             <div className="relative">
               <button 
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className={`p-2.5 rounded-none border transition-all relative ${
+                className={`p-2.5 rounded-lg border transition-all relative ${
                   notificationsOpen 
                     ? 'bg-primary text-white border-[#1e3a5f]' 
                     : 'bg-surface text-muted border-border hover:border-border hover:text-muted'
@@ -525,20 +685,17 @@ function AdminPageContent() {
               {notificationsOpen && (
                 <>
                   <div className="fixed inset-0 z-[110]" onClick={() => setNotificationsOpen(false)}></div>
-                  <div className="absolute right-0 mt-3 w-80 bg-surface rounded-none shadow-2xl border border-border z-[120] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 mt-3 w-80 bg-surface rounded-xl shadow-2xl border border-border z-[120] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-background/50">
-                      <h3 className="font-black text-foreground text-[10px] uppercase tracking-widest">Notifications</h3>
+                      <h3 className="font-black text-foreground text-xs uppercase tracking-widest">Notifications</h3>
                       {unreadNotificationsCount > 0 && (
-                        <button onClick={handleMarkAllRead} className="text-[10px] font-black text-primary hover:underline uppercase tracking-tight">Mark all read</button>
+                        <button onClick={handleMarkAllRead} className="text-xs font-black text-primary hover:underline uppercase tracking-tight">Mark all read</button>
                       )}
                     </div>
                     <div className="max-h-[400px] overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <div className="p-10 text-center">
-                          <div className="w-12 h-12 bg-background rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Bell className="text-gray-200" size={20}/>
-                          </div>
-                          <p className="text-muted text-[10px] font-black uppercase tracking-widest">No Alerts</p>
+                        <div className="p-8 text-center">
+                          <p className="text-muted text-sm font-medium">No notifications</p>
                         </div>
                       ) : (
                         notifications.map((n) => (
@@ -554,9 +711,9 @@ function AdminPageContent() {
                             <div className="flex gap-3">
                               <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-primary' : 'bg-transparent'}`}></div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-black text-foreground text-[11px] mb-1 uppercase tracking-tight">{n.title}</p>
-                                <p className="text-muted text-[11px] leading-relaxed line-clamp-2 font-medium">{n.message}</p>
-                                <p className="text-[9px] text-muted mt-2 uppercase font-black tracking-widest">
+                                <p className="font-black text-foreground text-sm mb-1 uppercase tracking-tight">{n.title}</p>
+                                <p className="text-muted text-sm leading-relaxed line-clamp-2 font-medium">{n.message}</p>
+                                <p className="text-xs text-muted mt-2 uppercase font-black tracking-widest">
                                   {new Date(n.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                                 </p>
                               </div>
@@ -570,7 +727,7 @@ function AdminPageContent() {
               )}
             </div>
 
-            <button onClick={refreshAll} className="flex items-center gap-2 px-3 py-2.5 bg-primary text-white rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-[#2e538a] transition-all">
+            <button onClick={refreshAll} className="flex items-center gap-2 px-3 py-2.5 bg-primary text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-[#2e538a] transition-all">
               <RefreshCw size={13}/>
               <span className="hidden sm:inline">Refresh</span>
             </button>
@@ -580,8 +737,27 @@ function AdminPageContent() {
         {/* Content */}
         <main className="p-6 lg:p-8 max-w-[1400px] mx-auto">
           <div className="mb-6">
-            <h1 className="text-3xl font-serif text-foreground tracking-wide">{TAB_LABELS[activeTab]}</h1>
-            <p className="text-[10px] font-bold text-gold uppercase tracking-widest mt-1">WatchCollectorHUB Admin Panel · Full Access</p>
+            <h1 className="text-2xl font-bold text-foreground">{TAB_LABELS[activeTab]}</h1>
+          </div>
+
+          {/* Stat Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {statCards.map((card, idx) => (
+              <div
+                key={idx}
+                className="bg-surface border border-border rounded-xl p-6 hover:border-amber-200 hover:shadow-md transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-amber-100/80 flex items-center justify-center shrink-0">
+                    <card.icon size={22} className="text-amber-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-3xl font-bold text-foreground truncate">{card.value}</p>
+                    <p className="text-xs font-bold text-muted uppercase tracking-widest">{card.label}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           {activeTab === "overview" && (
@@ -628,6 +804,17 @@ function AdminPageContent() {
             <OrdersTab orders={orders} tabLoading={tabLoading} onResolve={resolveDealAdmin} API_BASE_URL={API_BASE_URL}/>
           )}
 
+          {activeTab === "categories" && (
+            <CategoriesTab
+              categories={categories}
+              tabLoading={tabLoading}
+              API_URL={API_URL}
+              getHeaders={getHeaders}
+              showToast={showToast}
+              onRefresh={fetchCategories}
+            />
+          )}
+
           {activeTab === "escrow" && (
             <EscrowTab escrowDeals={escrowDeals} tabLoading={tabLoading} onRelease={releasePayoutAdmin} API_BASE_URL={API_BASE_URL}/>
           )}
@@ -661,19 +848,209 @@ function AdminPageContent() {
             />
           )}
 
+          {activeTab === "audit" && (
+            <AuditLogTab
+              API_URL={API_URL}
+              getHeaders={getHeaders}
+              showToast={showToast}
+            />
+          )}
+
+          {activeTab === "disputes" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-black text-foreground uppercase tracking-tight">Dispute Management</h2>
+                <div className="flex gap-2">
+                  {["open", "under_review", "resolved_buyer", "resolved_seller", "cancelled"].map(s => (
+                    <button key={s} onClick={() => { setDisputeFilter(s); loadDisputes(s); }} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${disputeFilter === s ? 'bg-primary text-white' : 'bg-surface text-muted hover:bg-background border border-border'}`}>{s.replace('_', ' ')}</button>
+                  ))}
+                </div>
+              </div>
+              {disputes.length === 0 ? (
+                <div className="p-12 border border-border rounded-xl text-center">
+                  <p className="text-sm text-muted font-bold uppercase tracking-widest">No disputes found</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {disputes.map(d => (
+                    <div key={d.id} className="p-6 border border-border rounded-xl bg-surface hover:bg-background/50 transition-all">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="font-bold text-foreground">Dispute #{d.id} — Deal #{d.deal_id}</p>
+                          <p className="text-xs text-muted font-bold mt-1 uppercase tracking-widest">Opened by: {d.opened_by_name} • {new Date(d.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <span className={`text-xs font-black px-3 py-1 uppercase tracking-widest ${d.status === 'open' ? 'bg-red-50 text-red-500' : d.status === 'under_review' ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'}`}>{d.status}</span>
+                      </div>
+                      <p className="text-sm font-bold text-muted mb-2">Reason: {d.reason}</p>
+                      <p className="text-xs text-muted mb-4">{d.description}</p>
+                      {d.status !== 'resolved_buyer' && d.status !== 'resolved_seller' && d.status !== 'cancelled' && (
+                        <div className="flex gap-3">
+                          <select value={selectedResolution} onChange={e => setSelectedResolution(e.target.value)} className="px-3 py-2 bg-background border border-border rounded-lg text-xs font-bold">
+                            <option value="">Resolve as...</option>
+                            <option value="resolved_buyer">Resolved — Buyer Wins</option>
+                            <option value="resolved_seller">Resolved — Seller Wins</option>
+                            <option value="cancelled">Cancel Dispute</option>
+                          </select>
+                          <input value={resolutionNotes} onChange={e => setResolutionNotes(e.target.value)} placeholder="Resolution notes..." className="px-3 py-2 bg-background border border-border rounded-lg text-xs font-bold flex-1" />
+                          <button onClick={() => handleResolveDispute(d.id)} disabled={!selectedResolution} className="px-6 py-2 bg-primary text-white rounded-lg text-xs font-black uppercase tracking-widest disabled:opacity-50">Apply</button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "coupons" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-black text-foreground uppercase tracking-tight">Coupon Engine</h2>
+                <button onClick={() => setShowCouponForm(!showCouponForm)} className="px-6 py-3 bg-primary text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-primary/90">
+                  {showCouponForm ? 'Cancel' : 'Create Coupon'}
+                </button>
+              </div>
+              {showCouponForm && (
+                <div className="p-6 border border-border rounded-xl bg-surface mb-6">
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <input value={couponForm.code} onChange={e => setCouponForm({...couponForm, code: e.target.value})} placeholder="CODE" className="px-4 py-3 bg-background border border-border rounded-lg text-sm font-bold" />
+                    <select value={couponForm.type} onChange={e => setCouponForm({...couponForm, type: e.target.value})} className="px-4 py-3 bg-background border border-border rounded-lg text-sm font-bold">
+                      <option value="percentage">Percentage</option>
+                      <option value="flat">Flat Amount</option>
+                    </select>
+                    <input value={couponForm.value} onChange={e => setCouponForm({...couponForm, value: e.target.value})} placeholder="Value" type="number" className="px-4 py-3 bg-background border border-border rounded-lg text-sm font-bold" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <input value={couponForm.min_cart_value} onChange={e => setCouponForm({...couponForm, min_cart_value: e.target.value})} placeholder="Min Cart Value" type="number" className="px-4 py-3 bg-background border border-border rounded-lg text-sm font-bold" />
+                    <input value={couponForm.max_uses} onChange={e => setCouponForm({...couponForm, max_uses: e.target.value})} placeholder="Max Uses" type="number" className="px-4 py-3 bg-background border border-border rounded-lg text-sm font-bold" />
+                    <input value={couponForm.expires_at} onChange={e => setCouponForm({...couponForm, expires_at: e.target.value})} placeholder="Expires At (YYYY-MM-DD)" className="px-4 py-3 bg-background border border-border rounded-lg text-sm font-bold" />
+                  </div>
+                  <button onClick={handleCreateCoupon} disabled={couponCreating} className="px-8 py-3 bg-black text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-primary disabled:opacity-50">{couponCreating ? 'Creating...' : 'Create Coupon'}</button>
+                </div>
+              )}
+              {coupons.length === 0 ? (
+                <div className="p-12 border border-border rounded-xl text-center">
+                  <p className="text-sm text-muted font-bold uppercase tracking-widest">No coupons created</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {coupons.map(c => (
+                    <div key={c.id} className="p-4 border border-border rounded-xl bg-surface flex items-center justify-between">
+                      <div className="flex items-center gap-6">
+                        <span className="font-black text-lg text-primary">{c.code}</span>
+                        <span className="text-xs font-bold">{c.type === 'percentage' ? `${c.value}%` : `₹${c.value}`}</span>
+                        <span className="text-xs font-bold text-muted">Used: {c.used_count}/{c.max_uses || '∞'}</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 ${c.is_active ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>{c.is_active ? 'Active' : 'Inactive'}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleToggleCoupon(c.id, !c.is_active)} className="text-xs font-bold text-primary uppercase tracking-widest border-b border-primary/20">{c.is_active ? 'Deactivate' : 'Activate'}</button>
+                        <button onClick={() => handleDeleteCoupon(c.id)} className="text-xs font-bold text-rose-500 uppercase tracking-widest">Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "verification" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-black text-foreground uppercase tracking-tight">Seller Verification</h2>
+                <div className="flex gap-2">
+                  {["all", "pending", "approved", "rejected"].map(s => (
+                    <button key={s} onClick={() => { setVerifFilter(s); loadVerifications(s); }} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${verifFilter === s ? 'bg-primary text-white' : 'bg-surface text-muted hover:bg-background border border-border'}`}>{s}</button>
+                  ))}
+                </div>
+              </div>
+              {verifications.length === 0 ? (
+                <div className="p-12 border border-border rounded-xl text-center">
+                  <p className="text-sm text-muted font-bold uppercase tracking-widest">No verification requests</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {verifications.map(v => (
+                    <div key={v.id} className="p-6 border border-border rounded-xl bg-surface hover:bg-background/50 transition-all">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="font-bold text-foreground">{v.user_name} <span className="text-muted text-xs font-medium">({v.email})</span></p>
+                          <p className="text-xs text-muted font-bold mt-1 uppercase tracking-widest">{v.document_type} • Submitted {new Date(v.submitted_at).toLocaleDateString()}</p>
+                        </div>
+                        <span className={`text-xs font-black px-3 py-1 uppercase tracking-widest ${v.status === 'pending' ? 'bg-amber-50 text-amber-500' : v.status === 'approved' ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-500'}`}>{v.status}</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <a href={v.document_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-primary underline underline-offset-4">View Document</a>
+                        {v.status === 'pending' && (
+                          <div className="flex gap-2 ml-auto">
+                            <button onClick={() => handleReviewDoc(v.id, 'approved', '')} className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-emerald-600">Approve</button>
+                            <button onClick={() => handleReviewDoc(v.id, 'rejected', '')} className="px-4 py-2 bg-red-500 text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-red-600">Reject</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "featured" && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-black text-foreground uppercase tracking-tight mb-8">Promotional Tools</h2>
+              {products.length === 0 ? (
+                <div className="p-12 border border-border rounded-xl text-center">
+                  <p className="text-sm text-muted font-bold uppercase tracking-widest">No products available</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {products.map(p => (
+                    <div key={p.id} className="p-4 border border-border rounded-xl bg-surface flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        {p.images?.[0] && <div className="relative w-12 h-12 shrink-0"><OptimizedImage src={p.images[0]} alt={p.title || 'Product image'} fill className="object-cover rounded-lg" size="thumbnail" /></div>}
+                        <div>
+                          <p className="font-bold text-foreground text-sm">{p.title}</p>
+                          <p className="text-xs text-muted font-bold">₹{parseFloat(p.price).toLocaleString()} • {p.status}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-xs font-bold px-2 py-0.5 ${p.is_featured ? 'text-amber-600 bg-amber-50' : 'text-muted bg-surface border border-border'}`}>{p.is_featured ? 'Featured' : 'Standard'}</span>
+                        <button onClick={() => handleToggleFeatured(p.id, !p.is_featured)} className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest ${p.is_featured ? 'bg-surface text-muted border border-border hover:bg-background' : 'bg-amber-500 text-white hover:bg-amber-600'}`}>
+                          {p.is_featured ? 'Remove Featured' : 'Make Featured'}
+                        </button>
+                        {p.is_featured && p.featured_expires_at && (
+                          <span className="text-xs text-muted font-bold">Expires: {new Date(p.featured_expires_at).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === "settings" && <SettingsTab />}
         </main>
       </div>
 
       {/* Toast */}
       {toast && (
-        <div className={`fixed bottom-8 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-none shadow-2xl text-[11px] font-black uppercase tracking-widest animate-in slide-in-from-right-10 duration-300 ${
+        <div className={`fixed bottom-8 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl text-sm font-bold tracking-wide ${
           toast.type === "error" ? "bg-surface border-2 border-rose-500 text-rose-600" : "bg-primary text-white"
         }`}>
-          <div className={`w-2 h-2 rounded-full ${toast.type === "error" ? "bg-rose-500" : "bg-[#b8860b]"} animate-pulse`}/>
           {toast.message}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        onConfirm={confirmDialog?.onConfirm || (() => {})}
+        title={confirmDialog?.title || "Confirm"}
+        message={confirmDialog?.message || "Are you sure?"}
+        confirmText={confirmDialog?.confirmText || "Delete"}
+        cancelText="Cancel"
+        variant={confirmDialog?.variant || "danger"}
+      />
 
       {/* Chat History Modal */}
       {selectedChat && (
@@ -682,10 +1059,10 @@ function AdminPageContent() {
           <div className="relative w-full max-w-2xl bg-surface rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="bg-primary p-6 text-white flex justify-between items-center">
               <div>
-                <h3 className="text-sm font-black uppercase tracking-widest">Audit Conversation #{selectedChat.id}</h3>
-                <p className="text-[10px] font-bold text-white/60 uppercase mt-0.5">{selectedChat.product_title}</p>
+                <h3 className="text-base font-bold">Chat #{selectedChat.id}</h3>
+                <p className="text-sm text-white/80 mt-0.5">{selectedChat.product_title}</p>
               </div>
-              <button onClick={() => setSelectedChat(null)} className="p-2 hover:bg-surface/10 rounded-none transition-colors">
+              <button onClick={() => setSelectedChat(null)} className="p-2 hover:bg-surface/10 rounded-lg transition-colors">
                 <X size={20}/>
               </button>
             </div>
@@ -693,26 +1070,26 @@ function AdminPageContent() {
               {historyLoading ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3">
                   <RefreshCw className="animate-spin text-primary" size={24}/>
-                  <p className="text-[10px] font-black text-muted uppercase tracking-widest">Loading secure logs...</p>
+                  <p className="text-xs font-black text-muted uppercase tracking-widest">Loading secure logs...</p>
                 </div>
               ) : chatMessages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-[11px] font-black text-muted uppercase tracking-widest">No messages in this audit log</p>
+                  <p className="text-sm font-black text-muted uppercase tracking-widest">No messages in this audit log</p>
                 </div>
               ) : (
                 chatMessages.map((m, i) => (
                   <div key={m.id || i} className={`flex flex-col ${m.sender_id === selectedChat.buyer_id ? "items-start" : "items-end"}`}>
-                     <span className="text-[9px] font-black text-muted uppercase tracking-widest mb-1.5 px-1">
+                     <span className="text-xs font-black text-muted uppercase tracking-widest mb-1.5 px-1">
                         {m.sender_name || (m.sender_id === selectedChat.buyer_id ? "Buyer" : "Seller")}
                      </span>
-                     <div className={`max-w-[85%] px-4 py-3 rounded-none text-[12px] font-semibold leading-relaxed shadow-sm ${
+                     <div className={`max-w-[85%] px-4 py-3 rounded-lg text-[12px] font-semibold leading-relaxed shadow-sm ${
                         m.sender_id === selectedChat.buyer_id 
                         ? "bg-surface text-foreground border-l-4 border-[#1e3a5f]" 
                         : "bg-primary text-white border-r-4 border-[#b8860b]"
                      }`}>
                         {m.message}
                      </div>
-                     <span className="text-[9px] font-bold text-muted mt-1.5 px-1 uppercase tracking-tight">
+                     <span className="text-xs font-bold text-muted mt-1.5 px-1 uppercase tracking-tight">
                         {new Date(m.created_at).toLocaleString()}
                      </span>
                   </div>
@@ -720,7 +1097,7 @@ function AdminPageContent() {
               )}
             </div>
             <div className="p-4 bg-surface border-t border-border flex justify-end">
-              <button onClick={() => setSelectedChat(null)} className="px-6 py-2.5 bg-background text-muted rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all">
+              <button onClick={() => setSelectedChat(null)} className="px-6 py-2.5 bg-background text-muted rounded-lg text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all">
                 Close Audit
               </button>
             </div>
@@ -741,8 +1118,8 @@ export default function AdminPage() {
             <div className="absolute inset-0 rounded-full border-4 border-[#1e3a5f] border-t-transparent animate-spin"/>
           </div>
           <div className="text-center">
-            <p className="text-[13px] font-black text-foreground">WatchCollectorHUB</p>
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Initializing Admin Panel...</p>
+            <p className="text-[13px] font-black text-foreground">Aera</p>
+            <p className="text-xs font-bold text-muted uppercase tracking-widest mt-1">Initializing Admin Panel...</p>
           </div>
         </div>
       </div>

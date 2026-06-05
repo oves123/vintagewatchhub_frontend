@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { Search, Eye, CheckCircle2, XCircle, RefreshCw, Package, ShoppingCart, TrendingUp, ShieldCheck, Printer } from "lucide-react";
+import ConfirmDialog from "../../../components/ConfirmDialog";
 
 export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserStatus, deleteUser, showToast, getHeaders, API_URL }) {
   const [search, setSearch] = useState("");
@@ -8,6 +9,7 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
   const [selectedUser, setSelectedUser] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const getImg = (p) => {
     if (p?.image) return p.image.startsWith('http') ? p.image : `${API_BASE_URL}/uploads/${p.image}`;
@@ -46,16 +48,16 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
   return (
     <div className="space-y-6">
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center bg-surface p-5 rounded-none border border-border shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center bg-surface p-5 rounded-xl border border-border shadow-sm">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"/>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users by name or email..."
-            className="w-full pl-9 pr-4 py-3 bg-background rounded-none text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:bg-surface transition-all placeholder:text-muted"/>
+            className="w-full pl-9 pr-4 py-3 bg-background rounded-lg text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:bg-surface transition-all placeholder:text-muted"/>
         </div>
-        <div className="flex gap-1 bg-background p-1 rounded-none flex-shrink-0">
+        <div className="flex gap-1 bg-background p-1 rounded-xl flex-shrink-0">
           {["all","active","suspended","admin","verified"].map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              className={`px-3 py-2 rounded-none text-[10px] font-black uppercase tracking-widest transition-all ${filter === f ? "bg-surface text-primary shadow" : "text-muted hover:text-muted"}`}>
+              className={`px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${filter === f ? "bg-surface text-primary shadow" : "text-muted hover:text-muted"}`}>
               {f}
             </button>
           ))}
@@ -63,7 +65,7 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
       </div>
 
       {/* Table */}
-      <div className="bg-surface rounded-none border border-border shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
         {tabLoading ? (
           <div className="flex items-center justify-center py-20"><RefreshCw className="animate-spin text-primary" size={24}/></div>
         ) : (
@@ -74,58 +76,58 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
                 <thead>
                   <tr className="border-b border-border bg-background">
                     {["User","Email","Role","Phone","Verified","Listed","Bought","Joined","Status","Actions"].map(h => (
-                      <th key={h} className="text-left px-4 py-3 text-[9px] font-black text-muted uppercase tracking-widest whitespace-nowrap">{h}</th>
+                      <th key={h} className="text-left px-4 py-3 text-xs font-black text-muted uppercase tracking-widest whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 && (
-                    <tr><td colSpan={10} className="text-center py-16 text-[11px] text-muted font-bold uppercase tracking-widest">No users found</td></tr>
+                    <tr><td colSpan={10} className="text-center py-16 text-sm text-muted font-bold uppercase tracking-widest">No users found</td></tr>
                   )}
                   {filtered.map(u => (
                     <tr key={u.id} className="border-b border-gray-50 hover:bg-background transition-colors group">
                       <td className="px-4 py-4">
                         <button onClick={() => fetchDetails(u)} className="flex items-center gap-3 text-left">
-                          <div className="w-9 h-9 rounded-none bg-primary text-white font-black text-sm flex items-center justify-center flex-shrink-0">
+                          <div className="w-9 h-9 rounded-lg bg-primary text-white font-black text-sm flex items-center justify-center flex-shrink-0">
                             {u.name?.[0]?.toUpperCase()}
                           </div>
                           <div>
                             <p className="text-[12px] font-black text-foreground group-hover:text-primary transition-colors">{u.name}</p>
-                            <p className="text-[9px] text-muted font-bold">UID-{String(u.id).padStart(4,"0")}</p>
+                            <p className="text-xs text-muted font-bold">UID-{String(u.id).padStart(4,"0")}</p>
                           </div>
                         </button>
                       </td>
-                      <td className="px-4 py-4 text-[11px] text-muted font-medium">{u.email}</td>
+                      <td className="px-4 py-4 text-sm text-muted font-medium">{u.email}</td>
                       <td className="px-4 py-4">
-                        <span className={`px-2 py-1 rounded-none text-[9px] font-black uppercase ${u.role === "admin" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-primary"}`}>{u.role || "user"}</span>
+                        <span className={`px-2 py-1 rounded-lg text-xs font-black uppercase ${u.role === "admin" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-primary"}`}>{u.role || "user"}</span>
                       </td>
-                      <td className="px-4 py-4 text-[11px] text-muted font-medium">{u.phone || "â€”"}</td>
+                      <td className="px-4 py-4 text-sm text-muted font-medium">{u.phone || "—"}</td>
                       <td className="px-4 py-4 text-center">
                         <CheckCircle2 size={15} className={u.is_verified ? "text-emerald-500 mx-auto" : "text-gray-200 mx-auto"}/>
                       </td>
                       <td className="px-4 py-4 text-[12px] font-black text-foreground text-center">{u.items_listed || 0}</td>
                       <td className="px-4 py-4 text-[12px] font-black text-foreground text-center">{u.items_bought || 0}</td>
-                      <td className="px-4 py-4 text-[10px] text-muted font-medium whitespace-nowrap">
-                        {u.joined_date ? new Date(u.joined_date).toLocaleDateString() : "â€”"}
+                      <td className="px-4 py-4 text-xs text-muted font-medium whitespace-nowrap">
+                        {u.joined_date ? new Date(u.joined_date).toLocaleDateString() : "—"}
                       </td>
                       <td className="px-4 py-4">
-                        <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase ${u.is_active !== false ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-black uppercase ${u.is_active !== false ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
                           {u.is_active !== false ? "Active" : "Suspended"}
                         </span>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <button onClick={() => fetchDetails(u)} className="p-2 bg-background hover:bg-primary hover:text-white text-muted rounded-none transition-all" title="View Profile">
-                            <Eye size={14}/>
-                          </button>
-                          <button onClick={() => toggleUserStatus(u.id, u.is_active !== false)}
-                            className={`p-2 rounded-none transition-all ${u.is_active !== false ? "bg-rose-50 text-rose-600 hover:bg-rose-100" : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"}`}
-                            title={u.is_active !== false ? "Suspend" : "Activate"}>
-                            {u.is_active !== false ? <XCircle size={14}/> : <CheckCircle2 size={14}/>}
-                          </button>
-                          <button onClick={() => { if(confirm(`Delete user ${u.name}?`)) deleteUser(u.id); }}
-                            className="p-2 bg-background hover:bg-rose-50 hover:text-rose-600 text-muted rounded-none transition-all" title="Delete">
-                            <span className="text-[11px] font-black">âœ•</span>
+<button onClick={() => fetchDetails(u)} className="p-2 bg-background hover:bg-primary hover:text-white text-muted rounded-lg transition-all" title="View Profile">
+                    <Eye size={14}/>
+                  </button>
+                  <button onClick={() => toggleUserStatus(u.id, u.is_active !== false)}
+                    className={`p-2 rounded-lg transition-all ${u.is_active !== false ? "bg-rose-50 text-rose-600 hover:bg-rose-100" : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"}`}
+                    title={u.is_active !== false ? "Suspend" : "Activate"}>
+                    {u.is_active !== false ? <XCircle size={14}/> : <CheckCircle2 size={14}/>}
+                  </button>
+                  <button onClick={() => setConfirmDialog({ title: "Delete user?", message: `Delete user ${u.name}?`, confirmText: "Delete", variant: "danger", onConfirm: () => deleteUser(u.id) })}
+                    className="p-2 bg-background hover:bg-rose-50 hover:text-rose-600 text-muted rounded-lg transition-all" title="Delete">
+                            <span className="text-sm font-black"></span>
                           </button>
                         </div>
                       </td>
@@ -138,57 +140,57 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
             {/* Mobile Card View */}
             <div className="md:hidden divide-y divide-gray-100">
               {filtered.length === 0 && (
-                <div className="text-center py-16 text-[11px] text-muted font-bold uppercase tracking-widest">No users found</div>
+                <div className="text-center py-16 text-sm text-muted font-bold uppercase tracking-widest">No users found</div>
               )}
               {filtered.map(u => (
                 <div key={u.id} className="p-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <button onClick={() => fetchDetails(u)} className="flex items-center gap-3 text-left">
-                      <div className="w-10 h-10 rounded-none bg-primary text-white font-black text-sm flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-lg bg-primary text-white font-black text-sm flex items-center justify-center">
                         {u.name?.[0]?.toUpperCase()}
                       </div>
                       <div>
                         <p className="text-[13px] font-black text-foreground">{u.name}</p>
-                        <p className="text-[10px] text-muted font-bold uppercase tracking-tight">UID-{String(u.id).padStart(4,"0")}</p>
+                        <p className="text-xs text-muted font-bold uppercase tracking-tight">UID-{String(u.id).padStart(4,"0")}</p>
                       </div>
                     </button>
-                    <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase ${u.is_active !== false ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-black uppercase ${u.is_active !== false ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
                       {u.is_active !== false ? "Active" : "Suspended"}
                     </span>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-background p-2 rounded-none">
-                      <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-0.5">Role</p>
-                      <p className="text-[10px] font-bold text-muted uppercase">{u.role || "user"}</p>
+                    <div className="bg-background p-2 rounded-xl">
+                      <p className="text-xs font-black text-muted uppercase tracking-widest mb-0.5">Role</p>
+                      <p className="text-xs font-bold text-muted uppercase">{u.role || "user"}</p>
                     </div>
-                    <div className="bg-background p-2 rounded-none">
-                      <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-0.5">Verified</p>
+                    <div className="bg-background p-2 rounded-xl">
+                      <p className="text-xs font-black text-muted uppercase tracking-widest mb-0.5">Verified</p>
                       <CheckCircle2 size={12} className={u.is_verified ? "text-emerald-500" : "text-gray-200"}/>
                     </div>
-                    <div className="bg-background p-2 rounded-none">
-                      <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-0.5">Listed</p>
+                    <div className="bg-background p-2 rounded-xl">
+                      <p className="text-xs font-black text-muted uppercase tracking-widest mb-0.5">Listed</p>
                       <p className="text-[12px] font-black text-foreground">{u.items_listed || 0}</p>
                     </div>
-                    <div className="bg-background p-2 rounded-none">
-                      <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-0.5">Bought</p>
+                    <div className="bg-background p-2 rounded-xl">
+                      <p className="text-xs font-black text-muted uppercase tracking-widest mb-0.5">Bought</p>
                       <p className="text-[12px] font-black text-foreground">{u.items_bought || 0}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-2">
-                    <p className="text-[10px] text-muted font-bold uppercase">{u.email}</p>
+                    <p className="text-xs text-muted font-bold uppercase">{u.email}</p>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => fetchDetails(u)} className="p-2.5 bg-background text-muted rounded-none">
-                        <Eye size={16}/>
-                      </button>
-                      <button onClick={() => toggleUserStatus(u.id, u.is_active !== false)}
-                        className={`p-2.5 rounded-none ${u.is_active !== false ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"}`}>
-                        {u.is_active !== false ? <XCircle size={16}/> : <CheckCircle2 size={16}/>}
-                      </button>
-                      <button onClick={() => { if(confirm(`Delete user ${u.name}?`)) deleteUser(u.id); }}
-                        className="p-2.5 bg-background text-muted rounded-none">
-                        <span className="text-[11px] font-black">âœ•</span>
+<button onClick={() => fetchDetails(u)} className="p-2.5 bg-background text-muted rounded-lg">
+                    <Eye size={16}/>
+                  </button>
+                  <button onClick={() => toggleUserStatus(u.id, u.is_active !== false)}
+                    className={`p-2.5 rounded-lg ${u.is_active !== false ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"}`}>
+                    {u.is_active !== false ? <XCircle size={16}/> : <CheckCircle2 size={16}/>}
+                  </button>
+                  <button onClick={() => setConfirmDialog({ title: "Delete user?", message: `Delete user ${u.name}?`, confirmText: "Delete", variant: "danger", onConfirm: () => deleteUser(u.id) })}
+                    className="p-2.5 bg-background text-muted rounded-lg">
+                        <span className="text-sm font-black"></span>
                       </button>
                     </div>
                   </div>
@@ -207,31 +209,31 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
           <div className="bg-surface w-full max-w-5xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden relative z-10 flex flex-col md:flex-row">
             {/* Left */}
             <div className="w-full md:w-72 bg-background border-r border-border p-8 flex flex-col items-center flex-shrink-0">
-              <div className="w-24 h-24 bg-primary rounded-none flex items-center justify-center text-4xl font-black text-white mb-5 uppercase">
+              <div className="w-24 h-24 bg-primary rounded-xl flex items-center justify-center text-4xl font-black text-white mb-5 uppercase">
                 {selectedUser.name?.[0]}
               </div>
               <h2 className="text-xl font-black text-foreground text-center">{selectedUser.name}</h2>
-              <p className="text-[10px] font-bold text-muted mt-1 text-center">{selectedUser.email}</p>
+              <p className="text-xs font-bold text-muted mt-1 text-center">{selectedUser.email}</p>
               <div className="mt-6 w-full space-y-2">
                 {[
                   ["Role", selectedUser.role || "user"],
-                  ["Phone", selectedUser.phone || "â€”"],
-                  ["City", selectedUser.city || "â€”"],
-                  ["State", selectedUser.state || "â€”"],
-                  ["Pincode", selectedUser.pincode || "â€”"],
+                  ["Phone", selectedUser.phone || "—"],
+                  ["City", selectedUser.city || "—"],
+                  ["State", selectedUser.state || "—"],
+                  ["Pincode", selectedUser.pincode || "—"],
                   ["Verified", selectedUser.is_verified ? "Yes" : "No"],
-                  ["Joined", selectedUser.joined_date ? new Date(selectedUser.joined_date).toLocaleDateString() : "â€”"],
+                  ["Joined", selectedUser.joined_date ? new Date(selectedUser.joined_date).toLocaleDateString() : "—"],
                   ["Status", selectedUser.is_active !== false ? "Active" : "Suspended"],
                 ].map(([k,v]) => (
-                  <div key={k} className="flex items-center justify-between bg-surface rounded-none px-3 py-2 border border-border">
-                    <span className="text-[9px] font-bold text-muted uppercase tracking-widest">{k}</span>
-                    <span className="text-[10px] font-black text-foreground uppercase">{v}</span>
+                  <div key={k} className="flex items-center justify-between bg-surface rounded-xl px-3 py-2 border border-border">
+                    <span className="text-xs font-bold text-muted uppercase tracking-widest">{k}</span>
+                    <span className="text-xs font-black text-foreground uppercase">{v}</span>
                   </div>
                 ))}
               </div>
               <button
                 onClick={() => { toggleUserStatus(selectedUser.id, selectedUser.is_active !== false); closeModal(); }}
-                className={`mt-6 w-full py-3 rounded-none text-[11px] font-black uppercase tracking-widest transition-all ${selectedUser.is_active !== false ? "bg-rose-50 text-rose-600 border border-rose-100" : "bg-emerald-600 text-white"}`}>
+                className={`mt-6 w-full py-3 rounded-lg text-sm font-black uppercase tracking-widest transition-all ${selectedUser.is_active !== false ? "bg-rose-50 text-rose-600 border border-rose-100" : "bg-emerald-600 text-white"}`}>
                 {selectedUser.is_active !== false ? "Suspend User" : "Activate User"}
               </button>
             </div>
@@ -239,10 +241,10 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
             {/* Right */}
             <div className="flex-grow p-8 overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-[11px] font-black text-muted uppercase tracking-widest">User Intelligence Report</h3>
+                <h3 className="text-sm font-black text-muted uppercase tracking-widest">User Intelligence Report</h3>
                 <div className="flex gap-2">
-                  <button onClick={() => window.print()} title="Print" className="p-2 bg-background hover:bg-primary hover:text-white text-muted rounded-none transition-all"><Printer size={16}/></button>
-                  <button onClick={closeModal} className="p-2 bg-background hover:bg-background rounded-none transition-all"><XCircle size={18} className="text-muted"/></button>
+                  <button onClick={() => window.print()} title="Print" className="p-2 bg-background hover:bg-primary hover:text-white text-muted rounded-lg transition-all"><Printer size={16}/></button>
+                  <button onClick={closeModal} className="p-2 bg-background hover:bg-background rounded-lg transition-all"><XCircle size={18} className="text-muted"/></button>
                 </div>
               </div>
 
@@ -252,35 +254,35 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
                 <div className="space-y-6">
                   {/* Stats row */}
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-primary rounded-none p-4 text-white text-center">
+                    <div className="bg-primary rounded-xl p-4 text-white text-center">
                       <p className="text-2xl font-black">{userDetails.products?.length || 0}</p>
-                      <p className="text-[9px] font-bold text-blue-300 uppercase tracking-widest mt-1">Listings</p>
+                      <p className="text-xs font-bold text-blue-300 uppercase tracking-widest mt-1">Listings</p>
                     </div>
-                    <div className="bg-amber-50 rounded-none p-4 text-center border border-amber-100">
+                    <div className="bg-amber-50 rounded-xl p-4 text-center border border-amber-100">
                       <p className="text-2xl font-black text-foreground">{userDetails.buyOrders?.length || 0}</p>
-                      <p className="text-[9px] font-bold text-amber-600 uppercase tracking-widest mt-1">Purchases</p>
+                      <p className="text-xs font-bold text-amber-600 uppercase tracking-widest mt-1">Purchases</p>
                     </div>
-                    <div className="bg-emerald-50 rounded-none p-4 text-center border border-emerald-100">
+                    <div className="bg-emerald-50 rounded-xl p-4 text-center border border-emerald-100">
                       <p className="text-2xl font-black text-foreground">{userDetails.sellOrders?.length || 0}</p>
-                      <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1">Sales</p>
+                      <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mt-1">Sales</p>
                     </div>
                   </div>
 
                   {/* Listings */}
                   <div>
-                    <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest mb-3 flex items-center gap-2"><Package size={13}/> Their Listings</h4>
+                    <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-3 flex items-center gap-2"><Package size={13}/> Their Listings</h4>
                     <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-                      {(!userDetails.products || userDetails.products.length === 0) && <p className="text-[10px] text-muted text-center py-4 font-bold">No listings</p>}
+                      {(!userDetails.products || userDetails.products.length === 0) && <p className="text-xs text-muted text-center py-4 font-bold">No listings</p>}
                       {userDetails.products?.map(p => (
-                        <div key={p.id} className="flex items-center gap-3 p-3 bg-background rounded-none border border-border">
-                          <div className="w-10 h-10 bg-surface rounded-none border border-border overflow-hidden flex-shrink-0">
+                        <div key={p.id} className="flex items-center gap-3 p-3 bg-background rounded-xl border border-border">
+                          <div className="w-10 h-10 bg-surface rounded-xl border border-border overflow-hidden flex-shrink-0">
                             <img src={getImg(p)} className="w-full h-full object-contain" alt={p.title}/>
                           </div>
                           <div className="flex-grow min-w-0">
-                            <p className="text-[11px] font-black text-foreground truncate">{p.title}</p>
-                            <p className="text-[9px] text-muted font-bold mt-0.5">â‚¹{parseFloat(p.price||0).toLocaleString()}</p>
+                            <p className="text-sm font-black text-foreground truncate">{p.title}</p>
+                            <p className="text-xs text-muted font-bold mt-0.5">Rs.{parseFloat(p.price||0).toLocaleString()}</p>
                           </div>
-                          <span className={`px-2 py-0.5 rounded-none text-[8px] font-black uppercase ${p.status === "approved" ? "bg-emerald-50 text-emerald-600" : p.status === "pending" ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"}`}>{p.status}</span>
+                          <span className={`px-2 py-0.5 rounded-lg text-xs font-black uppercase ${p.status === "approved" ? "bg-emerald-50 text-emerald-600" : p.status === "pending" ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"}`}>{p.status}</span>
                         </div>
                       ))}
                     </div>
@@ -288,31 +290,31 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
 
                   {/* Payment Information */}
                   <div>
-                    <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest mb-3 flex items-center gap-2 text-primary"><ShieldCheck size={13}/> Financial Identity</h4>
-                    <div className="bg-blue-50/30 rounded-none border border-blue-100/50 p-5">
+                    <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-3 flex items-center gap-2 text-primary"><ShieldCheck size={13}/> Financial Identity</h4>
+                    <div className="bg-blue-50/30 rounded-xl border border-blue-100/50 p-5">
                        {(() => {
                          const pm = typeof userDetails.user?.payment_methods === 'string' ? JSON.parse(userDetails.user?.payment_methods || "{}") : (userDetails.user?.payment_methods || {});
                          const hasData = pm && (pm.upi || pm.bank_name || pm.account_number || pm.ifsc);
                          
-                         if (!hasData) return <p className="text-[10px] text-muted text-center py-4 font-bold italic">No payment methods configured by user.</p>;
+                         if (!hasData) return <p className="text-xs text-muted text-center py-4 font-bold italic">No payment methods configured by user.</p>;
                          
                          return (
                            <div className="grid grid-cols-2 gap-y-4 gap-x-6">
                               <div>
-                                 <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">UPI ID</p>
-                                 <p className="text-[11px] font-bold text-foreground">{pm.upi || "â€”"}</p>
+                                 <p className="text-xs font-black text-muted uppercase tracking-widest mb-1">UPI ID</p>
+                                 <p className="text-sm font-bold text-foreground">{pm.upi || "—"}</p>
                               </div>
                               <div>
-                                 <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">Bank Name</p>
-                                 <p className="text-[11px] font-bold text-foreground">{pm.bank_name || "â€”"}</p>
+                                 <p className="text-xs font-black text-muted uppercase tracking-widest mb-1">Bank Name</p>
+                                 <p className="text-sm font-bold text-foreground">{pm.bank_name || "—"}</p>
                               </div>
                               <div>
-                                 <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">Account Number</p>
-                                 <p className="text-[11px] font-bold text-foreground font-mono tracking-tighter">{pm.account_number || "â€”"}</p>
+                                 <p className="text-xs font-black text-muted uppercase tracking-widest mb-1">Account Number</p>
+                                 <p className="text-sm font-bold text-foreground font-mono tracking-tighter">{pm.account_number || "—"}</p>
                               </div>
                               <div>
-                                 <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">IFSC Code</p>
-                                 <p className="text-[11px] font-bold text-foreground font-mono uppercase">{pm.ifsc || "â€”"}</p>
+                                 <p className="text-xs font-black text-muted uppercase tracking-widest mb-1">IFSC Code</p>
+                                 <p className="text-sm font-bold text-foreground font-mono uppercase">{pm.ifsc || "—"}</p>
                               </div>
                            </div>
                          );
@@ -322,18 +324,18 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
 
                   {/* Buy Orders */}
                   <div>
-                    <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest mb-3 flex items-center gap-2 text-primary"><ShoppingCart size={13}/> Purchase History</h4>
+                    <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-3 flex items-center gap-2 text-primary"><ShoppingCart size={13}/> Purchase History</h4>
                     <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
-                      {(!userDetails.buyOrders || userDetails.buyOrders.length === 0) && <p className="text-[10px] text-muted text-center py-4 font-bold">No purchases</p>}
+                      {(!userDetails.buyOrders || userDetails.buyOrders.length === 0) && <p className="text-xs text-muted text-center py-4 font-bold">No purchases</p>}
                       {userDetails.buyOrders?.map(o => (
-                        <div key={o.id} className="flex items-center justify-between p-3 bg-blue-50/40 rounded-none border border-blue-100/50">
+                        <div key={o.id} className="flex items-center justify-between p-3 bg-blue-50/40 rounded-xl border border-blue-100/50">
                           <div>
-                            <p className="text-[11px] font-black text-foreground truncate max-w-[200px]">{o.title}</p>
-                            <p className="text-[9px] text-muted font-bold mt-0.5">{new Date(o.created_at).toLocaleDateString()}</p>
+                            <p className="text-sm font-black text-foreground truncate max-w-[200px]">{o.title}</p>
+                            <p className="text-xs text-muted font-bold mt-0.5">{new Date(o.created_at).toLocaleDateString()}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-[11px] font-black text-primary">â‚¹{parseFloat(o.total_amount||0).toLocaleString()}</p>
-                            <span className="text-[8px] font-bold text-muted uppercase">{o.payment_status}</span>
+                            <p className="text-sm font-black text-primary">Rs.{parseFloat(o.total_amount||0).toLocaleString()}</p>
+                            <span className="text-xs font-bold text-muted uppercase">{o.payment_status}</span>
                           </div>
                         </div>
                       ))}
@@ -342,18 +344,18 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
 
                   {/* Sell Orders */}
                   <div>
-                    <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest mb-3 flex items-center gap-2 text-emerald-700"><TrendingUp size={13}/> Sales History</h4>
+                    <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-3 flex items-center gap-2 text-emerald-700"><TrendingUp size={13}/> Sales History</h4>
                     <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
-                      {(!userDetails.sellOrders || userDetails.sellOrders.length === 0) && <p className="text-[10px] text-muted text-center py-4 font-bold">No sales</p>}
+                      {(!userDetails.sellOrders || userDetails.sellOrders.length === 0) && <p className="text-xs text-muted text-center py-4 font-bold">No sales</p>}
                       {userDetails.sellOrders?.map(o => (
-                        <div key={o.id} className="flex items-center justify-between p-3 bg-emerald-50/40 rounded-none border border-emerald-100/50">
+                        <div key={o.id} className="flex items-center justify-between p-3 bg-emerald-50/40 rounded-xl border border-emerald-100/50">
                           <div>
-                            <p className="text-[11px] font-black text-foreground truncate max-w-[200px]">{o.title}</p>
-                            <p className="text-[9px] text-muted font-bold mt-0.5">{new Date(o.created_at).toLocaleDateString()}</p>
+                            <p className="text-sm font-black text-foreground truncate max-w-[200px]">{o.title}</p>
+                            <p className="text-xs text-muted font-bold mt-0.5">{new Date(o.created_at).toLocaleDateString()}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-[11px] font-black text-emerald-600">â‚¹{parseFloat(o.total_amount||0).toLocaleString()}</p>
-                            <span className="text-[8px] font-bold text-muted uppercase">{o.status}</span>
+                            <p className="text-sm font-black text-emerald-600">Rs.{parseFloat(o.total_amount||0).toLocaleString()}</p>
+                            <span className="text-xs font-bold text-muted uppercase">{o.status}</span>
                           </div>
                         </div>
                       ))}
@@ -365,6 +367,17 @@ export default function UserTab({ users, tabLoading, API_BASE_URL, toggleUserSta
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        onConfirm={confirmDialog?.onConfirm || (() => {})}
+        title={confirmDialog?.title || "Confirm"}
+        message={confirmDialog?.message || "Are you sure?"}
+        confirmText={confirmDialog?.confirmText || "Delete"}
+        cancelText="Cancel"
+        variant={confirmDialog?.variant || "danger"}
+      />
     </div>
   );
 }

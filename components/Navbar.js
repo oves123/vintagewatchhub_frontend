@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { API_URL, getTotalUnreadCount, getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "../services/api";
+import { API_URL, getTotalUnreadCount, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, getHeaders } from "../services/api";
 import socket from "../services/socket";
-import { useTheme } from "../context/ThemeContext";
+
+import OptimizedImage from "./OptimizedImage";
 
 // Inline SVG Logo Component
 function WCHLogo({ className = "", onClick }) {
@@ -20,8 +21,8 @@ function WCHLogo({ className = "", onClick }) {
         <path d="M10 6 L12 3 L14 5 L16 2 L18 5 L20 3 L22 6 Z" fill="#b8860b"/>
         <circle cx="16" cy="18" r="1.5" fill="#1e3a5f"/>
       </svg>
-      <span className="font-serif font-black tracking-widest text-foreground text-[16px] sm:text-[18px] leading-none">
-        Watch<span className="text-primary italic font-light">Collector</span><span className="text-gold">HUB</span>
+      <span className="font-serif font-black tracking-[0.2em] uppercase text-foreground text-[18px] sm:text-[22px] leading-none">
+        AERA
       </span>
     </Link>
   );
@@ -34,21 +35,13 @@ export default function Navbar() {
   const [watchlistCount, setWatchlistCount] = useState(0);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [categories, setCategories] = useState([{ label: "Home", href: "/" }]);
   const [notifications, setNotifications] = useState([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [lastNotification, setLastNotification] = useState(null);
-  const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchRef = useRef(null);
-  const { theme, toggleTheme } = useTheme();
-
-  // Scroll shadow effect
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   // Close mobile menu on route change
   useEffect(() => { setMobileOpen(false); }, [pathname]);
@@ -63,7 +56,7 @@ export default function Navbar() {
   const fetchWatchlistCount = async (userId) => {
     if (!userId) return;
     try {
-      const res = await fetch(`${API_URL}/watchlist/${userId}`);
+      const res = await fetch(`${API_URL}/watchlist/${userId}`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
         setWatchlistCount(data.length);
@@ -151,6 +144,22 @@ export default function Navbar() {
     };
   }, [pathname]);
 
+  // Fetch dynamic categories
+  useEffect(() => {
+    fetch(`${API_URL}/products/categories`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const dynamicCategories = data.map(cat => ({
+            label: cat.name,
+            href: `/?category=${encodeURIComponent(cat.name)}`
+          }));
+          setCategories([{ label: "Home", href: "/" }, ...dynamicCategories]);
+        }
+      })
+      .catch(err => console.error("Failed to fetch categories for Navbar:", err));
+  }, []);
+
   const handleSearch = (e) => {
     e.preventDefault();
     const q = search.trim();
@@ -190,23 +199,15 @@ export default function Navbar() {
     }
   };
 
-  const categories = [
-    { label: "Home", href: "/" },
-    { label: "Pre-Owned Watches", href: "/?category=Pre-Owned Watches" },
-    { label: "New Watches", href: "/?category=New Watches" },
-    { label: "Watch Lots", href: "/?category=Watch Lots" },
-    { label: "Accessories", href: "/?category=Accessories" },
-    { label: "Tools & Parts", href: "/?category=Tools & Parts" },
-  ];
 
   return (
     <>
-      <header className={`sticky top-0 z-[100] transition-all duration-300 ${scrolled ? 'bg-background/95 backdrop-blur-md shadow-sm border-b border-border' : 'bg-background border-b border-border'}`}>
+      <header className="relative z-[100] bg-background border-b border-border">
         {/* Concierge Top Bar */}
-        <div className="hidden md:flex bg-primary text-white text-[10px] font-bold tracking-widest uppercase">
+        <div className="hidden md:flex bg-primary text-white text-[10px] font-bold tracking-widest uppercase overflow-hidden max-h-10">
           <div className="max-w-[1400px] w-full mx-auto px-6 py-2 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <span className="text-gold">WatchCollectorHUB Concierge</span>
+              <span className="text-gold">Aera Concierge</span>
               <span className="opacity-40">|</span>
               {user ? (
                 <span>Welcome, <span className="text-gold">{user.name}</span></span>

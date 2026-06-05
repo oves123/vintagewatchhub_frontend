@@ -579,13 +579,25 @@ export default function SellPage() {
          )}
          <Navbar />
 
-         <main className="max-w-4xl mx-auto px-4 py-8">
-            <h1 className="text-2xl sm:text-3xl font-serif text-foreground uppercase tracking-widest text-center mt-3 mb-1">
-              {step === 1 && "Submit an Asset"}
-              {step === 2 && "Visual Authentication"}
-              {step === 3 && "Valuation & Sales Format"}
-              {step === 4 && "Shipping & Protocol"}
-            </h1>
+         {/* Cinematic Header */}
+         <div className="w-full bg-[#0a0a0a] text-white py-24 relative overflow-hidden flex flex-col items-center justify-center border-b border-gold/20">
+           <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1548690097-90c0a52df415?q=80&w=2000')] bg-cover bg-center mix-blend-luminosity"></div>
+           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] to-transparent"></div>
+           <div className="relative z-10 text-center px-4 mt-8">
+             <h1 className="text-4xl md:text-5xl font-serif tracking-[0.2em] uppercase mb-4">
+               {step === 1 && "Consign an Asset"}
+               {step === 2 && "Visual Authentication"}
+               {step === 3 && "Valuation & Sales Format"}
+               {step === 4 && "Shipping & Protocol"}
+             </h1>
+             <p className="text-gold text-xs md:text-sm font-bold tracking-[0.3em] uppercase">Join the world's most exclusive watch marketplace</p>
+           </div>
+         </div>
+
+         <main className="max-w-4xl mx-auto px-4 py-12">
+            <div className="mb-12 flex justify-center">
+              <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Consign' }]} />
+            </div>
 
             <div className="mb-10">
                {productStatus === 'rejected' && rejectionReason && (

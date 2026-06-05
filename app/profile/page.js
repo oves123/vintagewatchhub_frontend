@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
+import Breadcrumbs from "../../components/Breadcrumbs";
 import Navbar from "../../components/Navbar";
-import { getUserProfile, updateUserProfile, getUserActivity, API_BASE_URL, API_URL, getSellerReviews, createReview, markOrderShipped, markOrderDelivered, confirmOrderReceived, confirmOrderSale, cancelDeal, disputeDeal, getUserDeals, markOrderPaid, createRazorpayOrder, verifyRazorpayPayment, getUserReports, getUserLedger } from "../../services/api";
+import { getUserProfile, updateUserProfile, getUserActivity, API_BASE_URL, API_URL, getSellerReviews, createReview, markOrderShipped, markOrderDelivered, confirmOrderReceived, confirmOrderSale, cancelDeal, disputeDeal, getUserDeals, markOrderPaid, createRazorpayOrder, verifyRazorpayPayment, getUserReports, getUserLedger, markOrderReturned } from "../../services/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { X, Camera, CheckCircle, FileText, ExternalLink, Send, Edit2, PieChart, TrendingUp, Calendar, Search, Sliders, ArrowUpRight, ArrowDownLeft, Filter, ArrowRight, Download, XCircle } from "lucide-react";
+import { X, Camera, CheckCircle, FileText, ExternalLink, Send, Edit2, PieChart, TrendingUp, ArrowUpRight, ArrowDownLeft, Filter, ArrowRight, Download, XCircle, Search } from "lucide-react";
+import { useToast } from "../../context/ToastContext";
+import OptimizedImage from "../../components/OptimizedImage";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 function ProfileContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [activity, setActivity] = useState({ buyOrders: [], sellOrders: [], listings: [], chattedProducts: [] });
@@ -29,53 +35,27 @@ function ProfileContent() {
   const [paymentForm, setPaymentForm] = useState({ dealId: null, method: "UPI", receipt: null });
   const [editingTrackingId, setEditingTrackingId] = useState(null);
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
-  const [toast, setToast] = useState(null); 
-  const [counterForm, setCounterForm] = useState({ offerId: null, amount: "" });
-  const [financialReports, setFinancialReports] = useState({ year: new Date().getFullYear(), monthly: [], totals: { total_sales: 0, total_spent: 0, total_items_sold: 0, total_items_bought: 0 } });
-  const [reportsLoading, setReportsLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null);
   const [ledger, setLedger] = useState([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
-  const [ledgerFilters, setLedgerFilters] = useState({ 
-    status: 'ALL', 
-    role: 'all', 
-    search: '', 
-    year: new Date().getFullYear(),
-    startDate: '',
-    endDate: ''
+  const [ledgerFilters, setLedgerFilters] = useState({ status: 'ALL', role: 'all', search: '', year: new Date().getFullYear(), startDate: '', endDate: '' });
+  const [alerts, setAlerts] = useState([]);
+  const [verifDocs, setVerifDocs] = useState([]);
+  const [profileForm, setProfileForm] = useState({
+    name: '', phone: '', city: '', state: '', pincode: '', bio: '',
+    seller_type: 'individual', gst_number: '',
+    payment_methods: { upi: '', bank_name: '', account_number: '', ifsc: '' }
   });
-  const router = useRouter();
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [financialReports, setFinancialReports] = useState({ totals: { total_sales: 0, total_items_sold: 0 }, year: new Date().getFullYear() });
+  const [verifDocType, setVerifDocType] = useState("");
+  const [verifDocUrl, setVerifDocUrl] = useState("");
+  const [counterForm, setCounterForm] = useState({ offerId: null, amount: "" });
+  const [buyerNegotiations, setBuyerNegotiations] = useState([]);
+  const [sellerNegotiations, setSellerNegotiations] = useState([]);
+  const { addToast: showToast } = useToast();
 
-  // Grouped Negotiations Logic - Show only the latest offer per product
-  const sellerNegotiations = useMemo(() => {
-    if (!Array.isArray(offers)) return [];
-    const filtered = offers.filter(o => o.seller_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED'));
-    const grouped = {};
-    filtered.forEach(o => {
-      if (!grouped[o.product_id] || grouped[o.product_id].id < o.id) {
-        grouped[o.product_id] = o;
-      }
-    });
-    return Object.values(grouped).sort((a, b) => b.id - a.id);
-  }, [offers, user?.id]);
-
-  const buyerNegotiations = useMemo(() => {
-    if (!Array.isArray(offers)) return [];
-    const filtered = offers.filter(o => o.buyer_id === user?.id && (!o.deal_status || o.deal_status === 'EXPIRED'));
-    const grouped = {};
-    filtered.forEach(o => {
-      if (!grouped[o.product_id] || grouped[o.product_id].id < o.id) {
-        grouped[o.product_id] = o;
-      }
-    });
-    return Object.values(grouped).sort((a, b) => b.id - a.id);
-  }, [offers, user?.id]);
-  const searchParams = useSearchParams();
-
-  const isVideo = (filename) => {
-    if (!filename) return false;
-    const ext = filename.split('.').pop().toLowerCase();
-    return ['mp4', 'webm', 'ogg', 'mov'].includes(ext);
-  };
+  const isVideo = (url) => url?.match?.(/\.(mp4|mov|webm|quicktime|avi|mkv)$/i);
 
   const getImg = (images) => {
     if (!images || !Array.isArray(images) || images.length === 0) {
@@ -92,7 +72,13 @@ function ProfileContent() {
       router.push("/login?redirect=/profile");
       return;
     }
-    const userData = JSON.parse(storedUser);
+    let userData;
+    try {
+      userData = JSON.parse(storedUser);
+    } catch {
+      router.push("/login?redirect=/profile");
+      return;
+    }
     setUser(userData);
 
     const initialTab = searchParams.get("tab");
@@ -100,7 +86,7 @@ function ProfileContent() {
 
     const loadData = async () => {
       try {
-        const [profData, actData, offersData, dealsData, reviewsData] = await Promise.all([
+        const [profData, actData, offersData, dealsData, reviewsData, alertsData, verifData] = await Promise.all([
           getUserProfile(userData.id),
           getUserActivity(userData.id),
           fetch(`${API_URL}/offers/user/${userData.id}`, {
@@ -114,7 +100,13 @@ function ProfileContent() {
                "Authorization": `Bearer ${localStorage.getItem("token")}`
             }
           }).then(res => res.json()).catch(() => []),
-          getSellerReviews(userData.id)
+          getSellerReviews(userData.id),
+          fetch(`${API_URL}/features/price-alerts/${userData.id}`, {
+            headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+          }).then(res => res.json()).catch(() => []),
+          fetch(`${API_URL}/features/verification/${userData.id}`, {
+            headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+          }).then(res => res.json()).catch(() => [])
         ]);
 
         setProfile(profData);
@@ -122,6 +114,8 @@ function ProfileContent() {
         setOffers(offersData);
         setDeals(dealsData);
         setReceivedReviews(reviewsData);
+        setAlerts(Array.isArray(alertsData) ? alertsData : []);
+        setVerifDocs(Array.isArray(verifData) ? verifData : []);
         setProfileForm({
           name: profData.name || "",
           phone: profData.phone || "",
@@ -165,23 +159,6 @@ function ProfileContent() {
         console.error("Failed to reload activity data:", err);
       }
     }
-  };
-
-  const [profileForm, setProfileForm] = useState({
-    name: "",
-    phone: "",
-    city: "",
-    state: "",
-    pincode: "",
-    bio: "",
-    seller_type: "individual",
-    gst_number: "",
-    payment_methods: { upi: "", bank_name: "", account_number: "", ifsc: "" }
-  });
-
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
   };
 
   const handleProfileUpdate = async (updatedData = null) => {
@@ -254,7 +231,7 @@ function ProfileContent() {
 
     const headers = [
       "Date", "Product", "ID", "Role", "Counterparty", "Status", 
-      "Base Amount (â‚¹)", "Shipping (â‚¹)", "Platform Fee (â‚¹)", "Tax (â‚¹)", "Final Amount (â‚¹)"
+      "Base Amount (₹)", "Shipping (₹)", "Platform Fee (₹)", "Tax (₹)", "Final Amount (₹)"
     ];
 
     const rows = ledger.map(deal => {
@@ -344,55 +321,74 @@ function ProfileContent() {
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (!window.confirm("Are you sure you want to delete this listing? This action cannot be undone.")) return;
-    
-    try {
-      const res = await fetch(`${API_URL}/products/delete/${productId}`, {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-      });
-      
-      const data = await res.json();
-      if (res.ok) {
-        showToast("Listing deleted successfully.");
-        setActivity(prev => ({
-          ...prev,
-          listings: prev.listings.filter(l => l.id !== productId)
-        }));
-      } else {
-        showToast(data.message || "Failed to delete listing.", "error");
+    setConfirmDialog({
+      title: "Delete listing?",
+      message: "Are you sure you want to delete this listing? This action cannot be undone.",
+      confirmText: "Delete",
+      variant: "danger",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_URL}/products/delete/${productId}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showToast("Listing deleted successfully.");
+            setActivity(prev => ({
+              ...prev,
+              listings: prev.listings.filter(l => l.id !== productId)
+            }));
+          } else {
+            showToast(data.message || "Failed to delete listing.", "error");
+          }
+        } catch (err) {
+          console.error("Delete error:", err);
+          showToast("An error occurred while deleting the listing.", "error");
+        }
       }
-    } catch (err) {
-      console.error("Delete error:", err);
-      showToast("An error occurred while deleting the listing.", "error");
-    }
+    });
   };
 
   const handleMarkAsDelivered = async (orderId) => {
-    if (!window.confirm("Confirm that the item has been delivered to the buyer?")) return;
-    try {
-      const res = await markOrderDelivered(orderId, user.id);
-      if (res.message) {
-        showToast("Marked as delivered.");
-        loadActivity();
+    setConfirmDialog({
+      title: "Confirm delivery",
+      message: "Confirm that the item has been delivered to the buyer?",
+      confirmText: "Mark Delivered",
+      variant: "default",
+      onConfirm: async () => {
+        try {
+          const res = await markOrderDelivered(orderId, user.id);
+          if (res.message) {
+            showToast("Marked as delivered.");
+            loadActivity();
+          }
+        } catch (err) {
+          showToast("Error updating delivery status.", "error");
+        }
       }
-    } catch (err) {
-      showToast("Error updating delivery status.", "error");
-    }
+    });
   };
 
   const handleConfirmPurchase = async (orderId) => {
-    if (!window.confirm("Confirm receipt of this item? This will move the deal to DELIVERED state.")) return;
-    try {
-      const res = await confirmOrderReceived(orderId, user.id);
-      if (res.message) {
-        showToast("Receipt confirmed. Please verify the item then finalize completion.");
-        loadActivity();
-        setBuyingSubTab('delivered');
+    setConfirmDialog({
+      title: "Confirm receipt",
+      message: "Confirm receipt of this item? This will move the deal to DELIVERED state.",
+      confirmText: "Confirm Receipt",
+      variant: "default",
+      onConfirm: async () => {
+        try {
+          const res = await confirmOrderReceived(orderId, user.id);
+          if (res.message) {
+            showToast("Receipt confirmed. Please verify the item then finalize completion.");
+            loadActivity();
+            setBuyingSubTab('delivered');
+          }
+        } catch (err) {
+          showToast("Error confirming receipt.", "error");
+        }
       }
-    } catch (err) {
-      showToast("Error confirming receipt.", "error");
-    }
+    });
   };
 
   useEffect(() => {
@@ -456,17 +452,24 @@ function ProfileContent() {
   };
 
   const handleFinalizeCompletion = async (orderId) => {
-    if (!window.confirm("Is the watch exactly as described? Confirming completion finalized the deal and cannot be reversed.")) return;
-    try {
-      const res = await confirmOrderSale(orderId, user.id);
-      if (res.message) {
-        showToast("Transaction completed! Enjoy your new piece.");
-        loadActivity();
-        setBuyingSubTab('completed');
+    setConfirmDialog({
+      title: "Finalize completion",
+      message: "Is the watch exactly as described? Confirming completion finalized the deal and cannot be reversed.",
+      confirmText: "Confirm Completion",
+      variant: "default",
+      onConfirm: async () => {
+        try {
+          const res = await confirmOrderSale(orderId, user.id);
+          if (res.message) {
+            showToast("Transaction completed! Enjoy your new piece.");
+            loadActivity();
+            setBuyingSubTab('completed');
+          }
+        } catch (err) {
+          showToast("Error finalizing completion.", "error");
+        }
       }
-    } catch (err) {
-      showToast("Error finalizing completion.", "error");
-    }
+    });
   };
 
   const handleCancelDeal = async (orderId) => {
@@ -507,7 +510,6 @@ function ProfileContent() {
     if (!reason.trim()) return showToast("Reason is required", "error");
 
     try {
-      const { markOrderReturned } = await import("../../services/api");
       const res = await markOrderReturned(orderId, user.id, reason);
       if (res.message) {
         showToast("Order marked as RETURNED. Listing is now active again.");
@@ -539,6 +541,40 @@ function ProfileContent() {
       product_id: null
     });
     setIsReviewModalOpen(true);
+  };
+
+  // Price Alerts
+  const handleDeleteAlert = async (id) => {
+    try {
+      await fetch(`${API_URL}/features/price-alerts/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } });
+      setAlerts(prev => prev.filter(a => a.id !== id));
+    } catch (e) { console.error(e); }
+  };
+
+  // Disputes
+  const handleViewDispute = (dealId) => {
+    router.push(`/orders?tab=disputes&deal=${dealId}`);
+  };
+
+  // Verification
+  const handleSubmitVerification = async () => {
+    try {
+      const res = await fetch(`${API_URL}/features/verification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({ user_id: user.id, document_type: verifDocType, document_url: verifDocUrl })
+      });
+      const data = await res.json();
+      if (data.id) {
+        setVerifDocs(prev => [data, ...prev]);
+        setVerifDocType("");
+        setVerifDocUrl("");
+        showToast("Document submitted for review", "success");
+      }
+    } catch (e) { console.error(e); }
   };
 
   const submitReview = async () => {
@@ -576,10 +612,10 @@ function ProfileContent() {
              {[1,2,3,4,5].map(i => <div key={i} className="w-32 h-4 bg-background rounded" />)}
           </aside>
           <div className="lg:col-span-9 space-y-12">
-             <div className="w-full h-64 bg-background rounded-none" />
-             <div className="grid grid-cols-2 gap-8">
-                <div className="h-32 bg-background rounded-none" />
-                <div className="h-32 bg-background rounded-none" />
+              <div className="w-full h-64 bg-background rounded-xl" />
+              <div className="grid grid-cols-2 gap-8">
+                 <div className="h-32 bg-background rounded-xl" />
+                 <div className="h-32 bg-background rounded-xl" />
              </div>
           </div>
         </div>
@@ -592,6 +628,9 @@ function ProfileContent() {
     { id: "buying", label: "Buyer Hub" },
     { id: "selling", label: "Seller Hub" },
     { id: "analytics", label: "Financials" },
+    { id: "pricealerts", label: "Price Alerts" },
+    { id: "disputes", label: "Disputes" },
+    { id: "verification", label: "Verification" },
     { id: "feedback", label: "Feedback" },
     { id: "security", label: "Security" }
   ];
@@ -600,30 +639,22 @@ function ProfileContent() {
     <div className="bg-surface min-h-screen pb-24 font-sans text-[#121212]">
       <Navbar />
 
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] animate-in slide-in-from-top-4 duration-500">
-           <div className={`px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl backdrop-blur-md ${toast.type === 'error' ? 'bg-rose-500 text-white' : 'bg-black/90 text-white'}`}>
-              {toast.message}
-           </div>
-        </div>
-      )}
-
 
       <main className="max-w-[1200px] mx-auto px-6 py-12 md:py-20">
+        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Profile' }]} />
         
         {/* Header - Minimalist */}
         <div className="mb-16 flex flex-col md:flex-row md:items-center gap-8">
-           <div className="w-24 h-24 rounded-full bg-background border border-border flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
-              {profile?.profile_image ? (
-                <img src={profile.profile_image} alt={profile.name} className="w-full h-full object-cover" />
-              ) : (
+           <div className="w-24 h-24 rounded-full bg-background border border-border flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm relative">
+               {profile?.profile_image ? (
+                 <OptimizedImage src={profile.profile_image} alt={profile.name} fill className="object-cover" size="thumbnail" />
+               ) : (
                 <span className="text-2xl font-black text-gray-200 uppercase">{profile?.name?.charAt(0) || 'U'}</span>
               )}
            </div>
            <div>
               <h1 className="text-4xl font-serif font-bold tracking-wide tracking-tight text-foreground uppercase">My Account</h1>
-              <p className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mt-3">
+              <p className="text-xs font-bold text-muted uppercase tracking-[0.2em] mt-3">
                  Member ID: {profile?.id} / Status: {profile?.is_verified ? 'Verified Collector' : 'Standard'}
               </p>
            </div>
@@ -638,20 +669,20 @@ function ProfileContent() {
                    <button 
                       key={nav.id}
                       onClick={() => setActiveTab(nav.id)}
-                      className={`text-left text-[11px] font-bold uppercase tracking-[0.15em] transition-all pb-2 border-b w-fit ${activeTab === nav.id ? 'text-primary border-gold' : 'text-muted border-transparent hover:text-foreground hover:border-border'}`}
+                      className={`text-left text-sm font-bold uppercase tracking-[0.15em] transition-all pb-2 border-b w-fit ${activeTab === nav.id ? 'text-primary border-gold' : 'text-muted border-transparent hover:text-foreground hover:border-border'}`}
                    >
                       {nav.label}
                    </button>
                 ))}
                 
                 <div className="mt-20 pt-8 border-t border-border">
-                   <p className="text-[9px] font-bold text-muted uppercase tracking-widest mb-4">Account Metadata</p>
+                   <p className="text-xs font-bold text-muted uppercase tracking-widest mb-4">Account Metadata</p>
                    <div className="space-y-3">
-                      <div className="flex justify-between text-[10px] font-bold">
+                      <div className="flex justify-between text-xs font-bold">
                          <span className="text-muted uppercase">Rating</span>
                          <span>{parseFloat(profile?.rating || 0).toFixed(1)} / 5.0</span>
                       </div>
-                      <div className="flex justify-between text-[10px] font-bold">
+                      <div className="flex justify-between text-xs font-bold">
                          <span className="text-muted uppercase">Joined</span>
                          <span>{profile?.joined_date ? new Date(profile.joined_date).getFullYear() : "2024"}</span>
                       </div>
@@ -673,7 +704,7 @@ function ProfileContent() {
 
                    <form onSubmit={(e) => { e.preventDefault(); handleProfileUpdate(); }} className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 max-w-4xl">
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Legal Name</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Legal Name</label>
                           <input 
                              type="text" value={profileForm.name}
                              onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
@@ -681,7 +712,7 @@ function ProfileContent() {
                           />
                       </div>
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Mobile Link</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Mobile Link</label>
                           <input 
                              type="text" value={profileForm.phone}
                              onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
@@ -689,7 +720,7 @@ function ProfileContent() {
                           />
                       </div>
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">City</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">City</label>
                           <input 
                              type="text" value={profileForm.city}
                              onChange={(e) => setProfileForm({...profileForm, city: e.target.value})}
@@ -697,7 +728,7 @@ function ProfileContent() {
                           />
                       </div>
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">State</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">State</label>
                           <input 
                              type="text" value={profileForm.state}
                              onChange={(e) => setProfileForm({...profileForm, state: e.target.value})}
@@ -705,7 +736,7 @@ function ProfileContent() {
                           />
                       </div>
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Pincode</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Pincode</label>
                           <input 
                              type="text" value={profileForm.pincode}
                              onChange={(e) => setProfileForm({...profileForm, pincode: e.target.value})}
@@ -713,17 +744,17 @@ function ProfileContent() {
                           />
                       </div>
                       <div className="md:col-span-2 space-y-4 pt-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Collector Biography</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Collector Biography</label>
                           <textarea 
                              rows="4" value={profileForm.bio}
                              onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
-                             className="w-full border border-border bg-background/50 p-6 rounded-none outline-none text-[13px] font-medium leading-relaxed focus:border-gold focus:bg-surface transition-all"
+                             className="w-full border border-border bg-background/50 p-6 rounded-lg outline-none text-[13px] font-medium leading-relaxed focus:border-gold focus:bg-surface transition-all"
                              placeholder="Briefly describe your watch collection interest..."
                           />
                       </div>
 
                       <div className="space-y-4 pt-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Seller Type</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Seller Type</label>
                           <select 
                              value={profileForm.seller_type}
                              onChange={(e) => setProfileForm({...profileForm, seller_type: e.target.value})}
@@ -735,7 +766,7 @@ function ProfileContent() {
                       </div>
 
                       <div className="space-y-4 pt-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">GST Number (Optional)</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">GST Number (Optional)</label>
                           <input 
                              type="text" value={profileForm.gst_number}
                              onChange={(e) => setProfileForm({...profileForm, gst_number: e.target.value})}
@@ -750,7 +781,7 @@ function ProfileContent() {
                       </div>
 
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">UPI ID (e.g. name@bank)</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">UPI ID (e.g. name@bank)</label>
                           <input 
                              type="text" value={profileForm.payment_methods?.upi || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, upi: e.target.value }})}
@@ -760,7 +791,7 @@ function ProfileContent() {
                       </div>
 
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Bank Name</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Bank Name</label>
                           <input 
                              type="text" value={profileForm.payment_methods?.bank_name || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, bank_name: e.target.value }})}
@@ -770,7 +801,7 @@ function ProfileContent() {
                       </div>
 
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Account Number</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Account Number</label>
                           <input 
                              type="text" value={profileForm.payment_methods?.account_number || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, account_number: e.target.value }})}
@@ -780,7 +811,7 @@ function ProfileContent() {
                       </div>
 
                       <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-muted uppercase tracking-widest">IFSC Code</label>
+                          <label className="text-xs font-bold text-muted uppercase tracking-widest">IFSC Code</label>
                           <input 
                              type="text" value={profileForm.payment_methods?.ifsc || ""}
                              onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, ifsc: e.target.value }})}
@@ -792,7 +823,7 @@ function ProfileContent() {
                           <button 
                              type="submit"
                              disabled={isUpdating}
-                             className="bg-primary text-white border border-primary px-12 py-4 rounded-none text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-transparent hover:text-primary transition-all disabled:bg-gray-200"
+                             className="gold-sweep px-12 py-4 text-xs font-bold uppercase tracking-[0.2em] disabled:opacity-30"
                           >
                              {isUpdating ? 'Synchronizing Node...' : 'Update Information'}
                           </button>
@@ -815,7 +846,7 @@ function ProfileContent() {
                         <button 
                            key={sub}
                            onClick={() => setBuyingSubTab(sub)}
-                           className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${buyingSubTab === sub ? 'text-primary border-gold' : 'text-muted border-transparent hover:text-foreground'}`}
+                           className={`pb-4 text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${buyingSubTab === sub ? 'text-primary border-gold' : 'text-muted border-transparent hover:text-foreground'}`}
                         >
                            {sub} {
                              sub === 'negotiations' ? (
@@ -844,15 +875,15 @@ function ProfileContent() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {buyerNegotiations.length > 0 ? (
                               buyerNegotiations.map(offer => (
-                               <div key={offer.id} className="bg-surface border border-border rounded-none p-6 hover:shadow-md transition-all">
-                                  <div className="flex items-center gap-4 mb-4">
-                                     <div className="w-12 h-12 bg-background rounded-none overflow-hidden">
-                                        {offer.images?.[0] ? <img src={getImg(offer.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-background" />}
+                                <div key={offer.id} className="bg-surface border border-border rounded-xl p-6 hover:shadow-md transition-all">
+                                   <div className="flex items-center gap-4 mb-4">
+                                       <div className="w-12 h-12 bg-background rounded-lg overflow-hidden relative">
+                                         {offer.images?.[0] ? <OptimizedImage src={getImg(offer.images)} alt={offer.title || 'Watch image'} fill className="object-cover" size="thumbnail" /> : <div className="w-full h-full bg-background" />}
                                      </div>
                                      <div className="flex-1 min-w-0">
                                         <h4 className="text-[13px] font-bold uppercase tracking-tight truncate">{offer.title}</h4>
                                         <div className="flex items-center gap-2">
-                                           <p className="text-[9px] font-bold text-muted uppercase truncate">To: {offer.seller_name}</p>
+                                           <p className="text-xs font-bold text-muted uppercase truncate">To: {offer.seller_name}</p>
                                            {offer.status === 'pending' && offer.expires_at && (
                                              <span className="text-[7px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded uppercase">
                                                Expires in: {getRemainingTime(offer.expires_at)}
@@ -863,7 +894,7 @@ function ProfileContent() {
                                   </div>
                                    <div className="flex justify-between items-end">
                                      <div>
-                      <p className="text-[9px] font-bold text-muted uppercase mb-1">{offer.status === 'countered' ? 'Seller Counter Price' : 'Your bid'}</p>
+                      <p className="text-xs font-bold text-muted uppercase mb-1">{offer.status === 'countered' ? 'Seller Counter Price' : 'Your bid'}</p>
                                         <p className={`text-md font-black ${offer.status === 'countered' ? 'text-primary' : 'text-foreground'}`}>
                                            ₹{parseFloat(offer.status === 'countered' ? offer.counter_amount : offer.amount).toLocaleString()}
                                         </p>
@@ -872,58 +903,58 @@ function ProfileContent() {
                                         {offer.status === 'countered' && (
                                            <div className="flex flex-col w-full gap-2 mt-2">
                                               <div className="flex w-full gap-2">
-                                                 <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-emerald-700 transition">Accept</button>
-                                                 <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2 bg-rose-50 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-rose-100 transition border border-rose-200">Decline</button>
-                                                 <button
-                                                    onClick={() => setCounterForm(counterForm.offerId === offer.id ? { offerId: null, amount: "" } : { offerId: offer.id, amount: "" })}
-                                                    className="flex-1 py-2 bg-gold/5 text-gold text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-gold/10 transition border border-gold/20"
-                                                 >Counter</button>
+                                                  <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2 bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition">Accept</button>
+                                                  <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2 bg-rose-50 text-rose-600 text-xs font-black uppercase tracking-widest rounded-lg hover:bg-rose-100 transition border border-rose-200">Decline</button>
+                                                  <button
+                                                     onClick={() => setCounterForm(counterForm.offerId === offer.id ? { offerId: null, amount: "" } : { offerId: offer.id, amount: "" })}
+                                                     className="flex-1 py-2 bg-gold/5 text-gold text-xs font-black uppercase tracking-widest rounded-lg hover:bg-gold/10 transition border border-gold/20"
+                                                  >Counter</button>
                                               </div>
                                               {counterForm.offerId === offer.id && (
                                                  <div className="flex gap-2 w-full mt-1">
-                                                    <div className="flex items-center flex-1 border border-border rounded-none px-3 py-2 bg-surface">
-                                                       <span className="text-[10px] font-black text-muted mr-1">₹</span>
+                                                     <div className="flex items-center flex-1 border border-border rounded-lg px-3 py-2 bg-surface">
+                                                       <span className="text-xs font-black text-muted mr-1">₹</span>
                                                        <input
                                                           type="number"
                                                           placeholder="Your counter"
                                                           value={counterForm.amount}
                                                           onChange={(e) => setCounterForm({ ...counterForm, amount: e.target.value })}
-                                                          className="flex-1 text-[10px] font-black outline-none bg-transparent"
+                                                          className="flex-1 text-xs font-black outline-none bg-transparent"
                                                        />
                                                     </div>
                                                     <button
                                                        onClick={() => { handleOfferResponse(offer.id, 'buyer_countered', counterForm.amount); setCounterForm({ offerId: null, amount: "" }); }}
                                                        disabled={!counterForm.amount}
-                                                       className="px-4 py-2 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-primary-light transition disabled:opacity-40"
+                                                       className="gold-sweep px-4 py-2 text-xs font-black uppercase tracking-widest disabled:opacity-40"
                                                     >Send</button>
                                                  </div>
                                               )}
                                            </div>
                                         )}
                                         {offer.status === 'buyer_countered' && (
-                                           <div className="w-full mt-2 py-2 bg-primary/5 rounded-none text-center">
-                                              <p className="text-[9px] font-black text-primary uppercase tracking-widest">Awaiting Seller Response</p>
-                                              <p className="text-[8px] text-gold font-bold mt-0.5">Your counter of ₹{parseFloat(offer.counter_amount).toLocaleString()} was sent</p>
+                                           <div className="w-full mt-2 py-2 bg-primary/5 rounded-lg text-center">
+                                              <p className="text-xs font-black text-primary uppercase tracking-widest">Awaiting Seller Response</p>
+                                              <p className="text-xs text-gold font-bold mt-0.5">Your counter of ₹{parseFloat(offer.counter_amount).toLocaleString()} was sent</p>
                                            </div>
                                         )}
                                         {offer.chat_id && (
                                            <button 
                                               onClick={() => router.push(`/messages?chat=${offer.chat_id}`)}
-                                              className="w-full mt-2 px-6 py-2 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-primary transition shadow-lg shadow-gray-100 flex items-center justify-center gap-2"
+                                              className="w-full mt-2 px-6 py-2 bg-black text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-primary transition shadow-lg shadow-gray-100 flex items-center justify-center gap-2"
                                            >
                                               <Send className="w-3 h-3" /> Chat & Negotiate
                                            </button>
                                         )}
-                                        {offer.status === 'declined' && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest text-center w-full mt-2">Declined</p>}
-                                        {offer.status === 'rejected' && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest text-center w-full mt-2">Rejected/Expired</p>}
+                                        {offer.status === 'declined' && <p className="text-xs font-bold text-rose-500 uppercase tracking-widest text-center w-full mt-2">Declined</p>}
+                                        {offer.status === 'rejected' && <p className="text-xs font-bold text-rose-500 uppercase tracking-widest text-center w-full mt-2">Rejected/Expired</p>}
                                      </div>
                                   </div>
 
                                </div>
                              ))
                            ) : (
-                              <div className="md:col-span-2 py-10 text-center bg-background/50 rounded-none border border-border border-dashed">
-                                 <p className="text-[9px] font-bold text-muted uppercase tracking-widest">No pending negotiations</p>
+                              <div className="md:col-span-2 py-10 text-center bg-background/50 rounded-xl border border-border border-dashed">
+                                 <p className="text-xs font-bold text-muted uppercase tracking-widest">No pending negotiations</p>
                               </div>
                            )}
                         </div>
@@ -942,20 +973,20 @@ function ProfileContent() {
                             buyingSubTab === 'cancelled' ? d.status === 'CANCELLED' :
                             d.status === 'CONFIRMED'
                           )).map(deal => (
-                            <div key={deal.id} className="border border-border rounded-none p-6 bg-surface hover:shadow-xl hover:shadow-gray-100 transition-all flex flex-col md:flex-row gap-8 items-center">
-                               <div className="w-20 h-20 bg-background rounded-none overflow-hidden flex-shrink-0">
-                                  {deal.images?.[0] ? <img src={getImg(deal.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-background" />}
+                             <div key={deal.id} className="border border-border rounded-xl p-6 bg-surface hover:shadow-xl hover:shadow-gray-100 transition-all flex flex-col md:flex-row gap-8 items-center">
+                                 <div className="w-20 h-20 bg-background rounded-lg overflow-hidden flex-shrink-0 relative">
+                                   {deal.images?.[0] ? <OptimizedImage src={getImg(deal.images)} alt={deal.title || 'Deal product image'} fill className="object-cover" size="thumbnail" /> : <div className="w-full h-full bg-background" />}
                                </div>
                                <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-1">
-                                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none ${
+                                      <span className={`text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-lg ${
                                         deal.status === 'CONFIRMED' ? 'bg-black text-white' : 
                                         deal.status === 'SHIPPED' ? 'bg-amber-500 text-white' : 
                                         deal.status === 'DELIVERED' ? 'bg-emerald-500 text-white' : 
                                         ['CANCELLED', 'REFUND_PENDING'].includes(deal.status) ? 'bg-rose-500 text-white' : 'bg-primary text-white'
                                       }`}>
                                          {
-                                          deal.status === 'PAID' ? 'âœ“ Payment Verified' : 
+                                          deal.status === 'PAID' ? 'Payment Verified' : 
                                           deal.status === 'SHIPPED' ? 'SHIPPED' :
                                           deal.status === 'DELIVERED' ? 'IN 48H INSPECTION' :
                                           deal.status === 'CONFIRMED' ? 'COMPLETED' :
@@ -963,9 +994,9 @@ function ProfileContent() {
                                           deal.status
                                          }
                                       </span>
-                                     <span className="text-[10px] font-bold text-muted uppercase tracking-tight">Deal #D-{deal.id}</span>
+                                     <span className="text-xs font-bold text-muted uppercase tracking-tight">Deal #D-{deal.id}</span>
                                      {deal.payment_status === 'PAID' && (
-                                       <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-none uppercase tracking-widest ml-auto">PAID via {deal.payment_method}</span>
+                                       <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg uppercase tracking-widest ml-auto">PAID via {deal.payment_method}</span>
                                      )}
                                   </div>
                                    {/* Animated Deal Progress Stepper */}
@@ -981,20 +1012,19 @@ function ProfileContent() {
                                      const currentIdx = order.indexOf(deal.status);
                                      return (
                                        <div className="flex items-center mb-3 mt-2 w-full overflow-hidden">
-                                         <style>{`.step-pulse{animation:spulse 1.5s ease-in-out infinite}@keyframes spulse{0%,100%{box-shadow:0 0 0 0 rgba(197,160,89,.5)}70%{box-shadow:0 0 0 6px rgba(197,160,89,0)}}`}</style>
-                                         {steps.map((s, i) => {
+                                          {steps.map((s, i) => {
                                            const done = i < currentIdx;
                                            const active = i === currentIdx;
                                            return (
                                              <div key={s.key} className="flex items-center flex-1 min-w-0">
                                                <div className="flex flex-col items-center shrink-0">
-                                                 <div className={`w-7 h-7 rounded-none flex items-center justify-center text-[11px] transition-all ${done ? 'bg-emerald-500 text-white shadow-md' : active ? 'bg-primary text-white step-pulse' : 'bg-background text-muted'}`}>
-                                                   {done ? '✓' : s.icon}
-                                                 </div>
-                                                 <span className={`text-[7px] font-black uppercase tracking-widest mt-1 ${active ? 'text-primary' : done ? 'text-emerald-600' : 'text-muted'}`}>{s.label}</span>
-                                               </div>
-                                               {i < steps.length - 1 && (
-                                                 <div className={`h-0.5 flex-1 mx-1 mb-4 rounded-none transition-all ${done ? 'bg-emerald-400' : 'bg-background'}`} />
+                                                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-all ${done ? 'bg-emerald-500 text-white shadow-md' : active ? 'bg-primary text-white step-pulse' : 'bg-background text-muted'}`}>
+                                                    {done ? '✓' : s.icon}
+                                                  </div>
+                                                  <span className={`text-[7px] font-black uppercase tracking-widest mt-1 ${active ? 'text-primary' : done ? 'text-emerald-600' : 'text-muted'}`}>{s.label}</span>
+                                                </div>
+                                                {i < steps.length - 1 && (
+                                                  <div className={`h-0.5 flex-1 mx-1 mb-4 rounded-lg transition-all ${done ? 'bg-emerald-400' : 'bg-background'}`} />
                                                )}
                                              </div>
                                            );
@@ -1005,15 +1035,15 @@ function ProfileContent() {
                                   <h4 className="text-sm font-bold uppercase tracking-tight mb-2">{deal.title}</h4>
                                   <div className="flex flex-col gap-1 mb-4">
                                      <div className="flex items-baseline gap-2">
-                                        <span className="text-lg font-black text-foreground">â‚¹{(parseFloat(deal.amount || 0) + parseFloat(deal.shipping_fee || 0)).toLocaleString()}</span>
-                                        <span className="text-[9px] font-bold text-muted uppercase">Total Paid</span>
+                                        <span className="text-lg font-black text-foreground">₹{(parseFloat(deal.amount || 0) + parseFloat(deal.shipping_fee || 0)).toLocaleString()}</span>
+                                        <span className="text-xs font-bold text-muted uppercase">Total Paid</span>
                                      </div>
                                      <div className="flex items-center gap-3">
-                                        <p className="text-[9px] font-bold text-muted uppercase tracking-tight">Item: â‚¹{parseFloat(deal.amount).toLocaleString()}</p>
+                                        <p className="text-xs font-bold text-muted uppercase tracking-tight">Item: ₹{parseFloat(deal.amount).toLocaleString()}</p>
                                         {parseFloat(deal.shipping_fee || 0) > 0 && (
-                                           <p className="text-[9px] font-bold text-primary uppercase tracking-tight">Shipping: â‚¹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
+                                           <p className="text-xs font-bold text-primary uppercase tracking-tight">Shipping: ₹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
                                         )}
-                                        <p className="text-[9px] font-medium text-muted uppercase ml-auto">Seller: {deal.seller_name}</p>
+                                        <p className="text-xs font-medium text-muted uppercase ml-auto">Seller: {deal.seller_name}</p>
                                      </div>
                                   </div>
 
@@ -1035,9 +1065,9 @@ function ProfileContent() {
                                      })}
                                   </div>
                                    ) : (
-                                      <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-none">
-                                         <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Transaction Terminated</p>
-                                         <p className="text-[11px] font-bold text-rose-800 leading-tight">{deal.cancel_reason || 'No reason provided.'}</p>
+                                       <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-xl">
+                                         <p className="text-xs font-black text-rose-600 uppercase tracking-widest mb-1">Transaction Terminated</p>
+                                         <p className="text-sm font-bold text-rose-800 leading-tight">{deal.cancel_reason || 'No reason provided.'}</p>
                                       </div>
                                    )}
 
@@ -1047,7 +1077,7 @@ function ProfileContent() {
                                   {deal.status === 'SHIPPED' && (
                                     <button 
                                        onClick={() => handleConfirmPurchase(deal.id)}
-                                       className="w-full py-3 bg-primary text-white rounded-none text-[9px] font-bold uppercase tracking-widest hover:bg-primary-light transition shadow-none"
+                                        className="gold-sweep w-full py-3 text-xs font-bold uppercase tracking-widest shadow-none"
                                     >
                                        Confirm Receipt
                                     </button>
@@ -1055,15 +1085,15 @@ function ProfileContent() {
 
                                   {deal.status === 'DELIVERED' && (
                                      <>
-                                      <button 
-                                          onClick={() => handleFinalizeCompletion(deal.id)}
-                                          className="w-full py-3 bg-emerald-600 text-white rounded-none text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-700 transition shadow-none"
-                                       >
-                                          Confirm Completion
-                                       </button>
                                        <button 
-                                          onClick={() => handleDisputeDeal(deal.id)}
-                                          className="w-full py-2 border border-rose-100 text-rose-500 rounded-none text-[8px] font-bold uppercase tracking-widest hover:bg-rose-50 transition"
+                                           onClick={() => handleFinalizeCompletion(deal.id)}
+                                           className="w-full py-3 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-emerald-700 transition shadow-none"
+                                        >
+                                           Confirm Completion
+                                        </button>
+                                        <button 
+                                           onClick={() => handleDisputeDeal(deal.id)}
+                                           className="w-full py-2 border border-rose-100 text-rose-500 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-rose-50 transition"
                                        >
                                           Item Not As Described
                                        </button>
@@ -1075,14 +1105,14 @@ function ProfileContent() {
                                          {deal.payment_status === 'PENDING' && (
                                             <button 
                                                onClick={() => handlePayWithRazorpay(deal)}
-                                               className="w-full py-3 bg-primary text-white rounded-none text-[9px] font-bold uppercase tracking-widest hover:bg-primary-light transition shadow-none"
+className="gold-sweep w-full py-3 text-xs font-bold uppercase tracking-widest shadow-none"
                                             >
                                                Pay Online (Razorpay)
                                             </button>
                                          )}
                                         <button 
                                            onClick={() => handleCancelDeal(deal.id)}
-                                           className="w-full py-2 border border-border text-muted rounded-none text-[8px] font-bold uppercase tracking-widest hover:bg-background transition"
+                                            className="w-full py-2 border border-border text-muted rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-background transition"
                                         >
                                            {deal.status === 'PAID' ? 'Request Refund & Cancel' : 'Cancel Order'}
                                         </button>
@@ -1092,14 +1122,14 @@ function ProfileContent() {
                                   {['ACCEPTED', 'SHIPPED', 'DELIVERED'].includes(deal.status) && (
                                       <button 
                                          onClick={() => handleDisputeDeal(deal.id)}
-                                         className="w-full py-2 text-rose-500 text-[8px] font-bold uppercase tracking-widest hover:underline"
+                                         className="w-full py-2 text-rose-500 text-xs font-bold uppercase tracking-widest hover:underline"
                                       >
                                          Raise Dispute
                                       </button>
                                    )}
 
                                    {deal.status === 'DISPUTED' && (
-                                      <div className="w-full py-3 bg-background text-muted rounded-none text-[9px] font-bold uppercase tracking-widest text-center border border-border italic">
+                                      <div className="w-full py-3 bg-background text-muted rounded-lg text-xs font-bold uppercase tracking-widest text-center border border-border italic">
                                          Under Admin Review
                                       </div>
                                    )}
@@ -1107,24 +1137,24 @@ function ProfileContent() {
                                   {deal.status === 'CONFIRMED' && !deal.review_id && (
                                      <button 
                                         onClick={() => openReviewModal({...deal, seller_id: deal.seller_id})}
-                                        className="w-full py-3 bg-black text-white rounded-none text-[9px] font-bold uppercase tracking-widest hover:bg-gray-800 transition"
+                                        className="w-full py-3 bg-black text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition"
                                      >
                                         Leave Feedback
                                      </button>
                                   )}
-
+ 
                                   {deal.tracking_number && (
-                                     <div className="bg-background p-3 rounded-none border border-border mt-2">
-                                        <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
+                                     <div className="bg-background p-3 rounded-xl border border-border mt-2">
+                                        <p className="text-xs font-black text-muted uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
                                         <a 
                                            href={`https://www.google.com/search?q=${encodeURIComponent((deal.courier_name || '') + ' tracking ' + deal.tracking_number)}`}
                                            target="_blank"
-                                           className="text-[10px] font-bold text-primary truncate hover:underline flex items-center gap-1"
+                                           className="text-xs font-bold text-primary truncate hover:underline flex items-center gap-1"
                                         >
                                            {deal.tracking_number} <ExternalLink className="w-3 h-3" />
                                         </a>
                                         {deal.packing_video && (
-                                           <a href={deal.packing_video.startsWith('http') ? deal.packing_video : `${API_BASE_URL}/uploads/${deal.packing_video}`} target="_blank" className="text-[9px] font-bold text-primary uppercase tracking-widest mt-2 inline-flex items-center gap-1 hover:underline"><Camera className="w-3 h-3" /> View Packing Video</a>
+                                           <a href={deal.packing_video.startsWith('http') ? deal.packing_video : `${API_BASE_URL}/uploads/${deal.packing_video}`} target="_blank" className="text-xs font-bold text-primary uppercase tracking-widest mt-2 inline-flex items-center gap-1 hover:underline"><Camera className="w-3 h-3" /> View Packing Video</a>
                                         )}
                                      </div>
                                   )}
@@ -1133,7 +1163,7 @@ function ProfileContent() {
                           ))
                         ) : (
                           <div className="py-20 text-center border border-dashed border-border rounded-3xl">
-                             <p className="text-[10px] font-bold text-muted uppercase tracking-widest">No deals in {buyingSubTab} state</p>
+                             <p className="text-xs font-bold text-muted uppercase tracking-widest">No deals in {buyingSubTab} state</p>
                           </div>
                         )
                       )}
@@ -1149,7 +1179,7 @@ function ProfileContent() {
                           <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Seller Hub</h2>
                           <p className="text-xs text-muted mt-2 font-medium">Professional command center for your high-value inventory and active deal pipelines.</p>
                         </div>
-                        <button onClick={() => router.push('/sell')} className="bg-black text-white px-6 py-3 rounded-none text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all shadow-none">Create Listing</button>
+                        <button onClick={() => router.push('/sell')} className="bg-black text-white px-6 py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary transition-all shadow-none">Create Listing</button>
                      </div>
 
                      {/* Sub Tabs */}
@@ -1158,7 +1188,7 @@ function ProfileContent() {
                           <button 
                              key={sub}
                              onClick={() => setSellingSubTab(sub)}
-                             className={`pb-4 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${sellingSubTab === sub ? 'text-primary border-gold' : 'text-muted border-transparent hover:text-foreground'}`}
+                             className={`pb-4 text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${sellingSubTab === sub ? 'text-primary border-gold' : 'text-muted border-transparent hover:text-foreground'}`}
                           >
                              {sub === 'inventory' ? `Inventory (${activity.listings?.length || 0})` : 
                               sub === 'deals' ? `Active Deals${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length > 0 ? ` (${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length})` : ''}` :
@@ -1173,7 +1203,7 @@ function ProfileContent() {
                         {sellingSubTab === 'inventory' && (
                            <div className="space-y-6">
                                {activity.listings?.some(item => item.status === 'pending') && (
-                                 <div className="bg-gold/5 border border-gold/20 text-gold px-6 py-4 rounded-none text-[11px] font-bold uppercase tracking-tight flex items-start gap-4">
+                                  <div className="bg-gold/5 border border-gold/20 text-gold px-6 py-4 rounded-xl text-sm font-bold uppercase tracking-tight flex items-start gap-4">
                                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     <p>Newly created listings will appear as <span className="px-1 py-0.5 bg-amber-500 text-white rounded font-black mx-1">PENDING</span> and must be approved by an administrator before they become visible on the marketplace.</p>
                                  </div>
@@ -1181,27 +1211,27 @@ function ProfileContent() {
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                  {activity.listings?.length > 0 ? (
                                 activity.listings.map(item => (
-                                  <div key={item.id} className="group border border-border rounded-none p-5 hover:bg-surface hover:shadow-xl transition-all relative">
-                                     <div className="w-full aspect-square bg-background rounded-none mb-4 overflow-hidden relative">
-                                        {item.images?.[0] ? <img src={getImg(item.images)} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" alt="watch" /> : <div className="w-full h-full bg-background" />}
-                                        <div className={`absolute top-3 left-3 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${
+                                   <div key={item.id} className="group border border-border rounded-xl p-5 hover:bg-surface hover:shadow-xl transition-all relative">
+                                       <div className="w-full aspect-square bg-background rounded-xl mb-4 overflow-hidden relative">
+                                         {item.images?.[0] ? <OptimizedImage src={getImg(item.images)} alt={item.title || 'Product image'} fill className="object-contain group-hover:scale-110 transition-transform duration-500" size="small" /> : <div className="w-full h-full bg-background" />}
+                                        <div className={`absolute top-3 left-3 px-2 py-1 rounded text-xs font-black uppercase tracking-widest ${
                                           item.status === 'approved' || item.status === 'active' ? 'bg-black text-white' : 
                                           item.status === 'sold' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
                                         }`}>
                                            {item.status}
                                         </div>
                                      </div>
-                                     <h4 className="text-[11px] font-bold uppercase tracking-tight truncate leading-none mb-2">{item.title}</h4>
+                                     <h4 className="text-sm font-bold uppercase tracking-tight truncate leading-none mb-2">{item.title}</h4>
                                      
                                      {item.status === 'rejected' && item.rejection_reason && (
-                                       <div className="mb-3 p-2 bg-rose-50 border border-rose-100 rounded-none">
-                                         <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1">Rejection Reason:</p>
-                                         <p className="text-[10px] text-rose-700 font-medium leading-tight">{item.rejection_reason}</p>
+                                        <div className="mb-3 p-2 bg-rose-50 border border-rose-100 rounded-xl">
+                                         <p className="text-xs font-black text-rose-500 uppercase tracking-widest mb-1">Rejection Reason:</p>
+                                         <p className="text-xs text-rose-700 font-medium leading-tight">{item.rejection_reason}</p>
                                        </div>
                                      )}
 
                                      <div className="flex justify-between items-center">
-                                        <span className="text-sm font-black text-foreground">â‚¹{parseFloat(item.price).toLocaleString()}</span>
+                                        <span className="text-sm font-black text-foreground">₹{parseFloat(item.price).toLocaleString()}</span>
                                         <div className="flex gap-1">
                                            <button onClick={() => router.push(`/sell?edit=${item.id}`)} className="p-1.5 hover:text-primary transition-colors"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
                                            <button onClick={() => handleDeleteProduct(item.id)} className="p-1.5 hover:text-rose-600 transition-colors"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
@@ -1211,7 +1241,7 @@ function ProfileContent() {
                                 ))
                               ) : (
                                  <div className="col-span-full py-12 text-center border border-gray-50 border-dashed rounded-3xl">
-                                    <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Zero items listed</p>
+                                    <p className="text-xs font-bold text-muted uppercase tracking-widest">Zero items listed</p>
                                  </div>
                               )}
                            </div>
@@ -1225,10 +1255,10 @@ function ProfileContent() {
                                  deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','PAID','SHIPPED','DELIVERED','CONFIRMED','DISPUTED'].includes(d.status)).map(deal => (
                                    <div key={deal.id} className="bg-surface border border-border rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 hover:shadow-xl transition-all group">
                                       {/* Product Visual */}
-                                      <div className="w-full md:w-48 aspect-square rounded-none bg-background flex-shrink-0 relative overflow-hidden">
-                                         <img src={deal.images?.[0] ? getImg(deal.images) : '/placeholder.png'} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt="product" />
+                                          <div className="w-full md:w-48 aspect-square rounded-xl bg-background flex-shrink-0 relative overflow-hidden">
+                                          <OptimizedImage src={deal.images?.[0] ? getImg(deal.images) : '/placeholder.png'} alt={deal.product_title || 'Product image'} fill className="object-contain group-hover:scale-105 transition-transform duration-500" size="small" />
                                          <div className="absolute top-4 left-4">
-                                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${
+                                            <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-sm ${
                                                deal.status === 'ACCEPTED' ? 'bg-primary text-white' : 
                                                deal.status === 'PAID' ? 'bg-amber-500 text-white' : 
                                                deal.status === 'SHIPPED' ? 'bg-black text-white' : 'bg-emerald-500 text-white'
@@ -1243,18 +1273,18 @@ function ProfileContent() {
                                          <div className="space-y-4">
                                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                                <div>
-                                                  <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Deal #D-{deal.id}</p>
+                                                  <p className="text-xs text-muted font-bold uppercase tracking-widest mb-1">Deal #D-{deal.id}</p>
                                                   <h3 className="text-xl font-bold text-foreground uppercase tracking-tight leading-none">{deal.product_title}</h3>
                                                </div>
                                                <div className="text-right">
-                                                  <p className="text-[9px] font-bold text-muted uppercase tracking-widest mb-1">Your Payout</p>
-                                                  <p className="text-2xl font-black text-foreground leading-none">â‚¹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
+                                                  <p className="text-xs font-bold text-muted uppercase tracking-widest mb-1">Your Payout</p>
+                                                  <p className="text-2xl font-black text-foreground leading-none">₹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
                                                   <div className="flex flex-col items-end mt-2">
-                                                     <p className="text-[8px] font-bold text-muted uppercase">Sale: â‚¹{parseFloat(deal.amount).toLocaleString()}</p>
+                                                     <p className="text-xs font-bold text-muted uppercase">Sale: ₹{parseFloat(deal.amount).toLocaleString()}</p>
                                                      {parseFloat(deal.shipping_fee || 0) > 0 && (
-                                                        <p className="text-[8px] font-bold text-primary uppercase">Shipping: +â‚¹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
+                                                        <p className="text-xs font-bold text-primary uppercase">Shipping: +₹{parseFloat(deal.shipping_fee).toLocaleString()}</p>
                                                      )}
-                                                     <p className="text-[8px] font-bold text-rose-500 uppercase">Fee: -â‚¹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</p>
+                                                     <p className="text-xs font-bold text-rose-500 uppercase">Fee: -₹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</p>
                                                   </div>
                                                </div>
                                             </div>
@@ -1280,13 +1310,13 @@ function ProfileContent() {
 
                                          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {/* Left - Status Detail */}
-                                            <div className="bg-background rounded-none p-5 border border-border/50">
+                                             <div className="bg-background rounded-xl p-5 border border-border/50">
                                                {deal.status === 'ACCEPTED' && (
                                                   <div className="flex items-start gap-3">
                                                      <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center animate-pulse"><FileText className="w-4 h-4 text-primary" /></div>
                                                      <div>
-                                                        <p className="text-[10px] font-black text-foreground uppercase">Awaiting Payment</p>
-                                                        <p className="text-[9px] text-muted font-bold uppercase mt-1">Buyer has been notified to send funds.</p>
+                                                        <p className="text-xs font-black text-foreground uppercase">Awaiting Payment</p>
+                                                        <p className="text-xs text-muted font-bold uppercase mt-1">Buyer has been notified to send funds.</p>
                                                      </div>
                                                   </div>
                                                )}
@@ -1296,14 +1326,14 @@ function ProfileContent() {
                                                      <div className="flex items-center gap-3">
                                                         <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center"><CheckCircle className="w-4 h-4 text-emerald-600" /></div>
                                                         <div>
-                                                           <p className="text-[10px] font-black text-foreground uppercase">Funds Verified</p>
-                                                           <p className="text-[9px] text-muted font-bold uppercase mt-1">Please prepare the shipment.</p>
+                                                           <p className="text-xs font-black text-foreground uppercase">Funds Verified</p>
+                                                           <p className="text-xs text-muted font-bold uppercase mt-1">Please prepare the shipment.</p>
                                                         </div>
                                                      </div>
                                                      {deal.payment_receipt && (
                                                         <button 
                                                            onClick={() => setPaymentReceiptModal(deal.payment_receipt?.startsWith('http') ? deal.payment_receipt : `${API_BASE_URL}/uploads/${deal.payment_receipt}`)}
-                                                           className="w-full py-2 bg-surface border border-border rounded-none text-[10px] font-black uppercase tracking-widest text-foreground hover:bg-background transition-all flex items-center justify-center gap-2"
+                                                            className="w-full py-2 bg-surface border border-border rounded-lg text-xs font-black uppercase tracking-widest text-foreground hover:bg-background transition-all flex items-center justify-center gap-2"
                                                         >
                                                            <Camera className="w-4 h-4" /> View Receipt
                                                         </button>
@@ -1315,8 +1345,8 @@ function ProfileContent() {
                                                    <div className="flex items-start gap-3">
                                                       <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center"><Send className="w-4 h-4 text-white" /></div>
                                                       <div>
-                                                         <p className="text-[11px] font-black text-foreground uppercase">In Transit</p>
-                                                         <p className="text-[10px] text-primary font-bold uppercase mt-1 tracking-widest">{deal.courier_name} Â· {deal.tracking_number}</p>
+                                                         <p className="text-sm font-black text-foreground uppercase">In Transit</p>
+                                                         <p className="text-xs text-primary font-bold uppercase mt-1 tracking-widest">{deal.courier_name} · {deal.tracking_number}</p>
                                                       </div>
                                                    </div>
                                                 )}
@@ -1326,18 +1356,18 @@ function ProfileContent() {
                                                       <div className="flex items-center gap-3">
                                                          <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center"><CheckCircle className="w-4 h-4 text-emerald-600" /></div>
                                                          <div>
-                                                            <p className="text-[10px] font-black text-foreground uppercase">Deal Completed</p>
-                                                            <p className="text-[9px] text-muted font-bold uppercase mt-1">Buyer has confirmed receipt.</p>
+                                                            <p className="text-xs font-black text-foreground uppercase">Deal Completed</p>
+                                                            <p className="text-xs text-muted font-bold uppercase mt-1">Buyer has confirmed receipt.</p>
                                                          </div>
                                                       </div>
-                                                      <div className="mt-2 p-3 bg-surface rounded-none border border-border shadow-sm">
+                                                       <div className="mt-2 p-3 bg-surface rounded-xl border border-border shadow-sm">
                                                          <div className="flex justify-between items-center mb-1">
-                                                            <p className="text-[9px] font-black text-muted uppercase tracking-widest">Payout Status</p>
-                                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${deal.payout_status === 'RELEASED' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                                            <p className="text-xs font-black text-muted uppercase tracking-widest">Payout Status</p>
+                                                            <span className={`text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded ${deal.payout_status === 'RELEASED' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                                                                {deal.payout_status || 'PENDING'}
                                                             </span>
                                                          </div>
-                                                         <p className="text-sm font-black text-foreground">â‚¹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
+                                                         <p className="text-sm font-black text-foreground">₹{parseFloat(deal.seller_payout || 0).toLocaleString()}</p>
                                                          {deal.payout_released_at && (
                                                             <p className="text-[7px] text-muted mt-1 font-bold uppercase tracking-tight">Released on {new Date(deal.payout_released_at).toLocaleDateString()}</p>
                                                          )}
@@ -1353,7 +1383,7 @@ function ProfileContent() {
                                                       <div className="flex flex-col gap-2">
                                                          <div className="flex gap-2">
                                                             <select 
-                                                               className="flex-1 px-4 py-3 bg-surface border border-border rounded-none text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 text-foreground"
+                                                                className="flex-1 px-4 py-3 bg-surface border border-border rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 text-foreground"
                                                                value={trackingForm.order_id === deal.id ? trackingForm.courier_name : (deal.courier_name || '')}
                                                                onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, courier_name: e.target.value })}
                                                             >
@@ -1367,7 +1397,7 @@ function ProfileContent() {
                                                             </select>
                                                             <input 
                                                                placeholder="TRACKING #" 
-                                                               className="flex-1 px-4 py-3 bg-surface border border-border rounded-none text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-gray-200"
+                                                               className="flex-1 px-4 py-3 bg-surface border border-border rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-gray-200"
                                                                value={trackingForm.order_id === deal.id ? trackingForm.tracking_number : (deal.tracking_number || '')}
                                                                onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, tracking_number: e.target.value.toUpperCase() })}
                                                             />
@@ -1380,13 +1410,13 @@ function ProfileContent() {
                                                                 onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, packing_video: e.target.files[0] })}
                                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                                             />
-                                                            <div className="w-full bg-surface border-2 border-dashed border-border rounded-none px-4 py-3 flex flex-col items-center justify-center gap-1 group-hover:border-blue-300 transition-colors">
+                                                             <div className="w-full bg-surface border-2 border-dashed border-border rounded-lg px-4 py-3 flex flex-col items-center justify-center gap-1 group-hover:border-blue-300 transition-colors">
                                                                {trackingForm.order_id === deal.id && trackingForm.packing_video ? (
-                                                                  <span className="text-[10px] font-bold text-foreground truncate">Video Selected: {trackingForm.packing_video.name}</span>
+                                                                  <span className="text-xs font-bold text-foreground truncate">Video Selected: {trackingForm.packing_video.name}</span>
                                                                ) : (
                                                                   <>
-                                                                    <span className="text-[10px] font-bold text-muted uppercase tracking-widest"><Camera className="w-3 h-3 inline-block mr-1" /> Upload Packing Video</span>
-                                                                    <span className="text-[8px] text-muted font-medium">Mandatory for shipment verification</span>
+                                                                    <span className="text-xs font-bold text-muted uppercase tracking-widest"><Camera className="w-3 h-3 inline-block mr-1" /> Upload Packing Video</span>
+                                                                    <span className="text-xs text-muted font-medium">Mandatory for shipment verification</span>
                                                                   </>
                                                                )}
                                                             </div>
@@ -1396,14 +1426,14 @@ function ProfileContent() {
                                                          <button 
                                                             disabled={isSubmittingTracking}
                                                             onClick={() => handleSaveTracking(deal.id)}
-                                                            className="flex-1 py-4 bg-primary text-white rounded-none text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-100/50 hover:bg-black transition-all"
+                                                            className="gold-sweep flex-1 py-4 text-sm font-black uppercase tracking-widest shadow-xl"
                                                          >
                                                             {isSubmittingTracking ? 'Syncing...' : (deal.status === 'SHIPPED' ? 'Save Changes' : 'Confirm Shipment')}
                                                          </button>
                                                          {editingTrackingId === deal.id && (
                                                             <button 
                                                                onClick={() => setEditingTrackingId(null)}
-                                                               className="px-6 py-4 bg-background text-muted rounded-none text-[11px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                                                                className="px-6 py-4 bg-background text-muted rounded-lg text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
                                                             >
                                                                Cancel
                                                             </button>
@@ -1415,19 +1445,19 @@ function ProfileContent() {
                                                 {deal.status === 'SHIPPED' && editingTrackingId !== deal.id && (
                                                    <div className="flex flex-col gap-3">
                                                       {deal.tracking_number && (
-                                                         <div className="bg-background p-3 rounded-none border border-border">
-                                                            <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
+                                                          <div className="bg-background p-3 rounded-xl border border-border">
+                                                             <p className="text-xs font-black text-muted uppercase tracking-widest mb-1">{deal.courier_name || 'Tracking'}</p>
                                                             <a 
                                                                href={`https://www.google.com/search?q=${encodeURIComponent((deal.courier_name || '') + ' tracking ' + deal.tracking_number)}`}
                                                                target="_blank"
-                                                               className="text-[10px] font-bold text-primary truncate hover:underline flex items-center gap-1"
+                                                               className="text-xs font-bold text-primary truncate hover:underline flex items-center gap-1"
                                                             >
                                                                {deal.tracking_number} <ExternalLink className="w-3 h-3" />
                                                             </a>
                                                          </div>
                                                       )}
                                                       {deal.packing_video && (
-                                                         <a href={deal.packing_video.startsWith('http') ? deal.packing_video : `${API_BASE_URL}/uploads/${deal.packing_video}`} target="_blank" className="text-[9px] font-bold text-primary uppercase tracking-widest mt-2 inline-flex items-center gap-1 hover:underline"><Camera className="w-3 h-3" /> View Packing Video</a>
+                                                         <a href={deal.packing_video.startsWith('http') ? deal.packing_video : `${API_BASE_URL}/uploads/${deal.packing_video}`} target="_blank" className="text-xs font-bold text-primary uppercase tracking-widest mt-2 inline-flex items-center gap-1 hover:underline"><Camera className="w-3 h-3" /> View Packing Video</a>
                                                       )}
                                                       <button 
                                                          onClick={() => {
@@ -1439,7 +1469,7 @@ function ProfileContent() {
                                                                packing_video: null
                                                             });
                                                          }}
-                                                         className="w-full py-3 bg-surface border border-border rounded-none text-[10px] font-black uppercase tracking-widest text-foreground hover:bg-background transition-all flex items-center justify-center gap-2"
+                                                          className="w-full py-3 bg-surface border border-border rounded-lg text-xs font-black uppercase tracking-widest text-foreground hover:bg-background transition-all flex items-center justify-center gap-2"
                                                       >
                                                          <Edit2 className="w-3 h-3" /> Edit Tracking Details
                                                       </button>
@@ -1449,7 +1479,7 @@ function ProfileContent() {
                                                {((deal.status === 'ACCEPTED') || (deal.status === 'PAID' && new Date(deal.expires_at) < new Date())) && (
                                                   <button 
                                                      onClick={() => handleCancelDeal(deal.id)}
-                                                     className="w-full py-3 border-2 border-dashed border-border text-muted rounded-none text-[11px] font-bold uppercase tracking-widest hover:border-rose-100 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                                                      className="w-full py-3 border-2 border-dashed border-border text-muted rounded-lg text-sm font-bold uppercase tracking-widest hover:border-rose-100 hover:text-rose-500 hover:bg-rose-50 transition-all"
                                                   >
                                                      {deal.status === 'PAID' ? 'Cancel & Process Refund' : 'Cancel Deal'}
                                                   </button>
@@ -1460,12 +1490,12 @@ function ProfileContent() {
                                    </div>
                                  ))
                                ) : (
-                                   <div className="bg-surface rounded-3xl p-20 text-center border border-border shadow-sm border-dashed">
+                                   <div className="bg-surface rounded-3xl p-8 md:p-12 text-center border border-border shadow-sm border-dashed">
                                       <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-6">
                                          <FileText className="w-8 h-8 text-gray-200" />
                                       </div>
                                       <h3 className="text-sm font-black text-foreground uppercase tracking-widest">No Active Pipelines</h3>
-                                      <p className="text-[10px] text-muted font-bold uppercase mt-2">Active deals will materialize here once offers are accepted.</p>
+                                      <p className="text-xs text-muted font-bold uppercase mt-2">Active deals will materialize here once offers are accepted.</p>
                                    </div>
                                )}
                             </div>
@@ -1477,40 +1507,40 @@ function ProfileContent() {
                                {sellerNegotiations.length > 0 ? (
                                  sellerNegotiations.map(offer => (
                                    <div key={offer.id} className="bg-surface border border-border rounded-3xl p-6 hover:shadow-xl transition-all flex flex-col md:flex-row gap-6">
-                                      <div className="w-24 h-24 bg-background rounded-none overflow-hidden flex-shrink-0">
-                                         {offer.images?.[0] ? <img src={getImg(offer.images)} className="w-full h-full object-cover" alt="watch" /> : <div className="w-full h-full bg-background" />}
+                                        <div className="w-24 h-24 bg-background rounded-xl overflow-hidden flex-shrink-0 relative">
+                                          {offer.images?.[0] ? <OptimizedImage src={getImg(offer.images)} alt={offer.title || 'Offer product image'} fill className="object-cover" size="thumbnail" /> : <div className="w-full h-full bg-background" />}
                                       </div>
                                       <div className="flex-1">
                                          <div className="flex justify-between items-start mb-2">
                                             <div>
                                                <h4 className="text-sm font-bold uppercase tracking-tight">{offer.title}</h4>
-                                               <p className="text-[9px] font-bold text-muted uppercase mt-1">From: {offer.buyer_name}</p>
+                                               <p className="text-xs font-bold text-muted uppercase mt-1">From: {offer.buyer_name}</p>
                                             </div>
                                             <div className="text-right">
-                                               <p className="text-[9px] font-bold text-muted uppercase mb-1">{offer.status === 'buyer_countered' ? 'Buyer Counter Price' : 'Offered Price'}</p>
-                                               <p className="text-xl font-black text-primary">â‚¹{parseFloat(offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount).toLocaleString()}</p>
+                                               <p className="text-xs font-bold text-muted uppercase mb-1">{offer.status === 'buyer_countered' ? 'Buyer Counter Price' : 'Offered Price'}</p>
+                                               <p className="text-xl font-black text-primary">₹{parseFloat(offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount).toLocaleString()}</p>
                                             </div>
                                          </div>
                                          
                                          {offer.message && (
-                                           <div className="mt-3 p-3 bg-background rounded-none border-l-4 border-blue-600">
-                                              <p className="text-[9px] font-black text-muted uppercase tracking-widest mb-1">Buyer's Message:</p>
-                                              <p className="text-[11px] font-medium text-muted italic leading-relaxed">"{offer.message}"</p>
+                                            <div className="mt-3 p-3 bg-background rounded-xl border-l-4 border-blue-600">
+                                              <p className="text-xs font-black text-muted uppercase tracking-widest mb-1">Buyer's Message:</p>
+                                              <p className="text-sm font-medium text-muted italic leading-relaxed">"{offer.message}"</p>
                                            </div>
                                          )}
 
                                          <div className="mt-4 flex flex-col gap-3">
                                             <div className="flex justify-between items-center w-full">
-                                                <span className="text-[8px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded uppercase tracking-widest">
+                                                <span className="text-xs font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded uppercase tracking-widest">
                                                    Expires in: {getRemainingTime(offer.expires_at)}
                                                 </span>
-                                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Offer Count: {offer.offer_count}/5</span>
+                                                <span className="text-xs font-bold uppercase tracking-widest text-muted">Offer Count: {offer.offer_count}/5</span>
                                             </div>
                                             {(offer.status === 'pending' || offer.status === 'buyer_countered') && (
                                                 <>
                                                    {counterForm.offerId === offer.id ? (
                                                       <div className="flex items-center gap-2">
-                                                         <span className="text-sm font-bold text-muted">â‚¹</span>
+                                                         <span className="text-sm font-bold text-muted">₹</span>
                                                          <input 
                                                             type="number" 
                                                             value={counterForm.amount} 
@@ -1518,23 +1548,23 @@ function ProfileContent() {
                                                             className="flex-1 py-2 px-3 border border-border rounded outline-none text-xs font-bold"
                                                             placeholder="Counter Amount"
                                                          />
-                                                         <button onClick={() => handleOfferResponse(offer.id, 'countered', counterForm.amount)} className="px-4 py-2 bg-primary text-white rounded text-[9px] font-bold uppercase hover:bg-blue-700">Send</button>
-                                                         <button onClick={() => setCounterForm({offerId: null, amount: ""})} className="px-4 py-2 bg-background text-muted rounded text-[9px] font-bold uppercase hover:bg-gray-200">Cancel</button>
+                                                         <button onClick={() => handleOfferResponse(offer.id, 'countered', counterForm.amount)} className="px-4 py-2 bg-primary text-white rounded text-xs font-bold uppercase hover:bg-blue-700">Send</button>
+                                                         <button onClick={() => setCounterForm({offerId: null, amount: ""})} className="px-4 py-2 bg-background text-muted rounded text-xs font-bold uppercase hover:bg-gray-200">Cancel</button>
                                                       </div>
                                                    ) : (
                                                       <div className="flex w-full gap-2">
-                                                         <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2.5 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-emerald-700 transition">Accept</button>
-                                                         <button onClick={() => setCounterForm({offerId: offer.id, amount: offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount})} className="flex-1 py-2.5 bg-surface border-2 border-gray-900 text-foreground text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-background transition">Counter</button>
-                                                         <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-rose-100 transition">Decline</button>
+                                                          <button onClick={() => handleOfferResponse(offer.id, 'accepted')} className="flex-1 py-2.5 bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition">Accept</button>
+                                                          <button onClick={() => setCounterForm({offerId: offer.id, amount: offer.status === 'buyer_countered' ? offer.counter_amount : offer.amount})} className="flex-1 py-2.5 bg-surface border-2 border-gray-900 text-foreground text-xs font-black uppercase tracking-widest rounded-lg hover:bg-background transition">Counter</button>
+                                                          <button onClick={() => handleOfferResponse(offer.id, 'declined')} className="flex-1 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 text-xs font-black uppercase tracking-widest rounded-lg hover:bg-rose-100 transition">Decline</button>
                                                       </div>
                                                    )}
                                                 </>
                                             )}
-                                            {offer.status === 'countered' && <p className="text-[10px] font-bold text-primary uppercase tracking-widest text-center mt-2">Awaiting Buyer Response</p>}
-                                            {offer.status === 'declined' && <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest text-center mt-2">Declined</p>}
+                                            {offer.status === 'countered' && <p className="text-xs font-bold text-primary uppercase tracking-widest text-center mt-2">Awaiting Buyer Response</p>}
+                                            {offer.status === 'declined' && <p className="text-xs font-bold text-rose-500 uppercase tracking-widest text-center mt-2">Declined</p>}
                                             <button 
                                                onClick={() => router.push(`/messages?chat=${offer.chat_id}`)}
-                                               className="w-full mt-1 px-6 py-2.5 bg-background text-muted text-[9px] font-black uppercase tracking-widest rounded-none hover:bg-gray-200 transition flex items-center justify-center gap-2"
+                                                className="w-full mt-1 px-6 py-2.5 bg-background text-muted text-xs font-black uppercase tracking-widest rounded-lg hover:bg-gray-200 transition flex items-center justify-center gap-2"
                                             >
                                                <Send className="w-3 h-3" /> Go to Chat
                                             </button>
@@ -1543,8 +1573,8 @@ function ProfileContent() {
                                    </div>
                                  ))
                                ) : (
-                                 <div className="bg-surface rounded-3xl p-20 text-center border border-border shadow-sm border-dashed">
-                                    <p className="text-[10px] font-bold text-muted uppercase tracking-widest">No pending offers received</p>
+                                 <div className="bg-surface rounded-3xl p-8 md:p-12 text-center border border-border shadow-sm border-dashed">
+                                    <p className="text-xs font-bold text-muted uppercase tracking-widest">No pending offers received</p>
                                  </div>
                                )}
                              </div>
@@ -1556,10 +1586,10 @@ function ProfileContent() {
                                  {deals.filter(d => d.seller_id == user?.id && d.status === 'CANCELLED').length > 0 ? (
                                    deals.filter(d => d.seller_id == user?.id && d.status === 'CANCELLED').map(deal => (
                                      <div key={deal.id} className="bg-surface border border-rose-100 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 opacity-75 grayscale-[0.5]">
-                                        <div className="w-full md:w-48 aspect-square rounded-none bg-background flex-shrink-0 relative overflow-hidden">
-                                           <img src={deal.images?.[0] ? getImg(deal.images) : '/placeholder.png'} className="w-full h-full object-contain" alt="product" />
+                                         <div className="w-full md:w-48 aspect-square rounded-xl bg-background flex-shrink-0 relative overflow-hidden">
+                                            <OptimizedImage src={deal.images?.[0] ? getImg(deal.images) : '/placeholder.png'} alt={deal.product_title || 'Cancelled deal product'} fill className="object-contain" size="small" />
                                            <div className="absolute top-4 left-4">
-                                              <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-rose-500 text-white shadow-sm">
+                                              <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-rose-500 text-white shadow-sm">
                                                  CANCELLED
                                               </span>
                                            </div>
@@ -1569,30 +1599,30 @@ function ProfileContent() {
                                            <div className="space-y-4">
                                               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                                  <div>
-                                                    <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Deal #D-{deal.id}</p>
+                                                    <p className="text-xs text-muted font-bold uppercase tracking-widest mb-1">Deal #D-{deal.id}</p>
                                                     <h3 className="text-xl font-bold text-foreground uppercase tracking-tight leading-none">{deal.product_title}</h3>
                                                  </div>
                                                  <div className="text-right">
-                                                    <p className="text-[9px] font-bold text-muted uppercase tracking-widest mb-1">Voided Amount</p>
-                                                    <p className="text-2xl font-black text-muted leading-none line-through">â‚¹{parseFloat(deal.amount || 0).toLocaleString()}</p>
+                                                    <p className="text-xs font-bold text-muted uppercase tracking-widest mb-1">Voided Amount</p>
+                                                    <p className="text-2xl font-black text-muted leading-none line-through">₹{parseFloat(deal.amount || 0).toLocaleString()}</p>
                                                  </div>
                                               </div>
 
-                                              <div className="p-4 bg-rose-50 border border-rose-100 rounded-none">
-                                                 <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Cancellation Reason</p>
-                                                 <p className="text-[11px] font-bold text-rose-800 leading-tight">{deal.cancel_reason || 'Transaction terminated by either party or administrator.'}</p>
-                                                 <p className="text-[9px] font-medium text-rose-400 uppercase mt-2 italic">Buyer: {deal.buyer_name}</p>
+                                               <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl">
+                                                 <p className="text-xs font-black text-rose-600 uppercase tracking-widest mb-1">Cancellation Reason</p>
+                                                 <p className="text-sm font-bold text-rose-800 leading-tight">{deal.cancel_reason || 'Transaction terminated by either party or administrator.'}</p>
+                                                 <p className="text-xs font-medium text-rose-400 uppercase mt-2 italic">Buyer: {deal.buyer_name}</p>
                                               </div>
                                            </div>
                                         </div>
                                      </div>
                                    ))
                                  ) : (
-                                     <div className="bg-surface rounded-3xl p-20 text-center border border-border shadow-sm border-dashed">
+                                     <div className="bg-surface rounded-3xl p-8 md:p-12 text-center border border-border shadow-sm border-dashed">
                                         <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-6">
                                            <XCircle className="w-8 h-8 text-gray-200" />
                                         </div>
-                                        <p className="text-[11px] font-black text-muted uppercase tracking-[0.3em]">No Cancelled Deals</p>
+                                        <p className="text-sm font-black text-muted uppercase tracking-[0.3em]">No Cancelled Deals</p>
                                      </div>
                                  )}
                               </div>
@@ -1610,22 +1640,22 @@ function ProfileContent() {
                         </div>
                         <div className="text-right">
                            <p className="text-2xl font-black text-foreground">{receivedReviews.stats.average_rating}</p>
-                           <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Global Index / {receivedReviews.stats.review_count} nodes</p>
+                           <p className="text-xs font-bold text-muted uppercase tracking-widest">Global Index / {receivedReviews.stats.review_count} nodes</p>
                         </div>
                      </div>
 
                      <div className="space-y-6">
                         {receivedReviews.reviews?.length > 0 ? (
                            receivedReviews.reviews.map(review => (
-                              <div key={review.id} className="p-8 border border-border rounded-none bg-background/20">
+                               <div key={review.id} className="p-8 border border-border rounded-xl bg-background/20">
                                  <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-3">
-                                       <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold">
+                                       <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
                                           {review.reviewer_name?.charAt(0).toUpperCase()}
                                        </div>
                                        <div>
-                                          <p className="text-[11px] font-bold text-foreground uppercase">{review.reviewer_name}</p>
-                                          <p className="text-[9px] text-muted font-bold uppercase tracking-widest">{new Date(review.created_at).toLocaleDateString()}</p>
+                                          <p className="text-sm font-bold text-foreground uppercase">{review.reviewer_name}</p>
+                                          <p className="text-xs text-muted font-bold uppercase tracking-widest">{new Date(review.created_at).toLocaleDateString()}</p>
                                        </div>
                                     </div>
                                     <div className="flex gap-0.5">
@@ -1638,8 +1668,8 @@ function ProfileContent() {
                               </div>
                            ))
                         ) : (
-                           <div className="py-20 text-center border-2 border-dashed border-gray-50 rounded-none">
-                              <p className="text-[10px] font-bold text-muted uppercase tracking-widest">No Feedback Logs Found</p>
+                            <div className="py-20 text-center border-2 border-dashed border-gray-50 rounded-xl">
+                              <p className="text-xs font-bold text-muted uppercase tracking-widest">No Feedback Logs Found</p>
                            </div>
                         )}
                      </div>
@@ -1658,19 +1688,19 @@ function ProfileContent() {
                          <div className="flex gap-2">
                             <button 
                                onClick={() => setLedgerFilters({...ledgerFilters, role: 'all'})}
-                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'all' ? 'bg-black text-white' : 'bg-background text-muted hover:bg-background'}`}
+                               className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'all' ? 'bg-black text-white' : 'bg-background text-muted hover:bg-background'}`}
                             >
                                Global
                             </button>
                             <button 
                                onClick={() => setLedgerFilters({...ledgerFilters, role: 'seller'})}
-                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'seller' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-background text-muted hover:bg-background'}`}
+                               className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'seller' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-background text-muted hover:bg-background'}`}
                             >
                                Sales
                             </button>
                             <button 
                                onClick={() => setLedgerFilters({...ledgerFilters, role: 'buyer'})}
-                               className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'buyer' ? 'bg-primary text-white shadow-lg shadow-blue-100' : 'bg-background text-muted hover:bg-background'}`}
+                               className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${ledgerFilters.role === 'buyer' ? 'bg-primary text-white shadow-lg shadow-blue-100' : 'bg-background text-muted hover:bg-background'}`}
                             >
                                Purchases
                             </button>
@@ -1679,37 +1709,37 @@ function ProfileContent() {
 
                       {reportsLoading ? (
                         <div className="py-20 flex flex-col items-center gap-4">
-                            <div className="w-8 h-8 border-2 border-gold border-t-transparent animate-spin rounded-none"></div>
-                           <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Compiling Records...</p>
+                            <div className="w-8 h-8 border-2 border-gold border-t-transparent animate-spin rounded-lg"></div>
+                           <p className="text-xs font-bold text-muted uppercase tracking-widest">Compiling Records...</p>
                         </div>
                       ) : (
                         <div className="space-y-12">
                            {/* Summary Grid */}
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className="p-8 bg-black rounded-none text-white border border-border/40 shadow-none relative overflow-hidden group">
-                                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
-                                 <div className="flex justify-between items-start mb-6">
-                                    <div className="w-10 h-10 bg-surface/10 rounded-none flex items-center justify-center">
-                                       <TrendingUp className="w-5 h-5 text-emerald-400" />
-                                    </div>
-                                    <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-none border border-emerald-500/30">Liquidated Assets</span>
+                               <div className="p-8 bg-black rounded-xl text-white border border-border/40 shadow-none relative overflow-hidden group">
+                                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
+                                  <div className="flex justify-between items-start mb-6">
+                                     <div className="w-10 h-10 bg-surface/10 rounded-lg flex items-center justify-center">
+                                        <TrendingUp className="w-5 h-5 text-emerald-400" />
+                                     </div>
+                                     <span className="text-xs font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-lg border border-emerald-500/30">Liquidated Assets</span>
                                  </div>
-                                 <p className="text-[10px] font-bold text-muted uppercase tracking-[0.2em]">Total Sales Volume</p>
-                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">â‚¹{parseFloat(financialReports.totals.total_sales || 0).toLocaleString()}</h3>
-                                 <p className="text-[9px] font-medium text-muted mt-4 uppercase tracking-wider">{financialReports.totals.total_items_sold} Orders Successfully Audited</p>
+                                 <p className="text-xs font-bold text-muted uppercase tracking-[0.2em]">Total Sales Volume</p>
+                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">Rs.{parseFloat(financialReports?.totals?.total_sales || 0).toLocaleString()}</h3>
+                                 <p className="text-xs font-medium text-muted mt-4 uppercase tracking-wider">{financialReports?.totals?.total_items_sold || 0} Orders Successfully Audited</p>
                               </div>
 
-                              <div className="p-8 bg-primary rounded-none text-white border border-gold/20 shadow-none relative overflow-hidden group">
-                                 <div className="absolute top-0 right-0 w-32 h-32 bg-surface/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-surface/20 transition-all"></div>
-                                 <div className="flex justify-between items-start mb-6">
-                                    <div className="w-10 h-10 bg-surface/10 rounded-none flex items-center justify-center">
-                                       <PieChart className="w-5 h-5 text-white" />
-                                    </div>
-                                    <span className="text-[8px] font-black uppercase tracking-widest bg-surface/20 text-white px-3 py-1 rounded-none border border-white/30">Acquired Inventory</span>
+                               <div className="p-8 bg-primary rounded-xl text-white border border-gold/20 shadow-none relative overflow-hidden group">
+                                  <div className="absolute top-0 right-0 w-32 h-32 bg-surface/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-surface/20 transition-all"></div>
+                                  <div className="flex justify-between items-start mb-6">
+                                     <div className="w-10 h-10 bg-surface/10 rounded-lg flex items-center justify-center">
+                                        <PieChart className="w-5 h-5 text-white" />
+                                     </div>
+                                     <span className="text-xs font-black uppercase tracking-widest bg-surface/20 text-white px-3 py-1 rounded-lg border border-white/30">Acquired Inventory</span>
                                  </div>
-                                 <p className="text-[10px] font-bold text-gold uppercase tracking-[0.2em]">Total Acquisition Cost</p>
-                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">â‚¹{parseFloat(financialReports.totals.total_spent || 0).toLocaleString()}</h3>
-                                 <p className="text-[9px] font-medium text-white/60 mt-4 uppercase tracking-wider">{financialReports.totals.total_items_bought} Products in Vault</p>
+                                 <p className="text-xs font-bold text-gold uppercase tracking-[0.2em]">Total Acquisition Cost</p>
+                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">Rs.{parseFloat(financialReports?.totals?.total_spent || 0).toLocaleString()}</h3>
+                                 <p className="text-xs font-medium text-white/60 mt-4 uppercase tracking-wider">{financialReports?.totals?.total_items_bought || 0} Products in Vault</p>
                               </div>
                            </div>
 
@@ -1724,7 +1754,7 @@ function ProfileContent() {
                                        value={ledgerFilters.search}
                                        onChange={(e) => setLedgerFilters({...ledgerFilters, search: e.target.value})}
                                        onKeyDown={(e) => e.key === 'Enter' && loadLedger()}
-                                       className="w-full pl-12 pr-4 py-3 bg-surface border border-border rounded-none text-[11px] font-bold outline-none focus:ring-2 ring-blue-50 transition-all"
+                                        className="w-full pl-12 pr-4 py-3 bg-surface border border-border rounded-lg text-sm font-bold outline-none focus:ring-2 ring-blue-50 transition-all"
                                     />
                                  </div>
                                  
@@ -1733,7 +1763,7 @@ function ProfileContent() {
                                     <select 
                                        value={ledgerFilters.status}
                                        onChange={(e) => setLedgerFilters({...ledgerFilters, status: e.target.value})}
-                                       className="bg-surface border border-border text-[10px] font-black uppercase tracking-widest px-4 py-3 rounded-none outline-none cursor-pointer"
+                                        className="bg-surface border border-border text-xs font-black uppercase tracking-widest px-4 py-3 rounded-lg outline-none cursor-pointer"
                                     >
                                        <option value="ALL">All States</option>
                                        <option value="PAID">Paid</option>
@@ -1748,22 +1778,22 @@ function ProfileContent() {
                               <div className="flex flex-wrap items-center justify-between gap-6 pt-4 border-t border-border">
                                  <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
-                                       <span className="text-[9px] font-black text-muted uppercase tracking-widest">From</span>
+                                       <span className="text-xs font-black text-muted uppercase tracking-widest">From</span>
                                        <input 
                                           type="date" 
                                           value={ledgerFilters.startDate}
                                           onChange={(e) => setLedgerFilters({...ledgerFilters, startDate: e.target.value})}
-                                          className="bg-surface border border-border text-[10px] font-bold px-3 py-2 rounded-none outline-none focus:border-gold"
-                                       />
-                                    </div>
-                                    <ArrowRight className="w-3 h-3 text-muted" />
-                                    <div className="flex items-center gap-2">
-                                       <span className="text-[9px] font-black text-muted uppercase tracking-widest">To</span>
-                                       <input 
-                                          type="date" 
-                                          value={ledgerFilters.endDate}
-                                          onChange={(e) => setLedgerFilters({...ledgerFilters, endDate: e.target.value})}
-                                          className="bg-surface border border-border text-[10px] font-bold px-3 py-2 rounded-none outline-none focus:border-gold"
+                                           className="bg-surface border border-border text-xs font-bold px-3 py-2 rounded-lg outline-none focus:border-gold"
+                                        />
+                                     </div>
+                                     <ArrowRight className="w-3 h-3 text-muted" />
+                                     <div className="flex items-center gap-2">
+                                        <span className="text-xs font-black text-muted uppercase tracking-widest">To</span>
+                                        <input 
+                                           type="date" 
+                                           value={ledgerFilters.endDate}
+                                           onChange={(e) => setLedgerFilters({...ledgerFilters, endDate: e.target.value})}
+                                           className="bg-surface border border-border text-xs font-bold px-3 py-2 rounded-lg outline-none focus:border-gold"
                                        />
                                     </div>
                                  </div>
@@ -1774,20 +1804,20 @@ function ProfileContent() {
                                           setLedgerFilters({ status: 'ALL', role: 'all', search: '', year: new Date().getFullYear(), startDate: '', endDate: '' });
                                           loadLedger();
                                        }}
-                                       className="text-[9px] font-black text-muted uppercase tracking-[0.2em] hover:text-foreground transition-colors"
+                                       className="text-xs font-black text-muted uppercase tracking-[0.2em] hover:text-foreground transition-colors"
                                     >
                                        Reset
                                     </button>
                                     <button 
                                        onClick={downloadLedgerCSV}
-                                       className="flex items-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-100 px-6 py-3 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all"
+                                        className="flex items-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-100 px-6 py-3 rounded-lg text-xs font-black uppercase tracking-widest hover:bg-emerald-100 transition-all"
                                     >
                                        <Download className="w-4 h-4" />
                                        Download Report
                                     </button>
                                     <button 
                                        onClick={loadLedger}
-                                       className="bg-foreground text-white px-8 py-3 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-gray-200"
+                                       className="gold-sweep px-8 py-3 text-xs font-black uppercase tracking-widest shadow-lg"
                                     >
                                        Apply
                                     </button>
@@ -1798,36 +1828,36 @@ function ProfileContent() {
                            {/* Ledger Table */}
                            <div className="space-y-6">
                               <div className="flex justify-between items-center px-4">
-                                 <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Detailed Transaction Ledger</h4>
-                                 <p className="text-[9px] font-bold text-muted uppercase">{ledger.length} Record(s) Found</p>
+                                 <h4 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">Detailed Transaction Ledger</h4>
+                                 <p className="text-xs font-bold text-muted uppercase">{ledger.length} Record(s) Found</p>
                               </div>
 
                               {ledgerLoading ? (
                                 <div className="py-20 flex justify-center">
-                                   <div className="w-6 h-6 border-2 border-border border-t-gold animate-spin rounded-none"></div>
+                                    <div className="w-6 h-6 border-2 border-border border-t-gold animate-spin rounded-lg"></div>
                                 </div>
                               ) : ledger.length > 0 ? (
                                 <div className="space-y-4">
                                    {ledger.map((deal) => {
                                       const isBuyer = deal.buyer_id === user.id;
                                       return (
-                                         <div key={deal.id} className="bg-surface border border-border rounded-none p-6 hover:shadow-xl hover:shadow-gray-100/50 transition-all group">
-                                            <div className="flex flex-col lg:flex-row gap-8">
-                                               {/* Product Info */}
-                                               <div className="flex gap-5 flex-1">
-                                                  <div className="w-20 h-20 rounded-none bg-background border border-border overflow-hidden flex-shrink-0">
-                                                     <img src={deal.product_image ? (deal.product_image.startsWith('http') ? deal.product_image : `${API_BASE_URL}/uploads/${deal.product_image}`) : "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=200&auto=format&fit=crop"} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                          <div key={deal.id} className="bg-surface border border-border rounded-xl p-6 hover:shadow-xl hover:shadow-gray-100/50 transition-all group">
+                                             <div className="flex flex-col lg:flex-row gap-8">
+                                                {/* Product Info */}
+                                                <div className="flex gap-5 flex-1">
+                                                    <div className="w-20 h-20 rounded-lg bg-background border border-border overflow-hidden flex-shrink-0 relative">
+                                                      <OptimizedImage src={(() => { const img = Array.isArray(deal.product_image) ? deal.product_image[0] : deal.product_image; return img ? (typeof img === 'string' && img.startsWith('http') ? img : `${API_BASE_URL}/uploads/${img}`) : "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=200&auto=format&fit=crop"; })()} alt={deal.product_title || 'Transaction product'} fill className="object-cover group-hover:scale-110 transition-transform duration-500" size="thumbnail" />
                                                   </div>
                                                   <div className="flex flex-col justify-between py-1">
                                                      <div>
                                                         <div className="flex items-center gap-2 mb-1">
                                                            {isBuyer ? <ArrowDownLeft className="w-3 h-3 text-primary" /> : <ArrowUpRight className="w-3 h-3 text-emerald-600" />}
-                                                           <span className={`text-[8px] font-black uppercase tracking-widest ${isBuyer ? 'text-primary' : 'text-emerald-600'}`}>{isBuyer ? 'Acquisition' : 'Liquidation'}</span>
+                                                           <span className={`text-xs font-black uppercase tracking-widest ${isBuyer ? 'text-primary' : 'text-emerald-600'}`}>{isBuyer ? 'Acquisition' : 'Liquidation'}</span>
                                                         </div>
                                                         <h5 className="text-[13px] font-black text-foreground uppercase tracking-tight line-clamp-1">{deal.product_title}</h5>
                                                      </div>
-                                                     <p className="text-[9px] font-bold text-muted uppercase tracking-widest">
-                                                        {new Date(deal.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} â€¢ ID: {deal.id}
+                                                     <p className="text-xs font-bold text-muted uppercase tracking-widest">
+                                                        {new Date(deal.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • ID: {deal.id}
                                                      </p>
                                                   </div>
                                                </div>
@@ -1835,41 +1865,41 @@ function ProfileContent() {
                                                {/* Counterparty & Status */}
                                                <div className="flex flex-wrap lg:flex-nowrap gap-8 items-center">
                                                   <div className="min-w-[140px]">
-                                                     <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">{isBuyer ? 'Seller Node' : 'Buyer Node'}</p>
-                                                     <p className="text-[11px] font-bold text-foreground uppercase">{isBuyer ? deal.seller_name : deal.buyer_name}</p>
+                                                     <p className="text-xs font-black text-muted uppercase tracking-widest mb-1">{isBuyer ? 'Seller Node' : 'Buyer Node'}</p>
+                                                     <p className="text-sm font-bold text-foreground uppercase">{isBuyer ? deal.seller_name : deal.buyer_name}</p>
                                                   </div>
                                                   <div className="min-w-[100px]">
-                                                     <p className="text-[8px] font-black text-muted uppercase tracking-widest mb-1">State</p>
-                                                     <span className={`px-2 py-0.5 rounded-none text-[8px] font-black uppercase tracking-widest ${deal.status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : deal.status === 'CANCELLED' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-gold/5 text-gold border border-gold/20'}`}>
+                                                     <p className="text-xs font-black text-muted uppercase tracking-widest mb-1">State</p>
+                                                      <span className={`px-2 py-0.5 rounded-lg text-xs font-black uppercase tracking-widest ${deal.status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : deal.status === 'CANCELLED' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-gold/5 text-gold border border-gold/20'}`}>
                                                         {deal.status}
                                                      </span>
                                                   </div>
                                                   
                                                   {/* Financial Breakdown */}
-                                                  <div className="bg-background/50 px-6 py-4 rounded-none border border-border min-w-[200px]">
+                                                   <div className="bg-background/50 px-6 py-4 rounded-xl border border-border min-w-[200px]">
                                                      <div className="flex justify-between items-center mb-2">
-                                                        <span className="text-[9px] font-bold text-muted uppercase">Base Amount</span>
-                                                        <span className="text-[10px] font-black text-foreground">â‚¹{parseFloat(deal.amount).toLocaleString()}</span>
+                                                        <span className="text-xs font-bold text-muted uppercase">Base Amount</span>
+                                                        <span className="text-xs font-black text-foreground">₹{parseFloat(deal.amount).toLocaleString()}</span>
                                                      </div>
                                                      <div className="flex justify-between items-center mb-2">
-                                                        <span className="text-[9px] font-bold text-muted uppercase">Shipping</span>
-                                                        <span className="text-[10px] font-black text-foreground">+â‚¹{parseFloat(deal.shipping_fee || 0).toLocaleString()}</span>
+                                                        <span className="text-xs font-bold text-muted uppercase">Shipping</span>
+                                                        <span className="text-xs font-black text-foreground">+₹{parseFloat(deal.shipping_fee || 0).toLocaleString()}</span>
                                                      </div>
                                                      {isBuyer ? (
                                                         <div className="flex justify-between items-center mb-3">
-                                                           <span className="text-[9px] font-bold text-muted uppercase">Service Fee + GST</span>
-                                                           <span className="text-[10px] font-black text-foreground">+â‚¹{(parseFloat(deal.buyer_commission_amount || 0) + (parseFloat(deal.buyer_commission_amount || 0) * 0.18)).toLocaleString()}</span>
+                                                           <span className="text-xs font-bold text-muted uppercase">Service Fee + GST</span>
+                                                           <span className="text-xs font-black text-foreground">+₹{(parseFloat(deal.buyer_commission_amount || 0) + (parseFloat(deal.buyer_commission_amount || 0) * 0.18)).toLocaleString()}</span>
                                                         </div>
                                                      ) : (
                                                         <div className="flex justify-between items-center mb-3 text-rose-500">
-                                                           <span className="text-[9px] font-bold uppercase">Platform Fee</span>
-                                                           <span className="text-[10px] font-black">-â‚¹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</span>
+                                                           <span className="text-xs font-bold uppercase">Platform Fee</span>
+                                                           <span className="text-xs font-black">-₹{parseFloat(deal.total_platform_fee || 0).toLocaleString()}</span>
                                                         </div>
                                                      )}
                                                      <div className="pt-2 border-t border-border flex justify-between items-center">
-                                                        <span className="text-[10px] font-black text-foreground uppercase tracking-widest">{isBuyer ? 'Total Paid' : 'Net Payout'}</span>
+                                                        <span className="text-xs font-black text-foreground uppercase tracking-widest">{isBuyer ? 'Total Paid' : 'Net Payout'}</span>
                                                         <span className={`text-[12px] font-black ${isBuyer ? 'text-primary' : 'text-emerald-600'}`}>
-                                                           â‚¹{isBuyer ? parseFloat(deal.total_buyer_cost).toLocaleString() : parseFloat(deal.seller_payout).toLocaleString()}
+                                                           ₹{isBuyer ? parseFloat(deal.total_buyer_cost).toLocaleString() : parseFloat(deal.seller_payout).toLocaleString()}
                                                         </span>
                                                      </div>
                                                   </div>
@@ -1884,8 +1914,8 @@ function ProfileContent() {
                                    <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-50">
                                       <Search className="w-6 h-6 text-gray-200" />
                                    </div>
-                                   <p className="text-[11px] font-black text-muted uppercase tracking-[0.2em]">Zero Matching Records</p>
-                                   <p className="text-[9px] font-bold text-muted uppercase mt-2">Adjust your filters to audit other nodes.</p>
+                                   <p className="text-sm font-black text-muted uppercase tracking-[0.2em]">Zero Matching Records</p>
+                                   <p className="text-xs font-bold text-muted uppercase mt-2">Adjust your filters to audit other nodes.</p>
                                 </div>
                               )}
                            </div>
@@ -1893,6 +1923,120 @@ function ProfileContent() {
                       )}
                    </div>
                 )}
+
+                {/* Price Alerts Tab */}
+               {activeTab === "pricealerts" && (
+                  <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                     <div className="mb-12">
+                        <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Price Drop Alerts</h2>
+                        <p className="text-xs text-muted mt-2 font-medium">Monitor price changes on your watched items.</p>
+                     </div>
+                     {alerts.length === 0 ? (
+                         <div className="p-12 border border-border rounded-xl text-center">
+                            <p className="text-sm text-muted font-bold uppercase tracking-widest mb-4">No Price Alerts Set</p>
+                            <Link href="/" className="text-xs font-black text-primary uppercase tracking-widest underline underline-offset-4">Browse Products</Link>
+                         </div>
+                      ) : (
+                         <div className="space-y-3">
+                            {alerts.map(alert => (
+                               <div key={alert.id} className="p-6 border border-border rounded-xl bg-background/20 flex items-center justify-between">
+                                  <div className="flex items-center gap-4">
+                                      {alert.image_url && <div className="relative w-14 h-14 shrink-0"><OptimizedImage src={alert.image_url} alt={alert.title || 'Alert product image'} fill className="object-cover rounded-lg" size="thumbnail" /></div>}
+                                    <div>
+                                       <p className="text-sm font-bold text-foreground">{alert.title}</p>
+                                       <div className="flex items-center gap-4 mt-1.5">
+                                          <span className="text-xs font-bold text-muted">Current: <span className="text-foreground">₹{parseFloat(alert.price).toLocaleString()}</span></span>
+                                          <span className="text-xs font-bold text-muted">Target: <span className="text-amber-600">₹{parseFloat(alert.target_price).toLocaleString()}</span></span>
+                                          {alert.triggered && <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5">Triggered</span>}
+                                       </div>
+                                    </div>
+                                 </div>
+                                 <button onClick={() => handleDeleteAlert(alert.id)} className="text-xs font-bold text-rose-500 uppercase tracking-widest hover:text-rose-700">Remove</button>
+                              </div>
+                           ))}
+                        </div>
+                     )}
+                  </div>
+               )}
+
+                {/* Disputes Tab */}
+               {activeTab === "disputes" && (
+                  <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                     <div className="mb-12">
+                        <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Dispute Center</h2>
+                        <p className="text-xs text-muted mt-2 font-medium">Track and manage disputes on your transactions.</p>
+                     </div>
+                     {deals.filter(d => d.has_dispute || d.status === 'disputed').length === 0 ? (
+                         <div className="p-12 border border-border rounded-xl text-center">
+                            <p className="text-sm text-muted font-bold uppercase tracking-widest">No Active Disputes</p>
+                         </div>
+                      ) : (
+                         <div className="space-y-4">
+                            {deals.filter(d => d.has_dispute || d.status === 'disputed').map(deal => (
+                               <div key={deal.id} className="p-6 border border-border rounded-xl bg-background/20">
+                                 <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                       <p className="font-bold text-foreground">{deal.title}</p>
+                                       <p className="text-xs text-muted font-bold mt-1 uppercase tracking-widest">{deal.status}</p>
+                                    </div>
+                                    <span className="text-xs font-black text-red-500 bg-red-50 px-3 py-1 uppercase tracking-widest">Disputed</span>
+                                 </div>
+                                 <button onClick={() => handleViewDispute(deal.id)} className="text-xs font-bold text-primary uppercase tracking-widest border-b border-primary/20">View Dispute Details</button>
+                              </div>
+                           ))}
+                        </div>
+                     )}
+                  </div>
+               )}
+
+                {/* Verification Tab */}
+               {activeTab === "verification" && (
+                  <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                     <div className="mb-12">
+                        <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Seller Verification</h2>
+                        <p className="text-xs text-muted mt-2 font-medium">Submit documents to become a verified seller.</p>
+                     </div>
+                     {profile?.is_verified_seller ? (
+                         <div className="p-8 border border-emerald-200 rounded-xl bg-emerald-50/30">
+                           <div className="flex items-center gap-3 mb-4">
+                              <svg className="w-8 h-8 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                              <p className="text-lg font-bold text-foreground uppercase tracking-tight">Verified Seller</p>
+                           </div>
+                           <p className="text-sm text-muted">Your account is verified. You enjoy auto-approval on listings and increased buyer trust.</p>
+                        </div>
+                     ) : (
+                        <div className="space-y-6 max-w-lg">
+                            <div className="p-6 border border-border rounded-xl bg-background/20">
+                               <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-tight">Submit Verification Document</p>
+                               <div className="space-y-4">
+                                  <select value={verifDocType} onChange={e => setVerifDocType(e.target.value)} className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm font-bold outline-none">
+                                     <option value="">Select Document Type</option>
+                                     <option value="id_proof">ID Proof (Passport/Driving License)</option>
+                                     <option value="business_registration">Business Registration</option>
+                                     <option value="address_proof">Address Proof</option>
+                                     <option value="gst_certificate">GST Certificate</option>
+                                  </select>
+                                  <input type="text" value={verifDocUrl} onChange={e => setVerifDocUrl(e.target.value)} placeholder="Document URL (Google Drive / Cloud link)" className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm font-bold outline-none" />
+                                  <button onClick={handleSubmitVerification} disabled={!verifDocType || !verifDocUrl} className="w-full py-4 bg-black text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary transition-all disabled:opacity-50">
+                                    Submit for Review
+                                 </button>
+                              </div>
+                           </div>
+                           {verifDocs.length > 0 && (
+                              <div className="space-y-2">
+                                 <p className="text-xs font-bold text-muted uppercase tracking-widest">Previous Submissions</p>
+                                 {verifDocs.map(doc => (
+                                     <div key={doc.id} className="p-4 border border-border rounded-xl flex items-center justify-between bg-background/20">
+                                       <span className="text-xs font-bold">{doc.document_type}</span>
+                                       <span className={`text-xs font-bold uppercase tracking-widest ${doc.status === 'approved' ? 'text-emerald-500' : doc.status === 'rejected' ? 'text-red-500' : 'text-amber-500'}`}>{doc.status}</span>
+                                    </div>
+                                 ))}
+                              </div>
+                           )}
+                        </div>
+                     )}
+                  </div>
+               )}
 
                 {/* Security Tab */}
                {activeTab === "security" && (
@@ -1903,16 +2047,16 @@ function ProfileContent() {
                      </div>
 
                      <div className="space-y-4">
-                        <div className="p-8 border border-border rounded-none flex justify-between items-center bg-background/20">
+                         <div className="p-8 border border-border rounded-xl flex justify-between items-center bg-background/20">
                            <div>
                               <p className="text-sm font-bold text-foreground uppercase tracking-tight">Current Session</p>
-                              <p className="text-[10px] text-muted mt-1 uppercase font-medium">Windows Chrome â€¢ IP: 152.16.x.x â€¢ Active Now</p>
+                              <p className="text-xs text-muted mt-1 uppercase font-medium">Windows Chrome • IP: 152.16.x.x • Active Now</p>
                            </div>
                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-sm shadow-emerald-200"></span>
                         </div>
                         
                         <div className="pt-10">
-                           <button className="text-[10px] font-bold text-rose-500 uppercase tracking-widest border-b border-rose-100 pb-1 hover:border-rose-500 transition-all">Revoke All Other Sessions</button>
+                           <button className="text-xs font-bold text-rose-500 uppercase tracking-widest border-b border-rose-100 pb-1 hover:border-rose-500 transition-all">Revoke All Other Sessions</button>
                         </div>
                      </div>
                   </div>
@@ -1926,24 +2070,35 @@ function ProfileContent() {
       {paymentReceiptModal && (
         <div className="fixed inset-0 z-[1100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPaymentReceiptModal(null)}>
           <div className="relative max-w-2xl w-full" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setPaymentReceiptModal(null)} className="absolute -top-10 right-0 text-white/60 hover:text-white text-[10px] font-black uppercase tracking-widest">Close âœ•</button>
-            <div className="bg-surface rounded-none overflow-hidden shadow-2xl">
-              <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-                <div className="w-8 h-8 bg-emerald-50 rounded-none flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-emerald-500" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-black uppercase tracking-widest text-foreground">Payment Receipt</p>
-                  <p className="text-[9px] font-bold text-muted uppercase">Buyer submitted proof of payment</p>
-                </div>
-              </div>
-              <div className="p-4">
-                <img src={paymentReceiptModal} alt="Payment Receipt" className="w-full rounded-none object-contain max-h-[60vh]" />
+            <button onClick={() => setPaymentReceiptModal(null)} className="absolute -top-10 right-0 text-white/60 hover:text-white text-xs font-black uppercase tracking-widest">Close</button>
+             <div className="bg-surface rounded-xl overflow-hidden shadow-2xl">
+               <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+                 <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
+                   <CheckCircle className="w-4 h-4 text-emerald-500" />
+                 </div>
+                 <div>
+                   <p className="text-sm font-black uppercase tracking-widest text-foreground">Payment Receipt</p>
+                   <p className="text-xs font-bold text-muted uppercase">Buyer submitted proof of payment</p>
+                 </div>
+               </div>
+                <div className="p-4 relative flex items-center justify-center" style={{ minHeight: '200px' }}>
+                  <OptimizedImage src={paymentReceiptModal} alt="Payment receipt proof" fill className="rounded-lg object-contain" size="large" containerClassName="absolute inset-4" />
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        onConfirm={confirmDialog?.onConfirm || (() => {})}
+        title={confirmDialog?.title || "Confirm"}
+        message={confirmDialog?.message || "Are you sure?"}
+        confirmText={confirmDialog?.confirmText || "Delete"}
+        cancelText="Cancel"
+        variant={confirmDialog?.variant || "danger"}
+      />
 
       {/* Leave Review Modal */}
       {isReviewModalOpen && (
@@ -1952,12 +2107,12 @@ function ProfileContent() {
            <div className="relative bg-surface w-full max-w-lg rounded-3xl shadow-2xl p-10 animate-in zoom-in-95 duration-300">
               <div className="mb-8">
                  <h3 className="text-2xl font-black text-foreground uppercase tracking-tight">Evaluate Transaction</h3>
-                 <p className="text-[11px] font-bold text-muted uppercase tracking-widest mt-2">Logging performance for: {reviewForm.product_title}</p>
+                 <p className="text-sm font-bold text-muted uppercase tracking-widest mt-2">Logging performance for: {reviewForm.product_title}</p>
               </div>
 
               <div className="space-y-8">
                  <div className="flex flex-col items-center gap-4">
-                    <p className="text-[10px] font-black text-muted uppercase tracking-[0.2em]">Service Rating</p>
+                    <p className="text-xs font-black text-muted uppercase tracking-[0.2em]">Service Rating</p>
                     <div className="flex gap-4">
                        {[1,2,3,4,5].map(star => (
                           <button 
@@ -1974,12 +2129,12 @@ function ProfileContent() {
                  </div>
 
                  <div className="space-y-4">
-                    <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em]">Feedback Log</label>
+                    <label className="text-xs font-black text-muted uppercase tracking-[0.2em]">Feedback Log</label>
                     <textarea 
                        rows="4"
                        value={reviewForm.comment}
                        onChange={(e) => setReviewForm({...reviewForm, comment: e.target.value})}
-                       className="w-full bg-background border border-border p-6 rounded-none outline-none focus:border-gold focus:bg-surface transition-all text-sm font-medium"
+                        className="w-full bg-background border border-border p-6 rounded-lg outline-none focus:border-gold focus:bg-surface transition-all text-sm font-medium"
                        placeholder="Detail your acquisition experience..."
                     />
                  </div>
@@ -1987,14 +2142,14 @@ function ProfileContent() {
                  <div className="grid grid-cols-2 gap-4 pt-4">
                     <button 
                        onClick={() => setIsReviewModalOpen(false)}
-                       className="py-4 border border-border rounded-none text-[10px] font-bold uppercase tracking-widest text-muted hover:bg-background transition-all"
-                    >
-                       Cancel
-                    </button>
-                    <button 
-                       onClick={submitReview}
-                       disabled={isSubmittingReview}
-                       className="py-4 bg-black text-white rounded-none text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all disabled:opacity-50"
+                        className="py-4 border border-border rounded-lg text-xs font-bold uppercase tracking-widest text-muted hover:bg-background transition-all"
+                     >
+                        Cancel
+                     </button>
+                     <button 
+                        onClick={submitReview}
+                        disabled={isSubmittingReview}
+                        className="py-4 bg-black text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary transition-all disabled:opacity-50"
                     >
                        {isSubmittingReview ? 'Logging...' : 'Submit Records'}
                     </button>
@@ -2013,8 +2168,8 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-surface">
         <Navbar />
         <div className="flex items-center justify-center h-[60vh] gap-3">
-          <div className="animate-spin h-5 w-5 border-2 border-gold border-t-transparent rounded-none"></div>
-          <span className="text-muted font-bold uppercase tracking-widest text-[10px]">Verifying credentials...</span>
+          <div className="animate-spin h-5 w-5 border-2 border-gold border-t-transparent rounded-lg"></div>
+          <span className="text-muted font-bold uppercase tracking-widest text-xs">Verifying credentials...</span>
         </div>
       </div>
     }>

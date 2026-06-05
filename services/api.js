@@ -1,16 +1,36 @@
-const rawApiUrl = typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1"
-  ? process.env.NEXT_PUBLIC_API_URL 
-  : "http://127.0.0.1:5000";
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000/api";
 
-export const API_BASE_URL = rawApiUrl?.replace(/\/api\/?$/, "") || "http://127.0.0.1:5000";
+export const API_BASE_URL = rawApiUrl.replace(/\/api\/?$/, "");
 export const API_URL = `${API_BASE_URL}/api`;
 
+export function extractList(data) {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") {
+    const vals = Object.values(data);
+    const arr = vals.find(v => Array.isArray(v));
+    if (arr) return arr;
+  }
+  return [];
+}
+
+export function getUserId(user) {
+  if (!user) return null;
+  return user.id || user._id || user.user_id || null;
+}
+
+const getToken = () => typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
 export const getHeaders = () => {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token = getToken();
   return {
     "Content-Type": "application/json",
     ...(token ? { "Authorization": `Bearer ${token}` } : {})
   };
+};
+
+const authHeaders = () => {
+  const token = getToken();
+  return token ? { "Authorization": `Bearer ${token}` } : {};
 };
 
 export const registerUser = async (data) => {
@@ -50,57 +70,43 @@ export const resetPassword = async (data) => {
 };
 
 export const createProduct = async (formData) => {
-  const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/products/create`, {
     method: "POST",
-    headers: {
-      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    },
+    headers: authHeaders(),
     body: formData
   });
   return res.json();
 };
 
 export const updateProduct = async (id, formData) => {
-  const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/products/update/${id}`, {
     method: "PUT",
-    headers: {
-      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    },
+    headers: authHeaders(),
     body: formData
   });
   return res.json();
 };
 
 export const deleteProduct = async (id) => {
-  const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/products/delete/${id}`, {
     method: "DELETE",
-    headers: {
-      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    }
+    headers: authHeaders()
   });
   return res.json();
 };
 
 export const getMyListings = async (userId) => {
-  const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/products/my-listings/${userId}`, {
-    headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
+    headers: authHeaders()
   });
   return res.json();
 };
 
-export const updateProductStatus = async (id, status) => {
-  const token = localStorage.getItem("token");
+export const updateProductStatus = async (id, status, reason = "") => {
   const res = await fetch(`${API_URL}/products/status/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({ status })
+    headers: getHeaders(),
+    body: JSON.stringify({ status, reason })
   });
   return res.json();
 };
@@ -117,58 +123,48 @@ export const getBrands = async () => {
 
 // User Profile & Activity
 export const getUserProfile = async (id) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const res = await fetch(`${API_URL}/user/profile/${id}`, {
-    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    headers: authHeaders()
   });
   return res.json();
 };
 
 export const updateUserProfile = async (id, data) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const res = await fetch(`${API_URL}/user/profile/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { "Authorization": `Bearer ${token}` } : {})
-    },
+    headers: getHeaders(),
     body: JSON.stringify(data)
   });
   return res.json();
 };
 
 export const getUserActivity = async (id) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const res = await fetch(`${API_URL}/user/activity/${id}`, {
-    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    headers: authHeaders()
   });
   return res.json();
 };
 
 export const getUserReports = async (id, year) => {
-  const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/user/reports/${id}?year=${year || ""}`, {
-    headers: {
-      ...(token ? { "Authorization": `Bearer ${token}` } : {})
-    }
+    headers: authHeaders()
   });
   return res.json();
 };
 
 export const getUserLedger = async (id, filters = {}) => {
-  const token = localStorage.getItem("token");
   const query = new URLSearchParams(filters).toString();
   const res = await fetch(`${API_URL}/user/ledger/${id}?${query}`, {
-    headers: {
-      ...(token ? { "Authorization": `Bearer ${token}` } : {})
-    }
+    headers: authHeaders()
   });
   return res.json();
 };
 
 // Watch Vault
 export const getWatchVault = async (userId) => {
-  const res = await fetch(`${API_URL}/user/vault/${userId}`);
+  const res = await fetch(`${API_URL}/user/vault/${userId}`, {
+    headers: getHeaders()
+  });
   return res.json();
 };
 
@@ -255,10 +251,178 @@ export const uploadChatImage = async (formData) => {
   const res = await fetch(`${API_URL}/chat/upload`, {
     method: "POST",
     headers: {
-      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
     },
     body: formData
   });
+  return res.json();
+};
+
+// ========== WISHLIST FOLDERS ==========
+export const createFolder = async (data) => {
+  const res = await fetch(`${API_URL}/watchlist/folders`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  });
+  return res.json();
+};
+export const getFolders = async (userId) => {
+  const res = await fetch(`${API_URL}/watchlist/folders/${userId}`, { headers: authHeaders() });
+  return res.json();
+};
+export const renameFolder = async (id, name) => {
+  const res = await fetch(`${API_URL}/watchlist/folders/${id}`, {
+    method: "PUT", headers: getHeaders(), body: JSON.stringify({ name })
+  });
+  return res.json();
+};
+export const deleteFolder = async (id) => {
+  const res = await fetch(`${API_URL}/watchlist/folders/${id}`, { method: "DELETE", headers: authHeaders() });
+  return res.json();
+};
+
+// ========== PRICE DROP ALERTS ==========
+export const createPriceAlert = async (data) => {
+  const res = await fetch(`${API_URL}/features/price-alerts`, {
+    method: "POST", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+export const getPriceAlerts = async (userId) => {
+  const res = await fetch(`${API_URL}/features/price-alerts/${userId}`, { headers: authHeaders() });
+  return res.json();
+};
+export const deletePriceAlert = async (id) => {
+  const res = await fetch(`${API_URL}/features/price-alerts/${id}`, { method: "DELETE", headers: authHeaders() });
+  return res.json();
+};
+export const togglePriceAlert = async (id) => {
+  const res = await fetch(`${API_URL}/features/price-alerts/${id}/toggle`, { method: "PATCH", headers: authHeaders() });
+  return res.json();
+};
+
+// ========== DISPUTES ==========
+export const createDispute = async (data) => {
+  const res = await fetch(`${API_URL}/features/disputes`, {
+    method: "POST", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+export const getDisputeByDeal = async (dealId) => {
+  const res = await fetch(`${API_URL}/features/disputes/deal/${dealId}`, { headers: authHeaders() });
+  return res.json();
+};
+export const addEvidence = async (id, evidence_url) => {
+  const res = await fetch(`${API_URL}/features/disputes/${id}/evidence`, {
+    method: "POST", headers: getHeaders(), body: JSON.stringify({ evidence_url })
+  });
+  return res.json();
+};
+export const listDisputes = async (status) => {
+  const q = status ? `?status=${status}` : "";
+  const res = await fetch(`${API_URL}/features/admin/disputes${q}`, { headers: authHeaders() });
+  return res.json();
+};
+export const resolveDispute = async (id, data) => {
+  const res = await fetch(`${API_URL}/features/admin/disputes/${id}/resolve`, {
+    method: "PATCH", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+
+// ========== COUPONS ==========
+export const createCoupon = async (data) => {
+  const res = await fetch(`${API_URL}/features/admin/coupons`, {
+    method: "POST", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+export const listCoupons = async () => {
+  const res = await fetch(`${API_URL}/features/admin/coupons`, { headers: authHeaders() });
+  return res.json();
+};
+export const updateCoupon = async (id, data) => {
+  const res = await fetch(`${API_URL}/features/admin/coupons/${id}`, {
+    method: "PATCH", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+export const deleteCoupon = async (id) => {
+  const res = await fetch(`${API_URL}/features/admin/coupons/${id}`, { method: "DELETE", headers: authHeaders() });
+  return res.json();
+};
+export const validateCoupon = async (data) => {
+  const res = await fetch(`${API_URL}/features/coupons/validate`, {
+    method: "POST", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+export const applyCouponToDeal = async (data) => {
+  const res = await fetch(`${API_URL}/features/coupons/apply`, {
+    method: "POST", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+
+// ========== SELLER VERIFICATION ==========
+export const submitVerificationDoc = async (data) => {
+  const res = await fetch(`${API_URL}/features/verification`, {
+    method: "POST", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+export const getVerificationStatus = async (userId) => {
+  const res = await fetch(`${API_URL}/features/verification/${userId}`, { headers: authHeaders() });
+  return res.json();
+};
+export const listVerifications = async (status) => {
+  const q = status ? `?status=${status}` : "";
+  const res = await fetch(`${API_URL}/features/admin/verifications${q}`, { headers: authHeaders() });
+  return res.json();
+};
+export const reviewVerification = async (id, data) => {
+  const res = await fetch(`${API_URL}/features/admin/verifications/${id}/review`, {
+    method: "PATCH", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+
+// ========== FEATURED PRODUCTS ==========
+export const getFeaturedProducts = async () => {
+  const res = await fetch(`${API_URL}/features/products/featured`);
+  return res.json();
+};
+export const toggleFeatured = async (id, data) => {
+  const res = await fetch(`${API_URL}/features/admin/products/${id}/feature`, {
+    method: "PATCH", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+export const setFeatured = async (id, data) => {
+  const res = await fetch(`${API_URL}/features/admin/products/${id}/feature`, {
+    method: "POST", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+
+// ========== BULK LISTING ==========
+export const bulkCreateProducts = async (data) => {
+  const res = await fetch(`${API_URL}/features/products/bulk-create`, {
+    method: "POST", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+
+// ========== PAYOUT BATCH ==========
+export const batchReleasePayouts = async (data) => {
+  const res = await fetch(`${API_URL}/features/admin/payouts/batch-release`, {
+    method: "POST", headers: getHeaders(), body: JSON.stringify(data)
+  });
+  return res.json();
+};
+export const getPendingPayouts = async () => {
+  const res = await fetch(`${API_URL}/features/admin/payouts/pending`, { headers: authHeaders() });
   return res.json();
 };
 
@@ -479,9 +643,13 @@ export const getQuickReplies = async () => {
 };
 
 export const confirmDirectDeal = async (chat_id, seller_id, final_price) => {
+  const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/chat/confirm-direct-deal`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    },
     body: JSON.stringify({ chat_id, seller_id, final_price })
   });
   return res.json();

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { TrendingUp, TrendingDown, Activity } from "lucide-react";
 
@@ -13,14 +13,14 @@ export default function StatCard({ title, value, trend, color = "slate", onDetai
       <div className="flex flex-col gap-6 relative z-10">
         <div className="flex items-start justify-between">
             <div className="flex flex-col gap-1">
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{title}</p>
+               <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">{title}</p>
                <div className="flex items-center gap-1.5 mt-0.5">
                   <Activity size={10} className="text-slate-300" />
-                  <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Live Metadata</span>
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Live Metadata</span>
                </div>
             </div>
             {trend && (
-             <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-black tracking-tight uppercase transition-all duration-300 group-hover:scale-105 ${isPositive ? 'bg-emerald-50 text-emerald-600 shadow-sm shadow-emerald-100' : 'bg-rose-50 text-rose-600 shadow-sm shadow-rose-100'}`}>
+             <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-black tracking-tight uppercase transition-all duration-300 group-hover:scale-105 ${isPositive ? 'bg-emerald-50 text-emerald-600 shadow-sm shadow-emerald-100' : 'bg-rose-50 text-rose-600 shadow-sm shadow-rose-100'}`}>
                {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                {trend}
              </div>
@@ -43,11 +43,11 @@ export default function StatCard({ title, value, trend, color = "slate", onDetai
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                  <div className="w-1.5 h-1.5 rounded-full bg-slate-900 animate-pulse"></div>
-                 <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Active Analysis</span>
+                 <span className="text-xs font-black text-slate-300 uppercase tracking-widest">Active Analysis</span>
               </div>
               <button 
                 onClick={onDetail}
-                className="text-[8px] font-black text-slate-400 hover:text-slate-900 uppercase tracking-widest transition-colors"
+                className="text-xs font-black text-slate-400 hover:text-slate-900 uppercase tracking-widest transition-colors"
               >
                 Details
               </button>

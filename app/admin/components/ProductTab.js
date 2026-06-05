@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { Search, Eye, CheckCircle2, XCircle, RefreshCw, MessageSquare, Send } from "lucide-react";
+import ConfirmDialog from "../../../components/ConfirmDialog";
 
 export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL, updateProductStatus, deleteProduct, showToast, getHeaders }) {
   const [search, setSearch] = useState("");
@@ -9,6 +10,7 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [notifyMsg, setNotifyMsg] = useState("");
   const [sending, setSending] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const getImg = (p) => {
     if (!p) return "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=400&auto=format&fit=crop";
@@ -63,16 +65,16 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
   return (
     <div className="space-y-6">
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-surface p-5 rounded-none border border-border shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 bg-surface p-5 rounded-xl border border-border shadow-sm">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"/>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search listings by title or seller..."
-            className="w-full pl-9 pr-4 py-3 bg-background rounded-none text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:bg-surface transition-all placeholder:text-muted"/>
+            className="w-full pl-9 pr-4 py-3 bg-background rounded-lg text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:bg-surface transition-all placeholder:text-muted"/>
         </div>
-        <div className="flex gap-1 bg-background p-1 rounded-none">
+        <div className="flex gap-1 bg-background p-1 rounded-xl">
           {["all","pending","approved","rejected"].map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              className={`px-3 py-2 rounded-none text-[10px] font-black uppercase tracking-widest transition-all ${filter === f ? "bg-surface text-primary shadow" : "text-muted hover:text-muted"}`}>
+              className={`px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${filter === f ? "bg-surface text-primary shadow" : "text-muted hover:text-muted"}`}>
               {f}
             </button>
           ))}
@@ -81,17 +83,17 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
 
       {/* Pending banner */}
       {products.filter(p => p.status === "pending").length > 0 && filter === "all" && (
-        <div className="flex items-center gap-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-none px-6 py-4">
+        <div className="flex items-center gap-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-6 py-4">
           <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"/>
           <p className="text-[12px] font-black">
-            {products.filter(p => p.status === "pending").length} listings pending your review â€” approve or reject below
+            {products.filter(p => p.status === "pending").length} listings pending your review — approve or reject below
           </p>
-          <button onClick={() => setFilter("pending")} className="ml-auto text-[10px] font-black underline whitespace-nowrap">Show Pending</button>
+          <button onClick={() => setFilter("pending")} className="ml-auto text-xs font-black underline whitespace-nowrap">Show Pending</button>
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-surface rounded-none border border-border shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
         {tabLoading ? (
           <div className="flex items-center justify-center py-20"><RefreshCw className="animate-spin text-primary" size={24}/></div>
         ) : (
@@ -102,19 +104,19 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                 <thead>
                   <tr className="border-b border-border bg-background">
                     {["Product","Seller","Category","Type","Price","Shipping","Views","Status","Actions"].map(h => (
-                      <th key={h} className="text-left px-4 py-3 text-[9px] font-black text-muted uppercase tracking-widest whitespace-nowrap">{h}</th>
+                      <th key={h} className="text-left px-4 py-3 text-xs font-black text-muted uppercase tracking-widest whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 && (
-                    <tr><td colSpan={8} className="text-center py-16 text-[11px] text-muted font-bold uppercase tracking-widest">No listings found</td></tr>
+                    <tr><td colSpan={8} className="text-center py-16 text-sm text-muted font-bold uppercase tracking-widest">No listings found</td></tr>
                   )}
                   {filtered.map(p => (
                     <tr key={p.id} className={`border-b border-gray-50 hover:bg-background transition-colors ${p.status === "pending" ? "border-l-4 border-l-amber-400" : ""}`}>
                       <td className="px-4 py-4">
                         <button onClick={() => setSelectedProduct(p)} className="flex items-center gap-3 text-left group">
-                          <div className="w-12 h-12 rounded-none bg-background border border-border overflow-hidden flex-shrink-0 relative">
+                          <div className="w-12 h-12 rounded-xl bg-background border border-border overflow-hidden flex-shrink-0 relative">
                             <img src={getImg(p)} className="w-full h-full object-contain group-hover:scale-105 transition-transform" alt={p.title}/>
                             {getMediaList(p).some(m => isVideo(m)) && (
                               <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
@@ -126,43 +128,43 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                           </div>
                           <div>
                             <p className="text-[12px] font-black text-foreground group-hover:text-primary transition-colors max-w-[160px] truncate">{p.title}</p>
-                            <p className="text-[9px] text-muted font-bold mt-0.5">{new Date(p.created_at).toLocaleDateString()}</p>
+                            <p className="text-xs text-muted font-bold mt-0.5">{new Date(p.created_at).toLocaleDateString()}</p>
                           </div>
                         </button>
                       </td>
-                      <td className="px-4 py-4 text-[11px] font-bold text-muted">{p.seller_name || "â€”"}</td>
-                      <td className="px-4 py-4"><span className="px-2 py-1 bg-background text-muted rounded-none text-[9px] font-black uppercase">{p.category_name || "General"}</span></td>
+                      <td className="px-4 py-4 text-sm font-bold text-muted">{p.seller_name || "—"}</td>
+                      <td className="px-4 py-4"><span className="px-2 py-1 bg-background text-muted rounded-lg text-xs font-black uppercase">{p.category_name || "General"}</span></td>
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-1">
                           {p.allow_buy_now && <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[7px] font-black uppercase">Buy Now</span>}
                           {p.allow_auction && <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-[7px] font-black uppercase">Auction</span>}
                           {p.allow_offers && <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[7px] font-black uppercase">Offers</span>}
-                          {!p.allow_buy_now && !p.allow_auction && !p.allow_offers && <span className="text-[9px] text-muted">None</span>}
+                          {!p.allow_buy_now && !p.allow_auction && !p.allow_offers && <span className="text-xs text-muted">None</span>}
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-[12px] font-black text-foreground">â‚¹{parseFloat(p.price||0).toLocaleString()}</td>
+                      <td className="px-4 py-4 text-[12px] font-black text-foreground">₹{parseFloat(p.price||0).toLocaleString()}</td>
                       <td className="px-4 py-4">
                         <div className="flex flex-col">
-                          <span className="text-[10px] font-black text-foreground">
-                             {p.shipping_type === 'free' ? 'FREE' : p.shipping_type === 'contact' ? 'TBD' : `â‚¹${parseFloat(p.shipping_fee||0).toLocaleString()}`}
+                          <span className="text-xs font-black text-foreground">
+                             {p.shipping_type === 'free' ? 'FREE' : p.shipping_type === 'contact' ? 'TBD' : `₹${parseFloat(p.shipping_fee||0).toLocaleString()}`}
                           </span>
-                          <span className="text-[8px] font-bold text-muted uppercase">{p.shipping_type}</span>
+                          <span className="text-xs font-bold text-muted uppercase">{p.shipping_type}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-[11px] font-bold text-muted">{p.views || 0}</td>
-                      <td className="px-4 py-4"><span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase ${statusColor(p.status)}`}>{p.status}</span></td>
+                      <td className="px-4 py-4 text-sm font-bold text-muted">{p.views || 0}</td>
+                      <td className="px-4 py-4"><span className={`px-2 py-1 rounded-full text-xs font-black uppercase ${statusColor(p.status)}`}>{p.status}</span></td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-1.5">
-                          <button onClick={() => setSelectedProduct(p)} className="p-2 bg-background hover:bg-primary hover:text-white text-muted rounded-none transition-all" title="Details"><Eye size={13}/></button>
+                          <button onClick={() => setSelectedProduct(p)} className="p-2 bg-background hover:bg-primary hover:text-white text-muted rounded-lg transition-all" title="Details"><Eye size={13}/></button>
                           {p.status !== "approved" && (
-                            <button onClick={() => updateProductStatus(p.id,"approved")} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-none transition-all" title="Approve"><CheckCircle2 size={13}/></button>
+                            <button onClick={() => updateProductStatus(p.id,"approved")} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all" title="Approve"><CheckCircle2 size={13}/></button>
                           )}
                           <button onClick={() => {
                             const reason = window.prompt("Enter rejection reason:", notifyMsg);
                             if (reason !== null) updateProductStatus(p.id, "rejected", reason);
-                          }} className="p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-none transition-all" title="Reject"><XCircle size={13}/></button>
-                          <button onClick={() => { if(confirm("Delete this product?")) deleteProduct(p.id); }} className="p-2 bg-background hover:bg-rose-50 hover:text-rose-600 text-muted rounded-none transition-all" title="Delete">
-                            <span className="text-[11px] font-black">âœ•</span>
+                          }} className="p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all" title="Reject"><XCircle size={13}/></button>
+                          <button onClick={() => setConfirmDialog({ title: "Delete product?", message: "Delete this product?", confirmText: "Delete", variant: "danger", onConfirm: () => deleteProduct(p.id) })} className="p-2 bg-background hover:bg-rose-50 hover:text-rose-600 text-muted rounded-lg transition-all" title="Delete">
+                            <span className="text-sm font-black"></span>
                           </button>
                         </div>
                       </td>
@@ -175,51 +177,51 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
             {/* Mobile Cards */}
             <div className="md:hidden divide-y divide-gray-100">
                {filtered.length === 0 && (
-                <div className="text-center py-16 text-[11px] text-muted font-bold uppercase tracking-widest">No listings found</div>
+                <div className="text-center py-16 text-sm text-muted font-bold uppercase tracking-widest">No listings found</div>
               )}
               {filtered.map(p => (
                 <div key={p.id} className={`p-4 space-y-4 ${p.status === "pending" ? "bg-amber-50/30" : ""}`}>
                   <div className="flex gap-4">
-                    <button onClick={() => setSelectedProduct(p)} className="w-16 h-16 rounded-none bg-background border border-border overflow-hidden flex-shrink-0">
+                    <button onClick={() => setSelectedProduct(p)} className="w-16 h-16 rounded-xl bg-background border border-border overflow-hidden flex-shrink-0">
                       <img src={getImg(p)} className="w-full h-full object-contain" alt={p.title}/>
                     </button>
                     <div className="flex-grow min-w-0">
                       <div className="flex justify-between items-start mb-1">
                         <h4 className="text-[13px] font-black text-foreground truncate pr-2">{p.title}</h4>
-                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase whitespace-nowrap ${statusColor(p.status)}`}>{p.status}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-black uppercase whitespace-nowrap ${statusColor(p.status)}`}>{p.status}</span>
                       </div>
-                      <p className="text-[10px] font-bold text-muted uppercase tracking-tight">{p.seller_name || "â€”"} Â· {p.category_name || "General"}</p>
+                      <p className="text-xs font-bold text-muted uppercase tracking-tight">{p.seller_name || "—"} · {p.category_name || "General"}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <p className="text-sm font-black text-primary">â‚¹{parseFloat(p.price||0).toLocaleString()}</p>
-                        <span className="text-[9px] font-bold text-muted uppercase">
-                           + {p.shipping_type === 'free' ? 'Free' : p.shipping_type === 'contact' ? 'TBD' : `â‚¹${parseFloat(p.shipping_fee||0).toLocaleString()}`} Ship
+                        <p className="text-sm font-black text-primary">₹{parseFloat(p.price||0).toLocaleString()}</p>
+                        <span className="text-xs font-bold text-muted uppercase">
+                           + {p.shipping_type === 'free' ? 'Free' : p.shipping_type === 'contact' ? 'TBD' : `₹${parseFloat(p.shipping_fee||0).toLocaleString()}`} Ship
                         </span>
                       </div>
                     </div>
                   </div>
                   
                   <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-4 text-[10px] text-muted font-bold uppercase tracking-widest">
+                    <div className="flex items-center gap-4 text-xs text-muted font-bold uppercase tracking-widest">
                       <span>{p.views || 0} Views</span>
                       <span>{new Date(p.created_at).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <button onClick={() => setSelectedProduct(p)} className="p-2.5 bg-background text-muted rounded-none">
-                        <Eye size={16}/>
-                      </button>
-                      {p.status !== "approved" && (
-                        <button onClick={() => updateProductStatus(p.id,"approved")} className="p-2.5 bg-emerald-50 text-emerald-600 rounded-none">
-                          <CheckCircle2 size={16}/>
+<button onClick={() => setSelectedProduct(p)} className="p-2.5 bg-background text-muted rounded-lg">
+                          <Eye size={16}/>
                         </button>
-                      )}
-                      <button onClick={() => {
-                        const reason = window.prompt("Enter rejection reason:");
-                        if (reason !== null) updateProductStatus(p.id, "rejected", reason);
-                      }} className="p-2.5 bg-rose-50 text-rose-600 rounded-none">
-                        <XCircle size={16}/>
-                      </button>
-                      <button onClick={() => { if(confirm("Delete this product?")) deleteProduct(p.id); }} className="p-2.5 bg-background text-muted rounded-none">
-                        <span className="text-[11px] font-black">âœ•</span>
+                        {p.status !== "approved" && (
+                          <button onClick={() => updateProductStatus(p.id,"approved")} className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg">
+                            <CheckCircle2 size={16}/>
+                          </button>
+                        )}
+                        <button onClick={() => {
+                          const reason = window.prompt("Enter rejection reason:");
+                          if (reason !== null) updateProductStatus(p.id, "rejected", reason);
+                        }} className="p-2.5 bg-rose-50 text-rose-600 rounded-lg">
+                          <XCircle size={16}/>
+                        </button>
+                        <button onClick={() => setConfirmDialog({ title: "Delete product?", message: "Delete this product?", confirmText: "Delete", variant: "danger", onConfirm: () => deleteProduct(p.id) })} className="p-2.5 bg-background text-muted rounded-lg">
+                        <span className="text-sm font-black"></span>
                       </button>
                     </div>
                   </div>
@@ -238,7 +240,7 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
           <div className="bg-surface w-full max-w-5xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden relative z-10 flex flex-col md:flex-row">
             {/* Image/Media side */}
             <div className="w-full md:w-[380px] bg-background p-6 flex flex-col items-center border-r border-border flex-shrink-0 overflow-y-auto">
-              <div className="w-full aspect-[4/5] rounded-none bg-surface border border-border overflow-hidden shadow-sm mb-4 relative group">
+              <div className="w-full aspect-[4/5] rounded-xl bg-surface border border-border overflow-hidden shadow-sm mb-4 relative group">
                 {isVideo(selectedMedia || getMediaList(selectedProduct)[0]) ? (
                   <video 
                     key={selectedMedia || getMediaList(selectedProduct)[0]}
@@ -256,7 +258,7 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                 )}
                 
                 {/* Media Label Overlay */}
-                <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-none text-[8px] font-black text-white uppercase tracking-widest">
+                <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg text-xs font-black text-white uppercase tracking-widest">
                   {isVideo(selectedMedia || getMediaList(selectedProduct)[0]) ? 'VIDEO' : 'IMAGE'}
                 </div>
               </div>
@@ -267,7 +269,7 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                   <button 
                     key={idx} 
                     onClick={() => setSelectedMedia(m)}
-                    className={`aspect-square rounded-none border-2 overflow-hidden bg-surface transition-all relative ${
+                    className={`aspect-square rounded-xl border-2 overflow-hidden bg-surface transition-all relative ${
                       (selectedMedia === m || (!selectedMedia && idx === 0)) 
                       ? "border-[#1e3a5f] scale-95 shadow-inner" 
                       : "border-transparent hover:border-border grayscale-[0.5] hover:grayscale-0"
@@ -280,28 +282,28 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                         </div>
                       </div>
                     ) : (
-                      <img src={m.startsWith('http') ? m : `${API_BASE_URL}/uploads/${m}`} className="w-full h-full object-cover" />
+                      <img src={m.startsWith('http') ? m : `${API_BASE_URL}/uploads/${m}`} className="w-full h-full object-cover" alt="Product image" />
                     )}
                   </button>
                 ))}
               </div>
 
-              <span className={`w-full text-center py-2 rounded-none text-[10px] font-black uppercase tracking-widest ${statusColor(selectedProduct.status)}`}>{selectedProduct.status}</span>
-              <p className="text-2xl font-black text-foreground mt-3">â‚¹{parseFloat(selectedProduct.price||0).toLocaleString()}</p>
+              <span className={`w-full text-center py-2 rounded-lg text-xs font-black uppercase tracking-widest ${statusColor(selectedProduct.status)}`}>{selectedProduct.status}</span>
+              <p className="text-2xl font-black text-foreground mt-3">₹{parseFloat(selectedProduct.price||0).toLocaleString()}</p>
               <div className="mt-4 w-full space-y-2">
                 {[
-                  ["Seller", selectedProduct.seller_name || "â€”"],
-                  ["Category", selectedProduct.category_name || "â€”"],
-                  ["Buy Now", selectedProduct.allow_buy_now ? `Yes (â‚¹${parseFloat(selectedProduct.buy_it_now_price || selectedProduct.price).toLocaleString()})` : "No"],
-                  ["Auction", selectedProduct.allow_auction ? `Yes (Start: â‚¹${parseFloat(selectedProduct.starting_bid).toLocaleString()})` : "No"],
-                  ["Auction End", selectedProduct.auction_end ? new Date(selectedProduct.auction_end).toLocaleString() : "â€”"],
+                  ["Seller", selectedProduct.seller_name || "—"],
+                  ["Category", selectedProduct.category_name || "—"],
+                  ["Buy Now", selectedProduct.allow_buy_now ? `Yes (₹${parseFloat(selectedProduct.buy_it_now_price || selectedProduct.price).toLocaleString()})` : "No"],
+                  ["Auction", selectedProduct.allow_auction ? `Yes (Start: ₹${parseFloat(selectedProduct.starting_bid).toLocaleString()})` : "No"],
+                  ["Auction End", selectedProduct.auction_end ? new Date(selectedProduct.auction_end).toLocaleString() : "—"],
                   ["Offers Allowed", selectedProduct.allow_offers ? "Yes" : "No"],
-                  ["Shipping Fee", selectedProduct.shipping_type === 'free' ? "Free" : selectedProduct.shipping_type === 'contact' ? "TBD" : `â‚¹${parseFloat(selectedProduct.shipping_fee||0).toLocaleString()}`],
+                  ["Shipping Fee", selectedProduct.shipping_type === 'free' ? "Free" : selectedProduct.shipping_type === 'contact' ? "TBD" : `₹${parseFloat(selectedProduct.shipping_fee||0).toLocaleString()}`],
                   ["Shipping Type", selectedProduct.shipping_type || "fixed"],
                 ].map(([k,v]) => (
-                  <div key={k} className="flex justify-between bg-surface rounded-none px-3 py-2 border border-border">
-                    <span className="text-[9px] font-bold text-muted uppercase tracking-widest">{k}</span>
-                    <span className="text-[10px] font-black text-foreground">{v}</span>
+                  <div key={k} className="flex justify-between bg-surface rounded-xl px-3 py-2 border border-border">
+                    <span className="text-xs font-bold text-muted uppercase tracking-widest">{k}</span>
+                    <span className="text-xs font-black text-foreground">{v}</span>
                   </div>
                 ))}
               </div>
@@ -311,12 +313,12 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
             <div className="flex-grow p-8 overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-black text-foreground pr-4">{selectedProduct.title}</h2>
-                <button onClick={() => setSelectedProduct(null)} className="p-2 bg-background hover:bg-background rounded-none flex-shrink-0"><XCircle size={20} className="text-muted"/></button>
+                <button onClick={() => setSelectedProduct(null)} className="p-2 bg-background hover:bg-background rounded-lg flex-shrink-0"><XCircle size={20} className="text-muted"/></button>
               </div>
 
               {selectedProduct.description && (
-                <div className="mb-6 p-4 bg-background rounded-none border border-border">
-                  <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-2">Description</p>
+                <div className="mb-6 p-4 bg-background rounded-xl border border-border">
+                  <p className="text-xs font-black text-muted uppercase tracking-widest mb-2">Description</p>
                   <p className="text-[13px] text-muted font-medium leading-relaxed">{selectedProduct.description}</p>
                 </div>
               )}
@@ -324,12 +326,12 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
               {/* Item Specifics */}
               {selectedProduct.item_specifics && Object.keys(selectedProduct.item_specifics).length > 0 && (
                 <div className="mb-6">
-                  <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-3">Item Specifics</p>
+                  <p className="text-xs font-black text-muted uppercase tracking-widest mb-3">Item Specifics</p>
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(selectedProduct.item_specifics).filter(([k]) => !k.endsWith("_mode")).map(([k,v]) => (
-                      <div key={k} className="flex justify-between bg-background rounded-none px-3 py-2 border border-border">
-                        <span className="text-[9px] font-bold text-muted uppercase">{k.replace(/_/g," ")}</span>
-                        <span className="text-[10px] font-black text-foreground">{String(v)}</span>
+                      <div key={k} className="flex justify-between bg-background rounded-xl px-3 py-2 border border-border">
+                        <span className="text-xs font-bold text-muted uppercase">{k.replace(/_/g," ")}</span>
+                        <span className="text-xs font-black text-foreground">{String(v)}</span>
                       </div>
                     ))}
                   </div>
@@ -339,12 +341,12 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
               {/* Condition Details */}
               {selectedProduct.condition_details && Object.keys(selectedProduct.condition_details).length > 0 && (
                 <div className="mb-6">
-                  <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-3">Condition Details</p>
+                  <p className="text-xs font-black text-muted uppercase tracking-widest mb-3">Condition Details</p>
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(selectedProduct.condition_details).filter(([k]) => !k.endsWith("_mode")).map(([k,v]) => (
-                      <div key={k} className="flex justify-between bg-background rounded-none px-3 py-2 border border-border">
-                        <span className="text-[9px] font-bold text-muted uppercase">{k.replace(/_/g," ")}</span>
-                        <span className="text-[10px] font-black text-foreground">{String(v)}</span>
+                      <div key={k} className="flex justify-between bg-background rounded-xl px-3 py-2 border border-border">
+                        <span className="text-xs font-bold text-muted uppercase">{k.replace(/_/g," ")}</span>
+                        <span className="text-xs font-black text-foreground">{String(v)}</span>
                       </div>
                     ))}
                   </div>
@@ -355,8 +357,8 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
               <div className="flex gap-3 mb-6">
                 {selectedProduct.status !== "approved" && (
                   <button onClick={() => { updateProductStatus(selectedProduct.id,"approved"); setSelectedProduct(null); }}
-                    className="flex-1 py-3 bg-emerald-600 text-white rounded-none text-[11px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all">
-                    âœ“ Approve Listing
+                    className="flex-1 py-3 bg-emerald-600 text-white rounded-lg text-sm font-black uppercase tracking-widest hover:bg-emerald-700 transition-all">
+                    Approve Listing
                   </button>
                 )}
                 <button onClick={() => {
@@ -366,19 +368,19 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                     setSelectedProduct(null);
                   }
                 }}
-                  className="flex-1 py-3 bg-rose-50 text-rose-600 border border-rose-100 rounded-none text-[11px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all">
-                  âœ• Reject Listing
+                  className="flex-1 py-3 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-sm font-black uppercase tracking-widest hover:bg-rose-100 transition-all">
+                   Reject Listing
                 </button>
               </div>
 
               {/* Notify Seller */}
-              <div className="bg-blue-50 rounded-none p-5 border border-blue-100">
+              <div className="bg-blue-50 rounded-xl p-5 border border-blue-100">
                 <div className="flex items-center gap-2 mb-3">
                   <MessageSquare size={14} className="text-primary"/>
-                  <p className="text-[11px] font-black text-primary uppercase tracking-widest">Message Seller</p>
+                  <p className="text-sm font-black text-primary uppercase tracking-widest">Message Seller</p>
                 </div>
-                <p className="text-[10px] text-muted font-medium mb-3">
-                  Send a message to <strong>{selectedProduct.seller_name}</strong> about this listing â€” they&apos;ll receive it in their Messages inbox.
+                <p className="text-xs text-muted font-medium mb-3">
+                  Send a message to <strong>{selectedProduct.seller_name}</strong> about this listing — they&apos;ll receive it in their Messages inbox.
                 </p>
                 <div className="flex gap-2">
                   <textarea
@@ -386,10 +388,10 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                     onChange={e => setNotifyMsg(e.target.value)}
                     placeholder="e.g. Your listing was rejected because the images are unclear. Please re-upload with better quality photos."
                     rows={3}
-                    className="flex-1 p-3 bg-surface rounded-none border border-blue-200 text-[12px] font-medium outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 resize-none placeholder:text-muted"
+                    className="flex-1 p-3 bg-surface rounded-lg border border-blue-200 text-[12px] font-medium outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 resize-none placeholder:text-muted"
                   />
                   <button onClick={sendNotification} disabled={sending || !notifyMsg.trim()}
-                    className="flex-shrink-0 w-12 flex items-center justify-center bg-primary text-white rounded-none hover:bg-[#2e538a] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="flex-shrink-0 w-12 flex items-center justify-center bg-primary text-white rounded-lg hover:bg-[#2e538a] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                     {sending ? <RefreshCw size={16} className="animate-spin"/> : <Send size={16}/>}
                   </button>
                 </div>
@@ -398,6 +400,17 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        onConfirm={confirmDialog?.onConfirm || (() => {})}
+        title={confirmDialog?.title || "Confirm"}
+        message={confirmDialog?.message || "Are you sure?"}
+        confirmText={confirmDialog?.confirmText || "Delete"}
+        cancelText="Cancel"
+        variant={confirmDialog?.variant || "danger"}
+      />
     </div>
   );
 }

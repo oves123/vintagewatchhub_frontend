@@ -2,21 +2,22 @@
 
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
-import { API_BASE_URL, API_URL } from "../services/api";
+import OptimizedImage from "./OptimizedImage";
+import QuickViewModal from "./QuickViewModal";
+import { API_BASE_URL, API_URL, extractList, getUserId, getHeaders } from "../services/api";
 
-// ── Module-level cache prevents N+1 watchlist fetches when many cards render ──
-// All ProductCards on the same page share this single cached response.
-const _watchlistCache = new Map(); // key: userId, value: { data, ts }
-const CACHE_TTL_MS = 30_000; // 30 seconds
+const _watchlistCache = new Map();
+const CACHE_TTL_MS = 30_000;
 
 async function getCachedWatchlist(userId) {
   const cached = _watchlistCache.get(userId);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.data;
-  const res = await fetch(`${API_URL}/watchlist/${userId}`);
+  const res = await fetch(`${API_URL}/watchlist/${userId}`, { headers: getHeaders() });
   if (!res.ok) return [];
   const data = await res.json();
-  _watchlistCache.set(userId, { data: Array.isArray(data) ? data : [], ts: Date.now() });
-  return _watchlistCache.get(userId).data;
+  const list = extractList(data);
+  _watchlistCache.set(userId, { data: list, ts: Date.now() });
+  return list;
 }
 
 function invalidateWatchlistCache(userId) {
@@ -26,16 +27,33 @@ function invalidateWatchlistCache(userId) {
 export default function ProductCard({ product, horizontal = false }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
+
+  const timeLeft = useMemo(() => {
+    if (!product.auction_end) return null;
+    const end = new Date(product.auction_end);
+    const now = new Date();
+    const diff = end - now;
+    if (diff <= 0) return "Ended";
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 48) return `${Math.floor(hours / 24)}d left`;
+    if (hours > 0) return `${hours}h ${minutes}m left`;
+    return `${minutes}m left`;
+  }, [product.auction_end]);
 
   const images = useMemo(() => {
     let imgs = [];
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
-      imgs = product.images.map(img => ({
-        url: img?.startsWith('http') ? img : `${API_BASE_URL}/uploads/${img}`,
-        path: img
-      }));
+      imgs = product.images.map(img => {
+        const src = typeof img === 'string' ? img : (img?.url || img?.src || '');
+        return {
+          url: src?.startsWith('http') ? src : `${API_BASE_URL}/uploads/${src}`,
+          path: src
+        };
+      });
     } else if (product?.image) {
-      const img = product.image;
+      const img = typeof product.image === 'string' ? product.image : (product.image?.url || product.image?.src || '');
       imgs = [{
         url: img.startsWith('http') ? img : `${API_BASE_URL}/uploads/${img}`,
         path: img
@@ -64,23 +82,29 @@ export default function ProductCard({ product, horizontal = false }) {
   };
 
   const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [heartActive, setHeartActive] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        setIsOwner(parseInt(product.seller_id) === parseInt(parsedUser.id));
-        // Use module-level cache — all cards on page share ONE watchlist fetch
-        getCachedWatchlist(parsedUser.id)
-          .then(data => {
-            setIsInWatchlist(data.some(item => item.product_id === parseInt(product.id)));
-          })
-          .catch(err => console.error("Failed to fetch watchlist:", err));
+        const uid = getUserId(parsedUser);
+        setIsOwner(parseInt(product.seller_id) === parseInt(uid));
+        if (uid) {
+          getCachedWatchlist(uid)
+            .then(data => {
+              if (cancelled) return;
+              setIsInWatchlist(data.some(item => item.product_id === parseInt(product.id)));
+            })
+            .catch(err => console.error("Failed to fetch watchlist:", err));
+        }
       } catch (e) {
         console.error(e);
       }
     }
+    return () => { cancelled = true; };
   }, [product.id]);
 
   const handleWatchlistToggle = async (e) => {
@@ -93,19 +117,22 @@ export default function ProductCard({ product, horizontal = false }) {
       return;
     }
     const user = JSON.parse(storedUser);
+    const uid = getUserId(user);
+    if (!uid) return;
 
     try {
       const endpoint = isInWatchlist ? "remove" : "add";
       const res = await fetch(`${API_URL}/watchlist/${endpoint}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user.id, product_id: parseInt(product.id) }),
+        headers: getHeaders(),
+        body: JSON.stringify({ user_id: uid, product_id: parseInt(product.id) }),
       });
 
       if (res.ok) {
         setIsInWatchlist(!isInWatchlist);
-        // Invalidate cache so the next render sees fresh data
-        invalidateWatchlistCache(user.id);
+        setHeartActive(true);
+        setTimeout(() => setHeartActive(false), 800);
+        invalidateWatchlistCache(uid);
         window.dispatchEvent(new Event("watchlistUpdated"));
       }
     } catch (err) {
@@ -113,51 +140,55 @@ export default function ProductCard({ product, horizontal = false }) {
     }
   };
 
+  const price = parseFloat(product.allow_auction ? (product.current_bid || product.starting_bid) : product.price).toLocaleString();
+  const isAuction = product.allow_auction;
+
   if (horizontal) {
     return (
-      <div className="bg-background rounded-none border border-border overflow-hidden hover:border-primary transition-all duration-500 group flex flex-col sm:flex-row mb-6 fade-up">
-        <Link href={`/products/${product.id}`} className="block w-full sm:w-48 md:w-64 aspect-[4/3] sm:aspect-square bg-gray-50 dark:bg-neutral-900 flex-shrink-0 relative overflow-hidden">
+      <div className="bg-surface border border-border overflow-hidden hover:border-gold/30 transition-all duration-500 group flex flex-col sm:flex-row mb-6 fade-up shadow-sm hover:shadow-lg">
+        <Link href={`/products/${product.id}`} className="block w-full sm:w-48 md:w-64 aspect-[4/3] sm:aspect-square bg-background flex-shrink-0 relative overflow-hidden rounded-l-xl">
           {isVideo(images[currentImageIndex]?.url) ? (
-            <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-              <svg className="w-10 h-10 text-white opacity-40 absolute z-10" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-              </svg>
-              <video 
-                src={images[currentImageIndex]?.url} 
-                className="w-full h-full object-cover" 
-                muted={product.video_settings?.[images[currentImageIndex]?.path]?.muted ?? true} 
-                playsInline 
+            <div className="w-full h-full bg-foreground/5 flex items-center justify-center">
+              <video
+                src={images[currentImageIndex]?.url}
+                className="w-full h-full object-cover"
+                muted={product.video_settings?.[images[currentImageIndex]?.path]?.muted ?? true}
+                playsInline
               />
             </div>
           ) : (
-            <img
+            <OptimizedImage
               src={images[currentImageIndex]?.url}
               alt={product.title}
-              className="w-full h-full object-contain p-6 transition-transform group-hover:scale-105 duration-500"
+              fill
+              size="small"
+              className="object-contain p-6 transition-transform duration-700 group-hover:scale-105"
             />
           )}
           {images.length > 1 && (
             <>
-              <button onClick={handlePrevImage} className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/90 backdrop-blur border border-gray-100 rounded-full text-gray-700 hover:text-blue-600 shadow-sm opacity-0 group-hover:opacity-100 transition z-10">
+              <button onClick={handlePrevImage} className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-background/90 backdrop-blur border border-border rounded-full text-muted hover:text-gold shadow-sm opacity-0 group-hover:opacity-100 transition z-10 flex items-center justify-center">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
               </button>
-              <button onClick={handleNextImage} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/90 backdrop-blur border border-gray-100 rounded-full text-gray-700 hover:text-blue-600 shadow-sm opacity-0 group-hover:opacity-100 transition z-10">
+              <button onClick={handleNextImage} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-background/90 backdrop-blur border border-border rounded-full text-muted hover:text-gold shadow-sm opacity-0 group-hover:opacity-100 transition z-10 flex items-center justify-center">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
               </button>
             </>
           )}
           {product.status === 'sold' && (
-            <div className="absolute inset-0 z-30 bg-black/60 flex items-center justify-center backdrop-blur-sm">
-              <span className="bg-red-600 text-white text-[13px] font-black uppercase tracking-[0.2em] px-5 py-2 rounded-full shadow-xl border-2 border-white/20 rotate-[-8deg]">
-                SOLD
+            <div className="absolute inset-0 z-30 bg-background/80 flex items-center justify-center backdrop-blur-sm">
+              <span className="text-gold-dark font-black uppercase tracking-[0.25em] px-6 py-2 border border-gold/30 rotate-[-8deg]">
+                Sold
               </span>
             </div>
           )}
-          <button 
+          <button
             onClick={handleWatchlistToggle}
-            className={`absolute top-2 right-2 z-20 p-2 bg-background/90 backdrop-blur rounded-full transition shadow-sm ${isInWatchlist ? 'text-primary opacity-100' : 'text-muted opacity-0 group-hover:opacity-100 hover:text-primary'}`}
+            className={`absolute top-3 right-3 z-20 p-2 bg-background/90 backdrop-blur rounded-full transition-all shadow-md flex items-center justify-center ${
+              isInWatchlist ? 'text-rose-500 opacity-100' : 'text-muted opacity-0 translate-y-1 group-hover:translate-y-0 group-hover:opacity-100 hover:text-rose-500'
+            } ${heartActive ? 'scale-110' : ''}`}
           >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+            <svg className="w-4 h-4" fill={isInWatchlist ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
           </button>
         </Link>
 
@@ -169,42 +200,28 @@ export default function ProductCard({ product, horizontal = false }) {
               </h3>
             </Link>
             <div className="flex items-center gap-3 mt-2.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{product.category_name || "Certified Asset"}</span>
+              <span className="text-xs uppercase tracking-widest text-muted">{product.category_name || "Certified Asset"}</span>
             </div>
-            <p className="mt-4 text-[13px] text-gray-500 line-clamp-2 leading-relaxed font-medium">
+            <p className="mt-4 text-sm text-muted line-clamp-2 leading-relaxed">
               {product.description || "Expertly inspected and verified timepiece ready for domestic shipping."}
             </p>
           </div>
 
-          <div className="mt-8 flex flex-wrap items-end justify-between gap-6 pt-5 border-t border-border">
+          <div className="mt-8 flex flex-wrap items-end justify-between gap-6 pt-5 border-t border-border/50">
             <div>
-              <p className="text-[11px] text-muted font-bold uppercase tracking-widest mb-1.5">
-                Price Guide
-              </p>
+              <p className="text-xs uppercase tracking-widest text-muted mb-1.5">Price Guide</p>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-semibold tracking-tight text-foreground">₹{parseFloat(product.allow_auction ? (product.current_bid || product.starting_bid) : product.price).toLocaleString()}</span>
-                  {product.allow_auction && (
-                    <span className="bg-amber-100 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                  <span className="font-serif text-2xl tracking-tight">₹{price}</span>
+                  {isAuction && (
+                    <span className="bg-primary/5 text-primary text-xs font-bold px-1.5 py-0.5 uppercase tracking-tighter rounded">
                       {product.current_bid ? 'Current Bid' : 'Starting Bid'}
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-0.5">
-                   {product.shipping_type === 'free' ? (
-                      <span className="text-emerald-600">Free Shipping</span>
-                   ) : product.shipping_type === 'contact' ? (
-                      <span className="text-blue-600">Shipping TBD</span>
-                   ) : (
-                      <>+ ₹{parseFloat(product.shipping_fee || 0).toLocaleString()} Shipping</>
-                   )}
-                </span>
               </div>
-              <p className="text-xs text-muted font-semibold mt-1">
-                Free Authentication • Secure Transit
-              </p>
             </div>
-            <Link href={`/products/${product.id}`} className="bg-primary text-white px-10 py-3 font-bold text-[12px] uppercase tracking-widest hover:bg-primary-light transition shadow-sm whitespace-nowrap">
+            <Link href={`/products/${product.id}`} className="px-8 py-2.5 bg-foreground text-background font-bold text-xs uppercase tracking-widest hover:bg-gold transition-colors">
               Discover
             </Link>
           </div>
@@ -214,121 +231,86 @@ export default function ProductCard({ product, horizontal = false }) {
   }
 
   return (
-    <div className="bg-background rounded-none border border-border overflow-hidden hover:border-primary transition-all duration-500 group flex flex-col h-full fade-up">
-      <Link href={`/products/${product.id}`} className="block aspect-[5/4] bg-gray-50 dark:bg-neutral-900 relative overflow-hidden">
+    <div className="bg-surface border border-border overflow-hidden transition-all duration-500 group flex flex-col h-full hover:-translate-y-1 hover:shadow-xl hover:border-border/80">
+        <Link href={`/products/${product.id}`} className="block aspect-[5/4] bg-background relative overflow-hidden rounded-t-xl">
         {isVideo(images[currentImageIndex]?.url) ? (
-          <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-            <svg className="w-10 h-10 text-white opacity-40 absolute z-10" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-            </svg>
-            <video 
-              src={images[currentImageIndex]?.url} 
-              className="w-full h-full object-cover" 
-              muted={product.video_settings?.[images[currentImageIndex]?.path]?.muted ?? true} 
-              playsInline 
+          <div className="w-full h-full bg-foreground/5 flex items-center justify-center">
+            <video
+              src={images[currentImageIndex]?.url}
+              className="w-full h-full object-cover"
+              muted={product.video_settings?.[images[currentImageIndex]?.path]?.muted ?? true}
+              playsInline
             />
           </div>
         ) : (
-          <img
+          <OptimizedImage
             src={images[currentImageIndex]?.url}
             alt={product.title}
-            className="w-full h-full object-contain p-6 transition-transform group-hover:scale-105 duration-700"
+            fill
+            size="small"
+            className="object-contain p-6 transition-transform duration-700 group-hover:scale-105"
           />
         )}
         {images.length > 1 && (
           <>
-            <button onClick={handlePrevImage} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/95 backdrop-blur border border-gray-100 rounded-full text-gray-700 hover:text-blue-600 shadow-md opacity-0 group-hover:opacity-100 transition z-10 hover:scale-110">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+            <button onClick={handlePrevImage} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-background/90 backdrop-blur border border-border rounded-full text-muted hover:text-foreground shadow-md opacity-0 group-hover:opacity-100 transition z-10 hover:scale-110 flex items-center justify-center">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
             </button>
-            <button onClick={handleNextImage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white/95 backdrop-blur border border-gray-100 rounded-full text-gray-700 hover:text-blue-600 shadow-md opacity-0 group-hover:opacity-100 transition z-10 hover:scale-110">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+            <button onClick={handleNextImage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-background/90 backdrop-blur border border-border rounded-full text-muted hover:text-foreground shadow-md opacity-0 group-hover:opacity-100 transition z-10 hover:scale-110 flex items-center justify-center">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
             </button>
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              {images.map((_, i) => (
-                <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === currentImageIndex ? 'bg-blue-600 w-4' : 'bg-gray-300 w-1.5'}`}></div>
-              ))}
-            </div>
           </>
         )}
-        <div className="absolute top-3 left-3 z-20 bg-background/95 backdrop-blur px-3 py-1 text-[10px] font-bold text-gold uppercase tracking-widest shadow-sm border border-border">
-          Verified Hub
+        <div className="absolute top-3 left-3 z-20 bg-background/80 backdrop-blur text-xs font-bold uppercase tracking-widest px-2 py-1 rounded text-foreground border border-border/50 opacity-0 group-hover:opacity-100 transition-opacity">
+          WCH Verified
         </div>
         {product.status === 'sold' && (
-          <div className="absolute inset-0 z-30 bg-black/60 flex items-center justify-center backdrop-blur-sm">
-            <span className="bg-red-600 text-white text-[13px] font-black uppercase tracking-[0.2em] px-5 py-2 rounded-full shadow-xl border-2 border-white/20 rotate-[-8deg]">
-              SOLD
+          <div className="absolute inset-0 z-30 bg-background/80 flex items-center justify-center backdrop-blur-sm">
+            <span className="text-gold-dark font-black uppercase tracking-[0.25em] px-6 py-2 border border-gold/30 rotate-[-8deg]">
+              Sold
             </span>
           </div>
         )}
-        <button 
+        <button
           onClick={handleWatchlistToggle}
-          className={`absolute top-3 right-3 p-2 z-20 bg-background/90 rounded-full transition shadow-md ${isInWatchlist ? 'text-primary opacity-100 translate-y-0' : 'text-muted opacity-0 translate-y-2 group-hover:translate-y-0 group-hover:opacity-100 hover:text-primary'}`}
+          className={`absolute top-3 right-3 z-20 p-2 bg-background/90 backdrop-blur rounded-full transition-all shadow-md flex items-center justify-center ${
+            isInWatchlist ? 'text-rose-500 opacity-100' : 'text-muted opacity-0 translate-y-1 group-hover:translate-y-0 group-hover:opacity-100 hover:text-rose-500'
+          } ${heartActive ? 'scale-110' : ''}`}
         >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+          <svg className="w-4 h-4" fill={isInWatchlist ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
         </button>
 
+        {/* Quick View Slide Up */}
+        <div className="absolute bottom-0 left-0 w-full translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-20">
+          <div
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickViewOpen(true); }}
+            className="w-full frosted-glass text-center py-3 text-xs font-bold uppercase tracking-widest text-foreground cursor-pointer hover:bg-foreground hover:text-background transition-colors"
+          >
+            Quick View
+          </div>
+        </div>
       </Link>
+
+      {quickViewOpen && <QuickViewModal product={product} onClose={() => setQuickViewOpen(false)} />}
 
       <div className="p-5 flex-grow flex flex-col">
         <Link href={`/products/${product.id}`}>
-          <h3 className="font-serif tracking-wide text-foreground line-clamp-2 hover:text-gold transition-colors h-[2.5rem] text-[16px] leading-tight">
+          <h3 className="font-serif tracking-wide text-foreground line-clamp-2 hover:text-gold transition-colors text-[16px] leading-tight mb-2">
             {product.title}
           </h3>
         </Link>
-        <div className="flex items-center gap-2 mt-2 flex-wrap">
-          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{product.category_name || "Domestic Asset"}</p>
-          {product.seller_verified && (
-            <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-              <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-              Verified
-            </span>
-          )}
-          {isOwner && (
-            <div className="flex items-center gap-3 ml-auto">
-               <span className="flex items-center gap-1 text-[9px] font-bold text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100" title="Total Views">
-                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                  {product.view_count || 0}
-               </span>
-               <span className="flex items-center gap-1 text-[9px] font-bold text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100" title="Watchlist Count">
-                  <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                  {product.watchlist_count || 0}
-               </span>
-            </div>
-          )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-[10px] uppercase tracking-widest text-muted font-bold">{product.category_name || "Timepiece"}</p>
         </div>
 
         <div className="mt-auto pt-5">
-          <div className="flex flex-col">
-            <p className="text-[10px] text-muted font-bold uppercase tracking-widest leading-none mb-1.5">
-              Price Guide
-            </p>
+          <div className="flex items-center justify-between">
             <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-semibold tracking-tight text-foreground">₹{parseFloat(product.allow_auction ? (product.current_bid || product.starting_bid) : product.price).toLocaleString()}</span>
-                {product.allow_auction && (
-                  <span className="bg-amber-100 text-amber-700 text-[7px] font-black px-1 py-0.5 rounded uppercase tracking-tighter">
-                    {product.current_bid ? 'Bid' : 'Start'}
-                  </span>
-                )}
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-0.5">
-                 {product.shipping_type === 'free' ? (
-                    <span className="text-emerald-600">Free Delivery</span>
-                 ) : product.shipping_type === 'contact' ? (
-                    <span className="text-blue-600">Shipping TBD</span>
-                 ) : (
-                    <>+ ₹{parseFloat(product.shipping_fee || 0).toLocaleString()} Shipping</>
-                 )}
-              </span>
+              <p className="text-[10px] uppercase tracking-widest text-muted mb-1">Price Guide</p>
+              <span className="font-serif text-xl tracking-tight">₹{price}</span>
             </div>
-          </div>
-
-          <div className="mt-3.5 flex items-center justify-between border-t border-border pt-3">
-            <span className="text-[10px] text-muted font-semibold uppercase tracking-widest">
-              Hub Authenticated
-            </span>
-            <Link href={`/products/${product.id}`} className="text-[10px] text-gold font-bold uppercase tracking-widest hover:underline">
-              Discover
+            <Link href={`/products/${product.id}`} className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted hover:border-gold hover:text-gold transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
             </Link>
           </div>
         </div>

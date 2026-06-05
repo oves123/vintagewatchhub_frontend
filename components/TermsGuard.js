@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -21,11 +21,11 @@ export default function TermsGuard({ children }) {
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
-          // if (user && user.terms_accepted === false) {
-          //   router.push("/terms");
-          // } else {
+          if (user && user.terms_accepted === false) {
+            router.push("/terms");
+          } else {
             setChecking(false);
-          // }
+          }
         } catch (e) {
           console.error("Failed to parse user from local storage:", e);
           setChecking(false);
@@ -43,7 +43,7 @@ export default function TermsGuard({ children }) {
   if (checking && !["/terms", "/login", "/register"].includes(pathname)) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="animate-pulse text-primary font-bold uppercase tracking-widest text-[10px]">Verifying Protocol...</div>
+        <div className="animate-pulse text-primary font-bold uppercase tracking-widest text-xs">Verifying Protocol...</div>
       </div>
     );
   }

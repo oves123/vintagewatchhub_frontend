@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import WCHLogo from "../../components/WCHLogo";
 import { useRouter } from "next/navigation";
 import { loginUser } from "../../services/api";
 
@@ -49,24 +50,12 @@ export default function LoginPage() {
   return (
     <div className="bg-background min-h-screen font-sans antialiased text-foreground flex flex-col justify-between">
       {/* Header */}
-      <header className="px-6 py-5 bg-background border-b border-border flex justify-center md:justify-start">
-        <Link href="/" className="flex items-center gap-2 w-fit">
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="16" cy="18" r="12" stroke="#1e3a5f" strokeWidth="2"/>
-            <circle cx="16" cy="18" r="8" stroke="#b8860b" strokeWidth="1.5"/>
-            <line x1="16" y1="10" x2="16" y2="18" stroke="#1e3a5f" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="16" y1="18" x2="21" y2="18" stroke="#b8860b" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M10 6 L12 3 L14 5 L16 2 L18 5 L20 3 L22 6 Z" fill="#b8860b"/>
-            <circle cx="16" cy="18" r="1.5" fill="#1e3a5f"/>
-          </svg>
-          <span className="font-serif font-black tracking-widest text-foreground text-[16px] sm:text-[18px] leading-none">
-            Watch<span className="text-gold italic font-light">Collector</span><span className="text-gold">HUB</span>
-          </span>
-        </Link>
+<header className="px-6 py-5 bg-background border-b border-border flex justify-center md:justify-start">
+        <WCHLogo />
       </header>
 
       <main className="flex-grow flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[440px] bg-background rounded-none border border-border p-8 sm:p-12">
+        <div className="w-full max-w-[440px] bg-background rounded-xl border border-border p-8 sm:p-12">
           <div className="mb-10 text-center">
             <h1 className="text-2xl font-serif uppercase tracking-[0.2em] text-foreground mb-3">Sign In</h1>
             <p className="text-xs text-muted font-medium">
@@ -91,7 +80,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
-                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-none outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
+                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-lg outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
                 placeholder=" "
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -109,7 +98,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 required
-                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-none outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
+                className="w-full px-4 pt-6 pb-2 bg-transparent border border-border rounded-lg outline-none focus:border-gold transition-all peer text-[13px] text-foreground"
                 placeholder=" "
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -122,7 +111,7 @@ export default function LoginPage() {
                 Password
               </label>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 pt-4">
-                <Link href="/forgot-password" className="text-[11px] font-bold text-muted hover:text-gold uppercase tracking-wider transition-colors">
+                <Link href="/forgot-password" className="text-sm font-bold text-muted hover:text-gold uppercase tracking-wider transition-colors">
                   Forgot?
                 </Link>
               </div>
@@ -131,7 +120,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-black text-white border border-black hover:bg-gold hover:text-black transition-all duration-300 rounded-none font-serif uppercase tracking-[0.2em] text-[11px] font-bold disabled:opacity-50 mt-6"
+              className="w-full py-4 bg-black text-white border border-black hover:bg-gold hover:text-black transition-all duration-300 rounded-lg font-serif uppercase tracking-[0.2em] text-sm font-bold disabled:opacity-50 mt-6"
             >
               {loading ? "Signing in..." : "Enter Boutique"}
             </button>
@@ -140,7 +129,7 @@ export default function LoginPage() {
       </main>
 
       <footer className="py-8 border-t border-border text-center bg-background">
-        <p className="text-[10px] font-serif uppercase tracking-widest text-muted">© 2026 WatchCollectorHub Inc. All Rights Reserved.</p>
+        <p className="text-xs font-serif uppercase tracking-widest text-muted">© 2026 Aera Inc. All Rights Reserved.</p>
       </footer>
     </div>
   );

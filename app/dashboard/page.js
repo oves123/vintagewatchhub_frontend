@@ -1,136 +1,353 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import Breadcrumbs from "../../components/Breadcrumbs";
 import Navbar from "../../components/Navbar";
-import { API_URL } from "../../services/api";
+import { getUserDeals, getUserReports, getUserActivity, API_URL } from "../../services/api";
+import { TrendingUp, Package, DollarSign, Clock, AlertTriangle, BarChart3, Eye, Heart, MessageSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid } from "recharts";
+import Link from "next/link";
+import EmptyState from "../../components/EmptyState";
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({ listings: 0, orders: 0, revenue: 0 });
+  const [user, setUser] = useState(null);
+  const [deals, setDeals] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [activity, setActivity] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    const userString = localStorage.getItem("user");
-    if (!userString) {
-      setLoading(false);
-      return;
-    }
-    
-    let user;
-    try {
-      user = JSON.parse(userString);
-    } catch (e) {
-      setLoading(false);
-      return;
-    }
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) { setLoading(false); return; }
+    let parsed;
+    try { parsed = JSON.parse(storedUser); } catch { setLoading(false); return; }
+    setUser(parsed);
 
-    if (!user.id) {
-      setLoading(false);
-      return;
-    }
+    const token = localStorage.getItem("token");
 
-    // Attempt to fetch actual stats from backend
-    fetch(`${API_URL}/admin/stats`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && !data.error) {
-          setStats({
-            listings: data.totalProducts || 0,
-            orders: data.totalOrders || 0,
-            revenue: data.totalRevenue || 0
-          });
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Dashboard stats fetch error:", err);
-        setLoading(false);
-      });
+    Promise.allSettled([
+      getUserDeals(parsed.id),
+      getUserReports(parsed.id, new Date().getFullYear()),
+      getUserActivity(parsed.id),
+      fetch(`${API_URL}/products?seller_id=${parsed.id}`, {
+        headers: { ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
+      }).then(r => r.json())
+    ]).then(([d, r, a, p]) => {
+      if (d.status === "fulfilled") setDeals(Array.isArray(d.value) ? d.value : []);
+      if (r.status === "fulfilled") setReports(Array.isArray(r.value) ? r.value : []);
+      if (a.status === "fulfilled") setActivity(Array.isArray(a.value) ? a.value : []);
+      if (p.status === "fulfilled") {
+        const data = p.value;
+        setProducts(Array.isArray(data) ? data : (data.products || []));
+      }
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
+
+  const analytics = useMemo(() => {
+    const activeListings = products.filter(p => p.status !== 'sold' && p.status !== 'rejected').length;
+    const soldCount = deals.filter(d => d.status === 'CONFIRMED').length;
+    const pendingShipments = deals.filter(d => d.status === 'PAID' && !d.shipped_at).length;
+    const pendingOffers = deals.filter(d => d.status === 'OFFER_PENDING').length;
+    const totalPayout = deals.filter(d => d.status === 'CONFIRMED').reduce((sum, d) => sum + parseFloat(d.seller_payout || d.total_amount || 0), 0);
+    const totalViews = products.reduce((sum, p) => sum + (p.view_count || 0), 0);
+    const totalWatchlisted = products.reduce((sum, p) => sum + (p.watchlist_count || 0), 0);
+    const thisMonth = new Date().getMonth();
+    const monthlyRevenue = deals
+      .filter(d => d.status === 'CONFIRMED' && new Date(d.updated_at).getMonth() === thisMonth)
+      .reduce((sum, d) => sum + parseFloat(d.seller_payout || d.total_amount || 0), 0);
+    return { activeListings, soldCount, pendingShipments, pendingOffers, totalPayout, totalViews, totalWatchlisted, monthlyRevenue, totalDeals: deals.length };
+  }, [products, deals]);
+
+  const chartData = useMemo(() => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return months.map((m, i) => {
+      const monthDeals = deals.filter(d => {
+        if (d.status !== 'CONFIRMED') return false;
+        const dDate = new Date(d.updated_at);
+        return dDate.getMonth() === i && dDate.getFullYear() === new Date().getFullYear();
+      });
+      return {
+        name: m,
+        revenue: monthDeals.reduce((sum, d) => sum + parseFloat(d.seller_payout || d.total_amount || 0), 0),
+        sales: monthDeals.length
+      };
+    });
+  }, [deals]);
+
+  const topProducts = useMemo(() => {
+    return [...products]
+      .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
+      .slice(0, 5);
+  }, [products]);
+
+  const recentNotifications = useMemo(() => {
+    const items = [];
+    deals.filter(d => d.status === 'PAID' && !d.shipped_at).forEach(d => {
+      items.push({ type: 'ship', text: `Ship "${d.product_title || 'Watch'}" to buyer`, time: 'Action needed', priority: 'high' });
+    });
+    deals.filter(d => d.status === 'OFFER_PENDING').forEach(d => {
+      items.push({ type: 'offer', text: `New offer on "${d.product_title || 'Watch'}"`, time: 'Review needed', priority: 'medium' });
+    });
+    products.filter(p => p.status === 'pending').forEach(p => {
+      items.push({ type: 'pending', text: `"${p.title}" pending admin approval`, time: 'Awaiting review', priority: 'low' });
+    });
+    return items.sort((a, b) => a.priority === 'high' ? -1 : 1).slice(0, 5);
+  }, [deals, products]);
+
+  if (loading) {
+    return (
+      <div className="bg-background min-h-screen flex flex-col">
+        <Navbar />
+        <div className="max-w-[1300px] mx-auto px-4 py-20">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            {[1,2,3,4].map(i => <div key={i} className="h-28 bg-surface border border-border shimmer" />)}
+          </div>
+          <div className="h-80 bg-surface border border-border shimmer mb-10" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-64 bg-surface border border-border shimmer" />
+            <div className="h-64 bg-surface border border-border shimmer" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="max-w-[1300px] mx-auto px-4 py-8 w-full">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Dashboard' }]} />
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-black text-foreground tracking-tight">Seller Dashboard</h1>
-            <p className="text-muted font-medium text-sm mt-1">Manage your inventory and track performance.</p>
+            <h1 className="section-title text-3xl">Seller Dashboard</h1>
+            <p className="label-engraved mt-1">Track your sales, inventory, and performance</p>
           </div>
           <div className="flex gap-3">
-            <button className="px-5 py-2.5 bg-surface border border-border rounded-none text-xs font-bold text-muted hover:bg-background transition">Export Report</button>
-            <button 
-              onClick={() => window.location.href = '/sell'}
-              className="px-5 py-2.5 bg-primary text-white rounded-none text-xs font-bold hover:bg-primary-light transition shadow-none"
-            >
-              Add New Listing
-            </button>
+            <Link href="/profile?tab=analytics" className="gold-sweep-outline px-5 py-2.5 text-xs font-bold uppercase tracking-widest">
+              <BarChart3 className="w-3.5 h-3.5 mr-1.5 inline-block" />
+              Financial Reports
+            </Link>
+            <Link href="/sell" className="gold-sweep px-5 py-2.5 text-xs font-bold uppercase tracking-widest">
+              <Package className="w-3.5 h-3.5 mr-1.5 inline-block" />
+              New Listing
+            </Link>
           </div>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-32 bg-surface rounded-none border border-border animate-pulse shadow-none" />
-            ))}
+        {/* KPI Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          <div className="bg-background border border-border p-6 card-glow">
+            <div className="flex items-center gap-2 text-gold mb-1">
+              <Package className="w-4 h-4" />
+              <span className="label-engraved">Active Listings</span>
+            </div>
+            <p className="price-serif text-3xl">{analytics.activeListings}</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-8 bg-surface rounded-none border border-border shadow-none border-b-4 border-b-primary">
-              <span className="text-[10px] font-black text-muted uppercase tracking-[0.2em] block mb-2">My Active Listings</span>
-              <div className="flex items-baseline gap-2">
-                <h2 className="text-4xl font-black text-primary">{stats.listings}</h2>
-                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-none">+12%</span>
-              </div>
+          <div className="bg-background border border-border p-6 card-glow">
+            <div className="flex items-center gap-2 text-emerald-600 mb-1">
+              <TrendingUp className="w-4 h-4" />
+              <span className="label-engraved">Total Sold</span>
             </div>
-
-            <div className="p-8 bg-surface rounded-none border border-border shadow-none border-b-4 border-b-gold">
-              <span className="text-[10px] font-black text-muted uppercase tracking-[0.2em] block mb-2">Total Sales Orders</span>
-              <div className="flex items-baseline gap-2">
-                <h2 className="text-4xl font-black text-gold">{stats.orders}</h2>
-                <span className="text-xs font-bold text-muted bg-background px-2 py-0.5 rounded-none">Stable</span>
-              </div>
+            <p className="price-serif text-3xl">{analytics.soldCount}</p>
+          </div>
+          <div className="bg-background border border-border p-6 card-glow">
+            <div className="flex items-center gap-2 text-gold-dark mb-1">
+              <DollarSign className="w-4 h-4" />
+              <span className="label-engraved">Gross Payout</span>
             </div>
+            <p className="price-serif text-3xl">₹{analytics.totalPayout.toLocaleString()}</p>
+          </div>
+          <div className="bg-background border border-border p-6 card-glow">
+            <div className="flex items-center gap-2 text-amber-600 mb-1">
+              <BarChart3 className="w-4 h-4" />
+              <span className="label-engraved">This Month</span>
+            </div>
+            <p className="price-serif text-3xl">₹{analytics.monthlyRevenue.toLocaleString()}</p>
+          </div>
+        </div>
 
-            <div className="p-8 bg-surface rounded-none border border-border shadow-none border-b-4 border-b-emerald-600">
-              <span className="text-[10px] font-black text-muted uppercase tracking-[0.2em] block mb-2">Gross Revenue</span>
-              <div className="flex items-baseline gap-2">
-                <h2 className="text-4xl font-black text-emerald-600">â‚¹{Number(stats.revenue).toLocaleString()}</h2>
-                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-none">+â‚¹4,500</span>
-              </div>
+        {/* Secondary KPIs */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          <div className="bg-background border border-border p-4">
+            <div className="flex items-center gap-2 text-muted mb-1">
+              <Eye className="w-3.5 h-3.5" />
+              <span className="text-xs font-bold uppercase tracking-widest">Total Views</span>
+            </div>
+            <p className="text-lg font-bold text-foreground">{analytics.totalViews}</p>
+          </div>
+          <div className="bg-background border border-border p-4">
+            <div className="flex items-center gap-2 text-muted mb-1">
+              <Heart className="w-3.5 h-3.5" />
+              <span className="text-xs font-bold uppercase tracking-widest">Watchlist Adds</span>
+            </div>
+            <p className="text-lg font-bold text-foreground">{analytics.totalWatchlisted}</p>
+          </div>
+          <div className="bg-background border border-border p-4">
+            <div className="flex items-center gap-2 text-muted mb-1">
+              <Clock className="w-3.5 h-3.5" />
+              <span className="text-xs font-bold uppercase tracking-widest">Pending Ship</span>
+            </div>
+            <p className="text-lg font-bold text-foreground">{analytics.pendingShipments}</p>
+          </div>
+          <div className="bg-background border border-border p-4">
+            <div className="flex items-center gap-2 text-muted mb-1">
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span className="text-xs font-bold uppercase tracking-widest">Pending Offers</span>
+            </div>
+            <p className="text-lg font-bold text-foreground">{analytics.pendingOffers}</p>
+          </div>
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+          {/* Revenue Chart */}
+          <div className="bg-background border border-border p-6">
+            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-gold rounded-full"></span>
+              Revenue Trend
+            </h3>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#d4a853" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="#d4a853" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#7c7365' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#7c7365' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ background: '#faf8f5', border: '1px solid #e6ddd0', borderRadius: 0, fontSize: 12 }}
+                    formatter={(value) => [`₹${value.toLocaleString()}`, 'Revenue']}
+                  />
+                  <Area type="monotone" dataKey="revenue" stroke="#d4a853" strokeWidth={2} fill="url(#revenueGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
-        )}
 
-        <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-surface p-8 rounded-none border border-border shadow-none">
-                <h3 className="font-bold text-foreground mb-6 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-gold rounded-none"></span>
-                    Recent Activity
-                </h3>
-                <div className="space-y-6">
-                    {[1,2,3].map(i => (
-                        <div key={i} className="flex gap-4 pb-4 border-b border-gray-50 last:border-0">
-                            <div className="w-10 h-10 rounded-none bg-gold/5 flex-shrink-0 flex items-center justify-center text-gold border border-gold/10 font-bold text-xs">#{i}</div>
-                            <div>
-                                <p className="text-xs font-bold text-foreground leading-tight">New offer received for Omega Speedmaster</p>
-                                <p className="text-[10px] font-medium text-muted mt-1 uppercase tracking-wider">2 hours ago</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+          {/* Sales Chart */}
+          <div className="bg-background border border-border p-6">
+            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-gold rounded-full"></span>
+              Monthly Sales
+            </h3>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e6ddd0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#7c7365' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#7c7365' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ background: '#faf8f5', border: '1px solid #e6ddd0', borderRadius: 0, fontSize: 12 }}
+                    formatter={(value) => [value, 'Sales']}
+                  />
+                  <Bar dataKey="sales" fill="#b8860b" radius={[2, 2, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
-            
-            <div className="bg-primary p-10 rounded-none shadow-none relative overflow-hidden group">
-                <div className="relative z-10">
-                    <h3 className="text-white font-black text-2xl mb-4 leading-tight">Professional Seller<br/>Tools & Verification</h3>
-                    <p className="text-white/60 text-sm font-medium mb-8 max-w-[240px] leading-relaxed">Upgrade your account to access bulk listings and lower transaction fees.</p>
-                    <button className="px-6 py-3 bg-surface text-primary rounded-none font-bold text-xs hover:bg-gold/10 hover:text-gold border border-primary/20 transition shadow-none">Verify Account</button>
-                </div>
-                <div className="absolute -right-8 -bottom-8 opacity-20 transform rotate-12 transition-transform duration-700 group-hover:rotate-6">
-                    <svg className="w-48 h-48 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-                </div>
+          </div>
+        </div>
+
+        {/* Bottom Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top Products */}
+          <div className="bg-background border border-border p-6">
+            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-gold rounded-full"></span>
+              Top Performing Listings
+            </h3>
+            {topProducts.length === 0 ? (
+              <EmptyState
+                icon={<Package className="w-8 h-8" />}
+                title="No listings yet"
+                description="Create your first listing to start tracking performance."
+                actionLabel="Create Listing"
+                actionHref="/sell"
+              />
+            ) : (
+              <div className="space-y-3">
+                {topProducts.map((p, i) => (
+                  <Link
+                    key={p.id}
+                    href={`/products/${p.id}`}
+                    className="flex items-center gap-3 p-3 hover:bg-surface transition-colors group"
+                  >
+                    <span className="text-xs font-black text-muted w-5">#{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate group-hover:text-gold transition-colors">{p.title || 'Untitled'}</p>
+                      <div className="flex gap-3 mt-1">
+                        <span className="text-xs text-muted flex items-center gap-1"><Eye className="w-3 h-3" />{p.view_count || 0}</span>
+                        <span className="text-xs text-muted flex items-center gap-1"><Heart className="w-3 h-3" />{p.watchlist_count || 0}</span>
+                        <span className="text-xs text-muted">₹{parseFloat(p.price || 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <span className={`text-xs font-bold uppercase px-2 py-0.5 ${
+                      p.status === 'approved' ? 'text-emerald-600 bg-emerald-50 border border-emerald-200' :
+                      p.status === 'pending' ? 'text-amber-600 bg-amber-50 border border-amber-200' :
+                      p.status === 'sold' ? 'text-gold-dark bg-gold/5 border border-gold/20' :
+                      'text-muted bg-background border border-border'
+                    }`}>{p.status}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Pending Actions */}
+          <div className="bg-background border border-border p-6">
+            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+              Pending Actions
+            </h3>
+            {recentNotifications.length === 0 ? (
+              <EmptyState
+                icon={
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                }
+                title="All caught up!"
+                description="No pending actions require your attention."
+              />
+            ) : (
+              <div className="space-y-2">
+                {recentNotifications.map((n, i) => (
+                  <div key={i} className={`flex items-start gap-3 p-3 border-l-2 ${
+                    n.priority === 'high' ? 'border-l-rose-500 bg-rose-50/30' :
+                    n.priority === 'medium' ? 'border-l-amber-500 bg-amber-50/30' :
+                    'border-l-muted bg-background'
+                  }`}>
+                    {n.priority === 'high' ? <AlertTriangle className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" /> :
+                     n.priority === 'medium' ? <Clock className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" /> :
+                     <Package className="w-4 h-4 text-muted mt-0.5 shrink-0" />}
+                    <div className="flex-1">
+                      <p className="text-sm text-foreground">{n.text}</p>
+                      <p className="text-xs text-muted mt-0.5">{n.time}</p>
+                    </div>
+                    <Link
+                      href={n.type === 'ship' ? '/profile?tab=selling' : n.type === 'offer' ? '/profile?tab=selling&sub=negotiations' : '/profile?tab=selling'}
+                      className="text-xs text-gold font-bold uppercase tracking-widest hover:underline shrink-0"
+                    >
+                      View
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-4 pt-4 border-t border-border">
+              <Link href="/profile?tab=selling" className="text-xs text-gold font-bold uppercase tracking-widest gold-underline">
+                Go to Seller Hub →
+              </Link>
             </div>
+          </div>
         </div>
       </main>
     </div>

@@ -3,6 +3,8 @@
 import { useEffect, useState, use, useMemo } from "react";
 import Navbar from "../../../components/Navbar";
 import ProductCard from "../../../components/ProductCard";
+import OptimizedImage from "../../../components/OptimizedImage";
+import Breadcrumbs from "../../../components/Breadcrumbs";
 import Link from "next/link";
 import { API_URL, API_BASE_URL, createChat, getSellerReviews, createReport, getUserProfile } from "../../../services/api";
 import { useRouter } from "next/navigation";
@@ -534,7 +536,9 @@ export default function ProductPage({ params }) {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
     const x = ((e.pageX - left - window.scrollX) / width) * 100;
     const y = ((e.pageY - top - window.scrollY) / height) * 100;
-    setZoom({ x, y, show: true });
+    const pxX = e.pageX - left - window.scrollX;
+    const pxY = e.pageY - top - window.scrollY;
+    setZoom({ x, y, pxX, pxY, show: true });
   };
 
   const handleOnboardingComplete = (updatedUser) => {
@@ -562,31 +566,29 @@ export default function ProductPage({ params }) {
   if (!product) return <div className="min-h-screen bg-surface"><Navbar /><div className="flex items-center justify-center h-[60vh]"><div className="animate-pulse text-primary font-black uppercase tracking-widest text-xs">Decrypting Asset...</div></div></div>;
 
   return (
-    <div className="bg-background min-h-screen pb-20 text-foreground transition-colors duration-500">
+    <div className="bg-background min-h-screen pb-32 lg:pb-0 text-foreground transition-colors duration-500">
       <ProfileOnboardingModal 
          isOpen={showOnboarding} 
          onClose={() => setShowOnboarding(false)} 
          user={user} 
          onComplete={handleOnboardingComplete} 
       />
-      <Navbar />
+      <Breadcrumbs items={[
+        { label: "Home", href: "/" },
+        { label: product.category_name || "Collectibles", href: `/?category=${(product.category_name || "").toLowerCase()}` },
+        { label: product.title },
+      ]} />
 
-      <main className="max-w-[1300px] mx-auto px-4 py-4 md:py-8">
-        <nav className="text-[11px] text-muted mb-8 flex gap-3 font-bold uppercase tracking-widest items-center">
-          <Link href="/" className="hover:text-primary transition">Marketplace Home</Link>
-          <span className="opacity-30">/</span>
-          <span className="text-foreground truncate font-semibold">{product.title}</span>
-        </nav>
-
-        <div className="bg-background rounded-none border-t border-b md:border border-border overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-12">
+      <main className="max-w-[1500px] mx-auto px-0 lg:px-4 py-0 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-12">
             
-            {/* Gallery */}
-            <div className="lg:col-span-6 p-6 md:p-10 border-r border-border bg-background/10">
+            {/* Gallery - Edge to Edge on Mobile */}
+            <div className="lg:col-span-7 bg-surface/50 lg:rounded-2xl lg:p-8">
               <div 
-                className="aspect-square bg-background rounded-none border border-border overflow-hidden relative group/gallery"
+                className="aspect-square sm:aspect-[4/3] lg:aspect-[4/3] bg-background lg:rounded-xl lg:border border-border/50 overflow-hidden relative group/gallery cursor-zoom-in shadow-2xl"
                 onMouseMove={mediaItems[selectedImage]?.type === 'image' ? handleMouseMove : null}
                 onMouseLeave={() => setZoom({ ...zoom, show: false })}
+                onClick={() => setLightboxOpen(true)}
               >
                 {mediaItems[selectedImage]?.type === 'video' ? (
                   <video 
@@ -597,12 +599,35 @@ export default function ProductPage({ params }) {
                     muted={product.video_settings?.[mediaItems[selectedImage].path]?.muted ?? true} 
                   />
                 ) : (
-                  <img
-                    src={mediaItems[selectedImage]?.url}
-                    alt={product.title}
-                    className={`w-full h-full object-contain mix-blend-multiply p-8 transition-transform duration-500 ease-out ${zoom.show ? 'scale-175' : 'scale-100'}`}
-                    style={zoom.show ? { transformOrigin: `${zoom.x}% ${zoom.y}%` } : {}}
-                  />
+                  <div className="w-full h-full relative cursor-none">
+                    <OptimizedImage
+                      src={mediaItems[selectedImage]?.url}
+                      alt={product.title}
+                      fill
+                      priority
+                      className="object-contain p-8"
+                      size="large"
+                    />
+                    {zoom.show && (
+                      <div 
+                        className="absolute pointer-events-none rounded-full border border-gold/50 shadow-[0_0_20px_rgba(0,0,0,0.5)] z-20 backdrop-blur-sm bg-background/10"
+                        style={{
+                          width: '300px',
+                          height: '300px',
+                          left: `${zoom.pxX}px`,
+                          top: `${zoom.pxY}px`,
+                          transform: 'translate(-50%, -50%)',
+                          backgroundImage: `url(${mediaItems[selectedImage]?.url})`,
+                          backgroundRepeat: 'no-repeat',
+                          backgroundPosition: `${zoom.x}% ${zoom.y}%`,
+                          backgroundSize: '350%',
+                        }}
+                      >
+                         <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_rgba(255,255,255,0.2)]"></div>
+                         <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 border border-white/50 rounded-full"></div>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* Navigation Arrows */}
@@ -610,21 +635,21 @@ export default function ProductPage({ params }) {
                   <>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-10"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-10"
                       title="Previous Photo"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-10"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-10"
                       title="Next Photo"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
                     </button>
 
                     {/* Counter Indicator */}
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-black/70 backdrop-blur-md rounded-full text-[10px] font-black text-white uppercase tracking-widest pointer-events-none shadow-xl">
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-black/70 backdrop-blur-md rounded-full text-xs font-black text-white uppercase tracking-widest pointer-events-none shadow-xl">
                        {selectedImage + 1} <span className="text-white/40 mx-1">/</span> {mediaItems.length}
                     </div>
                   </>
@@ -652,12 +677,12 @@ export default function ProductPage({ params }) {
               </div>
             </div>
 
-            {/* Content */}
-            <div className="lg:col-span-6 p-8 md:p-12 flex flex-col">
+            {/* Content & sticky sidebar */}
+            <div className="lg:col-span-5 p-6 md:p-10 flex flex-col lg:sticky lg:top-24 lg:self-start bg-background/80 backdrop-blur-md rounded-2xl border border-border shadow-xl">
               <div className="flex-grow">
                 <div className="flex items-center gap-3 mb-6">
-                    <span className="bg-primary text-white px-3 py-1 rounded-none text-[10px] font-bold uppercase tracking-widest">{product.condition_code || "PRE-OWNED"}</span>
-                    <div className="flex items-center gap-3 text-[10px] font-bold text-muted uppercase tracking-widest">
+                    <span className="bg-gold/10 text-gold-dark px-3 py-1 rounded text-[10px] font-black uppercase tracking-[0.2em] border border-gold/20 shadow-sm">{product.condition_code || "PRE-OWNED"}</span>
+                    <div className="flex items-center gap-3 text-xs font-bold text-muted uppercase tracking-widest">
                        <span className="flex items-center gap-1">
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                           {product.views || 0}
@@ -674,26 +699,26 @@ export default function ProductPage({ params }) {
                   {product.title}
                 </h1>
                 
-                <div className="flex flex-wrap items-center gap-5 text-[11px] font-bold uppercase tracking-wider text-muted">
+                <div className="flex flex-wrap items-center gap-5 text-sm font-bold uppercase tracking-wider text-muted">
                   <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
                     Professional Hub Authentication
                   </div>
-                  <div className="flex items-center gap-1.5 text-primary bg-primary/5 px-3 py-1.5 rounded-none border border-primary/10">
+                  <div className="flex items-center gap-1.5 text-primary bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10">
                     <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
                     Verified Listing
                   </div>
                 </div>
 
-                <div className="mt-10 p-8 md:p-10 bg-background/50 rounded-none border border-border relative overflow-hidden">
+                <div className="mt-10 p-8 md:p-10 bg-background/50 rounded-xl border border-border relative overflow-hidden">
                   <div className="space-y-6 relative z-10">
                     <div>
-                      <p className="text-[11px] font-bold text-muted uppercase tracking-widest mb-2">Live Valuation</p>
+                      <p className="text-sm font-bold text-muted uppercase tracking-widest mb-2">Live Valuation</p>
                        <div className="flex flex-col gap-1">
                           <span className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">₹{parseFloat(product?.price || 0).toLocaleString()}</span>
                           <div className="flex items-center gap-1.5 mt-1">
                              <svg className="w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                             <span className="text-[11px] font-black uppercase tracking-widest text-muted">
+                             <span className="text-sm font-black uppercase tracking-widest text-muted">
                                 {product.shipping_type === 'free' ? (
                                    <span className="text-emerald-600">Free Shipping</span>
                                 ) : product.shipping_type === 'contact' ? (
@@ -712,7 +737,7 @@ export default function ProductPage({ params }) {
                         {isSeller ? (
                            <Link 
                              href={`/sell?edit=${product.id}`}
-                             className="w-full h-14 bg-emerald-600 text-white rounded-none font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-3 group"
+                             className="w-full h-14 bg-emerald-600 text-white rounded-lg font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-3 group"
                            >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                               <span>Manage This Listing</span>
@@ -722,20 +747,17 @@ export default function ProductPage({ params }) {
                               {product.allow_buy_now && bidHistory.length === 0 && (
                                 <button 
                                   onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow}
-                                  className={`w-full h-14 rounded-none font-bold text-[11px] uppercase tracking-[0.2em] transition-all border flex items-center justify-center gap-3 group ${product.shipping_type === 'contact' ? 'bg-background border-gold text-gold hover:bg-gold hover:text-white' : 'bg-primary text-white border-primary hover:bg-transparent hover:text-primary'}`}
+                                  className={`w-full h-14 rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all border flex items-center justify-center gap-3 group ${product.shipping_type === 'contact' ? 'bg-background border-gold text-gold hover:bg-gold hover:text-white' : 'bg-foreground text-background border-foreground hover:bg-gold hover:border-gold hover:text-white shadow-xl'}`}
                                 >
                                    {product.shipping_type === 'contact' ? (
                                       <>
-                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-                                         <span>Request Shipping Quote</span>
+                                         <span>Discuss with Seller</span>
+                                         <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                                       </>
                                    ) : (
                                       <>
-                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                                         <div className="flex flex-col items-start">
-                                            <span>Buy It Now - ₹{(parseFloat(product.buy_it_now_price || product.price) + (product.shipping_type === 'fixed' ? parseFloat(product.shipping_fee || 0) : 0)).toLocaleString()}</span>
-                                            {platformSettings?.buyer_commission_rate > 0 && <span className="text-[8px] opacity-80 normal-case tracking-normal leading-none mt-1">+ {platformSettings.buyer_commission_rate}% buyer premium</span>}
-                                         </div>
+                                         <span>Secure Asset Now</span>
+                                         <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                                       </>
                                    )}
                                 </button>
@@ -897,7 +919,6 @@ export default function ProductPage({ params }) {
               </div>
             </div>
           </div>
-        </div>
 
         {/* Technical Grid (Specs & Condition) */}
         <section className="mt-20">
@@ -1004,26 +1025,39 @@ export default function ProductPage({ params }) {
                  </div>
                )}
               {activeTab === "condition" && (
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-500">
-                   <div className="col-span-full mb-4">
-                      <p className="text-[11px] font-bold text-muted uppercase tracking-widest mb-1.5">Overall Grade</p>
-                      <div className="inline-block px-4 py-2 bg-background rounded-none text-sm font-bold text-foreground border border-border uppercase">
-                         {product.condition_code ? product.condition_code.replace(/_/g, ' ') : "Not Specified"}
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-500">
+                   <div className="md:col-span-1 mb-4 flex flex-col justify-center bg-surface border border-border p-8 rounded-2xl shadow-sm items-center text-center">
+                      <p className="text-xs font-bold text-muted uppercase tracking-[0.2em] mb-2">Overall Grade</p>
+                      <div className="w-24 h-24 rounded-full border-[6px] border-gold/20 flex items-center justify-center mb-4 relative">
+                        <div className="absolute inset-0 rounded-full border-[6px] border-gold border-t-transparent -rotate-45" />
+                        <span className="font-serif text-3xl text-foreground font-black tracking-tighter">
+                          {product.condition_code ? product.condition_code.split('_')[0].charAt(0).toUpperCase() : "-"}
+                        </span>
                       </div>
+                      <p className="text-sm font-black text-foreground uppercase tracking-widest">
+                        {product.condition_code ? product.condition_code.replace(/_/g, ' ') : "Not Specified"}
+                      </p>
                    </div>
-                   {product.condition_details && Object.entries(product.condition_details)
-                      .filter(([key]) => !key.endsWith('_manual_mode'))
-                      .map(([key, value]) => (
-                      <div key={key} className="p-5 border border-border rounded-none bg-background/30">
-                         <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-1.5">{key.replace(/_/g, ' ')}</p>
-                         <p className="text-sm font-bold text-foreground uppercase leading-snug">{value}</p>
-                      </div>
-                   ))}
-                   {(!product.condition_details || Object.keys(product.condition_details).length === 0) && (
-                      <div className="col-span-full p-6 border border-dashed border-border rounded-none text-center">
-                         <p className="text-sm font-medium text-muted italic">No specific technical condition details provided.</p>
-                      </div>
-                   )}
+                   
+                   <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     {product.condition_details && Object.entries(product.condition_details)
+                        .filter(([key]) => !key.endsWith('_manual_mode'))
+                        .map(([key, value]) => (
+                         <div key={key} className="p-5 border border-border/50 rounded-xl bg-surface/50 hover:bg-surface transition-colors group">
+                           <div className="flex justify-between items-start mb-2">
+                             <p className="text-[11px] font-black text-muted uppercase tracking-[0.2em] group-hover:text-gold transition-colors">{key.replace(/_/g, ' ')}</p>
+                             <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/></svg>
+                           </div>
+                           <p className="text-sm font-bold text-foreground capitalize leading-snug">{value}</p>
+                        </div>
+                     ))}
+                     {(!product.condition_details || Object.keys(product.condition_details).length === 0) && (
+                         <div className="col-span-full p-8 border border-dashed border-border rounded-xl text-center flex flex-col items-center justify-center">
+                           <svg className="w-8 h-8 text-muted mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                           <p className="text-sm font-bold text-muted uppercase tracking-widest">No detailed scorecard available</p>
+                        </div>
+                     )}
+                   </div>
                  </div>
                )}
 
@@ -1539,6 +1573,40 @@ export default function ProductPage({ params }) {
            </div>
         </div>
       )}
+     {/* Floating Mobile Concierge Bar (Visible only on mobile/tablet) */}
+     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 p-4 pb-safe bg-background/80 backdrop-blur-xl border-t border-border shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+       <div className="flex items-center gap-3 max-w-md mx-auto">
+         <button 
+           onClick={toggleWatchlist}
+           className={`shrink-0 w-12 h-12 rounded-xl border flex items-center justify-center transition-all ${isInWatchlist ? 'border-rose-500 bg-rose-500/10 text-rose-500' : 'border-border bg-surface text-foreground hover:bg-surface/80'}`}
+         >
+           <svg className={`w-5 h-5 ${isInWatchlist ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+         </button>
+
+         {isSeller ? (
+           <Link href={`/sell?edit=${product.id}`} className="flex-1 h-12 bg-emerald-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] flex items-center justify-center shadow-lg shadow-emerald-500/20">
+             Manage Listing
+           </Link>
+         ) : product.type === 'auction' ? (
+           <button 
+             onClick={() => setShowBidModal(true)}
+             disabled={!product.is_active || new Date(product.end_time) <= new Date()}
+             className={`flex-1 h-12 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] flex items-center justify-center transition-all shadow-xl ${!product.is_active || new Date(product.end_time) <= new Date() ? 'bg-surface border border-border text-muted cursor-not-allowed' : 'bg-foreground text-background border border-foreground hover:bg-gold hover:border-gold hover:text-white'}`}
+           >
+             {!product.is_active || new Date(product.end_time) <= new Date() ? 'Auction Closed' : 'Place Bid'}
+           </button>
+         ) : (
+           <button 
+             onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow}
+             disabled={!product.is_active}
+             className={`flex-1 h-12 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] flex items-center justify-center transition-all shadow-xl ${!product.is_active ? 'bg-surface border border-border text-muted cursor-not-allowed' : 'bg-foreground text-background border border-foreground hover:bg-gold hover:border-gold hover:text-white'}`}
+           >
+             {product.shipping_type === 'contact' ? 'Discuss' : 'Secure Asset'}
+           </button>
+         )}
+       </div>
+     </div>
+
    </div>
   );
 }

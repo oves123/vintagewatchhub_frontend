@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -23,7 +23,7 @@ export default function MessageRedirect() {
           <div className="absolute inset-0 rounded-full border-4 border-border"/>
           <div className="absolute inset-0 rounded-full border-4 border-[#1e3a5f] border-t-transparent animate-spin"/>
         </div>
-        <p className="text-[11px] font-black text-muted uppercase tracking-widest mt-1">Redirecting to conversation...</p>
+        <p className="text-sm font-black text-muted uppercase tracking-widest mt-1">Redirecting to conversation...</p>
       </div>
     </div>
   );

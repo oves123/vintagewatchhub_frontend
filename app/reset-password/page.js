@@ -84,7 +84,7 @@ function ResetPasswordContent() {
 
           {!token ? (
             <div className="text-center">
-              <Link href="/forgot-password" size="sm" className="text-xs font-bold uppercase tracking-wider text-gold hover:text-gold/80 transition-colors">
+              <Link href="/forgot-password" className="text-xs font-bold uppercase tracking-wider text-gold hover:text-gold/80 transition-colors">
                 Request a new reset link
               </Link>
             </div>
@@ -94,7 +94,7 @@ function ResetPasswordContent() {
                 <input
                   type="password"
                   required
-                  className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all peer text-[13px] text-foreground"
+                  className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-lg outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all peer text-[13px] text-foreground"
                   placeholder=" "
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -112,7 +112,7 @@ function ResetPasswordContent() {
                 <input
                   type="password"
                   required
-                  className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-none outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all peer text-[13px] text-foreground"
+                  className="w-full px-4 pt-6 pb-2 bg-surface border border-border rounded-lg outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all peer text-[13px] text-foreground"
                   placeholder=" "
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -129,7 +129,7 @@ function ResetPasswordContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-black text-white border border-black hover:bg-gold hover:text-black transition-all duration-300 rounded-none font-serif uppercase tracking-[0.2em] text-[11px] font-bold disabled:opacity-50 mt-6"
+                className="w-full py-4 bg-black text-white border border-black hover:bg-gold hover:text-black transition-all duration-300 rounded-lg font-serif uppercase tracking-[0.2em] text-sm font-bold disabled:opacity-50 mt-6"
               >
                 {loading ? "Updating..." : "Update Password"}
               </button>
@@ -145,13 +145,13 @@ function ResetPasswordContent() {
       </main>
 
       <footer className="mt-auto py-10 border-t border-border">
-         <div className="max-w-[1240px] mx-auto px-6 flex flex-col items-center gap-4 text-[11px] text-muted uppercase tracking-widest font-bold">
+         <div className="max-w-[1240px] mx-auto px-6 flex flex-col items-center gap-4 text-sm text-muted uppercase tracking-widest font-bold">
             <div className="flex gap-6">
               <Link href="/help" className="hover:underline">User Agreement</Link>
               <Link href="/privacy" className="hover:underline">Privacy Notice</Link>
               <Link href="/cookies" className="hover:underline">Cookies</Link>
             </div>
-            <p>Copyright Â© 1995-2026 WatchCollectorHub Inc. All Rights Reserved.</p>
+            <p>Copyright 1995-2026 Aera Inc. All Rights Reserved.</p>
          </div>
       </footer>
     </div>
