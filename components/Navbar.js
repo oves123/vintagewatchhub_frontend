@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { API_URL, getTotalUnreadCount, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, getHeaders } from "../services/api";
+import { API_URL, getTotalUnreadCount, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, getHeaders, getUserId } from "../services/api";
 import socket from "../services/socket";
 
 import OptimizedImage from "./OptimizedImage";
@@ -91,13 +91,14 @@ export default function Navbar() {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
+        const uid = getUserId(parsedUser);
         setUser(parsedUser);
-        fetchWatchlistCount(parsedUser.id);
-        fetchUnreadCount(parsedUser.id);
+        fetchWatchlistCount(uid);
+        fetchUnreadCount(uid);
         fetchNotifications();
         
         // Join user room for private notifications
-        socket.emit("joinUser", parsedUser.id);
+        if (uid) socket.emit("joinUser", uid);
       } catch (err) { console.error("Failed to parse user session"); }
     } else {
       setUser(null);
@@ -113,7 +114,7 @@ export default function Navbar() {
       if (storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser);
-          fetchWatchlistCount(parsedUser.id);
+          fetchWatchlistCount(getUserId(parsedUser));
         } catch (e) {}
       }
     };

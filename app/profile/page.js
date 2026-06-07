@@ -29,37 +29,6 @@ function ProfileContent() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState({ order_id: null, seller_id: null, rating: 5, comment: "", product_title: "", product_id: null });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-"use client";
-
-import { useEffect, useState, useMemo, Suspense } from "react";
-import Breadcrumbs from "../../components/Breadcrumbs";
-import Navbar from "../../components/Navbar";
-import { getUserProfile, updateUserProfile, getUserActivity, API_BASE_URL, API_URL, getSellerReviews, createReview, markOrderShipped, markOrderDelivered, confirmOrderReceived, confirmOrderSale, cancelDeal, disputeDeal, getUserDeals, markOrderPaid, createRazorpayOrder, verifyRazorpayPayment, getUserReports, getUserLedger, markOrderReturned } from "../../services/api";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { X, Camera, CheckCircle, FileText, ExternalLink, Send, Edit2, PieChart, TrendingUp, ArrowUpRight, ArrowDownLeft, Filter, ArrowRight, Download, XCircle, Search } from "lucide-react";
-import { useToast } from "../../context/ToastContext";
-import OptimizedImage from "../../components/OptimizedImage";
-import ConfirmDialog from "../../components/ConfirmDialog";
-
-function ProfileContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [activity, setActivity] = useState({ buyOrders: [], sellOrders: [], listings: [], chattedProducts: [] });
-  const [offers, setOffers] = useState([]);
-  const [deals, setDeals] = useState([]);
-  const [activeTab, setActiveTab] = useState("personal");
-  const [loading, setLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [buyingSubTab, setBuyingSubTab] = useState("active"); // active, shipped, delivered, completed
-  const [sellingSubTab, setSellingSubTab] = useState("inventory"); // inventory, deals
-  const [paymentReceiptModal, setPaymentReceiptModal] = useState(null); // URL of receipt to preview
-  const [receivedReviews, setReceivedReviews] = useState({ reviews: [], stats: { average_rating: 0, review_count: 0 } });
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [reviewForm, setReviewForm] = useState({ order_id: null, seller_id: null, rating: 5, comment: "", product_title: "", product_id: null });
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [trackingForm, setTrackingForm] = useState({ order_id: null, tracking_number: "", courier_name: "", packing_video: null });
   const [isSubmittingTracking, setIsSubmittingTracking] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -1368,21 +1337,35 @@ function ProfileContent() {
                                          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {/* Left - Status Detail */}
                                              <div className="bg-background rounded-xl p-5 border border-border/50">
-                                                        <div>
-                                                           <p className="text-xs font-black text-foreground uppercase">Funds Verified</p>
-                                                           <p className="text-xs text-muted font-bold uppercase mt-1">Please prepare the shipment.</p>
-                                                        </div>
-                                                     </div>
-                                                     {deal.payment_receipt && (
-                                                        <button 
-                                                           onClick={() => setPaymentReceiptModal(deal.payment_receipt?.startsWith('http') ? deal.payment_receipt : `${API_BASE_URL}/uploads/${deal.payment_receipt}`)}
+                                                {deal.status === 'ACCEPTED' && (
+                                                   <div className="flex items-start gap-3">
+                                                      <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center"><CheckCircle className="w-4 h-4 text-emerald-600" /></div>
+                                                      <div>
+                                                         <p className="text-sm font-black text-foreground uppercase">Awaiting Payment</p>
+                                                         <p className="text-xs text-muted font-bold uppercase mt-1">Buyer is sending funds to Escrow.</p>
+                                                      </div>
+                                                   </div>
+                                                )}
+
+                                                {deal.status === 'PAID' && (
+                                                   <div className="flex flex-col gap-4">
+                                                      <div className="flex items-start gap-3">
+                                                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center"><PieChart className="w-4 h-4 text-primary" /></div>
+                                                         <div>
+                                                            <p className="text-xs font-black text-foreground uppercase">Funds Verified</p>
+                                                            <p className="text-xs text-muted font-bold uppercase mt-1">Please prepare the shipment.</p>
+                                                         </div>
+                                                      </div>
+                                                      {deal.payment_receipt && (
+                                                         <button 
+                                                            onClick={() => setPaymentReceiptModal(deal.payment_receipt?.startsWith('http') ? deal.payment_receipt : `${API_BASE_URL}/uploads/${deal.payment_receipt}`)}
                                                             className="w-full py-2 bg-surface border border-border rounded-lg text-xs font-black uppercase tracking-widest text-foreground hover:bg-background transition-all flex items-center justify-center gap-2"
-                                                        >
-                                                           <Camera className="w-4 h-4" /> View Receipt
-                                                        </button>
-                                                     )}
-                                                  </div>
-                                               )}
+                                                         >
+                                                            <Camera className="w-4 h-4" /> View Receipt
+                                                         </button>
+                                                      )}
+                                                   </div>
+                                                )}
 
                                                {deal.status === 'SHIPPED' && (
                                                    <div className="flex items-start gap-3">
