@@ -418,7 +418,7 @@ export default function SellPage() {
 
          finalData.append("title", formData.title);
          finalData.append("description", formData.description);
-          const mainPrice = formData.allow_buy_now ? formData.buy_it_now_price : (formData.allow_auction ? formData.starting_bid : 0);
+          const mainPrice = formData.allow_auction ? formData.starting_bid : (formData.allow_buy_now ? formData.buy_it_now_price : 0);
           finalData.append("price", mainPrice);
          finalData.append("category_id", formData.category_id);
          finalData.append("product_type", formData.product_type);
@@ -1233,6 +1233,19 @@ export default function SellPage() {
                                         </div>
                                         <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${formData.shipping_type === 'free' ? 'bg-emerald-500 border-emerald-500' : 'border-gray-200 group-hover:border-gray-400'}`}>
                                            {formData.shipping_type === 'free' && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>}
+                                        </div>
+                                     </button>
+
+                                     <button 
+                                        onClick={() => handleShippingToggle('contact')}
+                                        className={`p-5 rounded-2xl border-2 text-left transition-all flex items-center justify-between group ${formData.shipping_type === 'contact' ? 'border-blue-500 bg-blue-50' : 'border-gray-50 hover:border-gray-200'}`}
+                                     >
+                                        <div>
+                                           <p className={`text-[12px] font-black uppercase tracking-widest ${formData.shipping_type === 'contact' ? 'text-blue-700' : 'text-gray-900'}`}>Contact for Quote</p>
+                                           <p className="text-[9px] font-bold text-gray-400 uppercase mt-0.5">Calculate fee after deal</p>
+                                        </div>
+                                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${formData.shipping_type === 'contact' ? 'bg-blue-500 border-blue-500' : 'border-gray-200 group-hover:border-gray-400'}`}>
+                                           {formData.shipping_type === 'contact' && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>}
                                         </div>
                                      </button>
                                   </div>

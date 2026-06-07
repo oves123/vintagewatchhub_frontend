@@ -79,6 +79,20 @@ export default function CheckoutPage({ params: paramsPromise }) {
     }
   };
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleConfirmPurchase = async () => {
     setIsSecuring(true);
     try {
@@ -96,13 +110,86 @@ export default function CheckoutPage({ params: paramsPromise }) {
         })
       });
       const data = await res.json();
-      if (res.ok) {
-        setConfirmed(true);
-        setStep(2);
-      } else {
+      
+      if (!res.ok) {
         alert(data.message || "Failed to secure deal.");
         setIsSecuring(false);
+        return;
       }
+
+      if (product.shipping_type === 'contact') {
+        setConfirmed(true);
+        setStep(2);
+        setIsSecuring(false);
+        return;
+      }
+
+      // Proceed to Razorpay
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded) {
+        alert("Failed to load Razorpay SDK. Please check your connection.");
+        setIsSecuring(false);
+        return;
+      }
+
+      const orderRes = await fetch(`${API_URL}/payments/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+        body: JSON.stringify({ deal_id: data.deal.id })
+      });
+      const orderData = await orderRes.json();
+      
+      if (!orderRes.ok) {
+        alert("Failed to initialize payment: " + orderData.message);
+        setIsSecuring(false);
+        return;
+      }
+
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Vintage Watch Hub",
+        description: `Payment for ${product.title}`,
+        order_id: orderData.order_id,
+        handler: async function (response) {
+          try {
+            const verifyRes = await fetch(`${API_URL}/payments/verify`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                deal_id: data.deal.id
+              })
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok) {
+              setConfirmed(true);
+              setStep(2);
+              setIsSecuring(false);
+            } else {
+              alert("Payment verification failed. Please contact support.");
+              setIsSecuring(false);
+            }
+          } catch (e) {
+            alert("Payment verification error.");
+            setIsSecuring(false);
+          }
+        },
+        prefill: { name: user.name, email: user.email, contact: user.phone },
+        theme: { color: "#C6A87C" },
+        modal: {
+          ondismiss: function () {
+            setIsSecuring(false);
+            router.push("/profile?tab=buying");
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
       alert("Error securing deal. Please try again.");
       setIsSecuring(false);
@@ -341,13 +428,15 @@ export default function CheckoutPage({ params: paramsPromise }) {
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
-                    Confirm & Secure Asset — ₹{totalAmount.toLocaleString()}
+                    {product.shipping_type === 'contact' 
+                      ? 'Request Shipping Quote & Secure Asset' 
+                      : `Pay & Secure Asset — ₹${totalAfterDiscount.toLocaleString()}`}
                   </>
                 )}
               </button>
 
               <p className="text-xs text-center text-muted font-bold uppercase tracking-widest mt-4">
-                Funds held in escrow until you confirm receipt
+                {product.shipping_type === 'contact' ? 'Seller will provide a shipping quote before you pay' : 'Funds held in escrow until you confirm receipt'}
               </p>
             </div>
           </div>
@@ -367,18 +456,37 @@ export default function CheckoutPage({ params: paramsPromise }) {
               <div className="bg-surface/50 border border-border p-5 mb-6 text-left">
                 <h4 className="font-bold text-foreground text-xs mb-3 uppercase tracking-widest">Next Steps</h4>
                 <ul className="space-y-3">
-                  <li className="flex items-start gap-2 text-sm text-muted">
-                    <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">1</span></span>
-                    Complete payment via the Buyer Hub within 24 hours
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-muted">
-                    <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">2</span></span>
-                    Seller ships the timepiece within 48-72 hours
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-muted">
-                    <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">3</span></span>
-                    Inspect and confirm receipt to release payment
-                  </li>
+                  {product.shipping_type === 'contact' ? (
+                    <>
+                      <li className="flex items-start gap-2 text-sm text-muted">
+                        <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">1</span></span>
+                        Wait for the seller to provide a shipping quote.
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-muted">
+                        <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">2</span></span>
+                        Complete payment via the Buyer Hub once quoted.
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-muted">
+                        <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">3</span></span>
+                        Inspect and confirm receipt to release payment.
+                      </li>
+                    </>
+                  ) : (
+                    <>
+                      <li className="flex items-start gap-2 text-sm text-muted">
+                        <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">1</span></span>
+                        Your payment is held safely in Escrow.
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-muted">
+                        <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">2</span></span>
+                        Seller ships the timepiece within 48-72 hours
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-muted">
+                        <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">3</span></span>
+                        Inspect and confirm receipt to release payment
+                      </li>
+                    </>
+                  )}
                 </ul>
               </div>
 

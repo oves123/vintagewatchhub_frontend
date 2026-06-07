@@ -445,7 +445,7 @@ export default function ProductPage({ params }) {
        return;
     }
     
-    setShowBuyNowModal(true);
+    router.push(`/products/${id}/checkout`);
   };
 
   const confirmBuyNow = async () => {
