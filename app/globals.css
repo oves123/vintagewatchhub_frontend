@@ -2,16 +2,16 @@
 
 :root {
   --background: #FFFFFF;
-  --foreground: #000000;
-  --primary: #0F1A2E;
-  --primary-light: #1A2D4A;
-  --gold: #C9A96E;
-  --gold-dark: #A67C2E;
-  --gold-light: #D4BC8A;
-  --surface: #F9FAFB;
-  --border: #E5E1DB;
-  --muted: #4B5563;
-  --radius: 12px;
+  --foreground: #1A1A1A;
+  --primary: #111111;
+  --primary-light: #2A2A2A;
+  --gold: #C2A878;
+  --gold-dark: #9A8050;
+  --gold-light: #DED0B6;
+  --surface: #FAF9F6;
+  --border: #EAE6DF;
+  --muted: #737373;
+  --radius: 0px;
   --radius-sm: 8px;
   --radius-lg: 16px;
   --radius-xl: 24px;
@@ -191,12 +191,12 @@ body {
 
 /* Card glow */
 .card-glow {
-  transition: box-shadow 0.4s ease, transform 0.4s ease;
+  transition: box-shadow 0.6s ease, transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   border-radius: var(--radius);
 }
 .card-glow:hover {
-  box-shadow: 0 8px 32px rgba(201, 169, 110, 0.12), 0 2px 8px rgba(201, 169, 110, 0.06);
-  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
+  transform: translateY(-4px);
 }
 
 /* Wax seal */
@@ -499,11 +499,12 @@ body {
   background: white;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  transition: box-shadow 0.5s ease, transform 0.5s ease, border-color 0.5s ease;
 }
 .card-base:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  transform: translateY(-1px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+  border-color: var(--gold-light);
 }
 
 /* Input base style */

@@ -128,12 +128,23 @@ export default function ProductCard({ product, horizontal = false }) {
         body: JSON.stringify({ user_id: uid, product_id: parseInt(product.id) }),
       });
 
+      if (res.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+        return;
+      }
+
       if (res.ok) {
         setIsInWatchlist(!isInWatchlist);
         setHeartActive(true);
         setTimeout(() => setHeartActive(false), 800);
         invalidateWatchlistCache(uid);
         window.dispatchEvent(new Event("watchlistUpdated"));
+      } else {
+        const errorData = await res.json();
+        console.error("Watchlist API Error:", errorData.message);
       }
     } catch (err) {
       console.error("Failed to update watchlist", err);
@@ -228,7 +239,7 @@ export default function ProductCard({ product, horizontal = false }) {
   }
 
   return (
-    <div className="bg-surface border border-border overflow-hidden transition-all duration-[800ms] group flex flex-col h-full hover:-translate-y-1.5 hover:shadow-2xl hover:border-gold/30">
+    <div className="bg-surface border border-border overflow-hidden transition-all duration-[800ms] group flex flex-col h-full hover:-translate-y-1 hover:shadow-xl hover:border-gold/50">
       <div className="relative">
         <Link href={`/products/${product.id}`} className="block aspect-[5/4] bg-background relative overflow-hidden rounded-t-xl">
         {isVideo(images[currentImageIndex]?.url) ? (

@@ -185,6 +185,39 @@ function HomeContent() {
     <div className="bg-background min-h-screen flex flex-col transition-colors duration-500">
       <Navbar />
 
+      {/* Hero Section */}
+      {!isCatalogView && (
+        <section className="relative w-full h-[70vh] min-h-[500px] flex items-center justify-center bg-[#FAF9F6] overflow-hidden border-b border-border">
+          {/* Background Image / Placeholder */}
+          <div className="absolute inset-0 z-0 flex justify-center items-center opacity-30">
+             <img 
+               src="https://images.unsplash.com/photo-1547996160-81dfa63595aa?q=80&w=2574&auto=format&fit=crop" 
+               alt="Luxury Watch Background" 
+               className="w-full h-full object-cover object-center scale-105 transform hover:scale-100 transition-transform duration-[15s] ease-out mix-blend-multiply" 
+             />
+             <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9F6]/80 via-transparent to-[#FAF9F6]/80"></div>
+          </div>
+          
+          <div className="relative z-10 text-center px-4 max-w-4xl mx-auto flex flex-col items-center">
+             <span className="text-xs font-bold text-gold uppercase tracking-[0.3em] mb-4 block">Welcome to AERA</span>
+             <h1 className="text-5xl sm:text-7xl font-serif text-foreground tracking-wide mb-6 leading-tight">
+               The Pinnacle of <br className="hidden sm:block"/> Vintage Horology
+             </h1>
+             <p className="text-muted text-lg font-light mb-10 max-w-2xl mx-auto leading-relaxed">
+               Discover, consign, and collect the world's most exceptional pre-owned timepieces. Authenticity guaranteed.
+             </p>
+             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+               <button onClick={() => router.push('/?catalog=true#market')} className="px-10 py-4 bg-primary text-white border border-primary text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-transparent hover:text-primary transition-all duration-300 rounded-none w-full sm:w-auto">
+                 Shop Collection
+               </button>
+               <Link href="/sell" className="px-10 py-4 bg-transparent text-foreground border border-foreground text-[11px] font-bold uppercase tracking-[0.2em] hover:border-gold hover:text-gold transition-all duration-300 rounded-none w-full sm:w-auto">
+                 Consign Watch
+               </Link>
+             </div>
+          </div>
+        </section>
+      )}
+
 
       {/* Brand Quick Links - New Section */}
       {!isCatalogView && brands.length > 0 && (
@@ -541,23 +574,23 @@ function HomeContent() {
         )}
 
         {/* Promotional Banner */}
-        <section className="mt-32 mb-16 bg-foreground text-background overflow-hidden relative shadow-2xl">
-          <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <section className="mt-32 mb-16 bg-[#F6F4ED] text-foreground overflow-hidden relative border border-border">
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
             <img 
-              src="https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg" 
+              src="https://images.unsplash.com/photo-1547996160-81dfa63595aa?q=80&w=2574&auto=format&fit=crop" 
               alt="Promotional background" 
-              className="w-full h-full object-cover -rotate-6 scale-125 grayscale" 
+              className="w-full h-full object-cover scale-125 mix-blend-multiply" 
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/90 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#F6F4ED] via-[#F6F4ED]/90 to-transparent"></div>
           </div>
           <div className="relative z-10 p-12 md:p-24 md:w-2/3">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tighter uppercase leading-[0.9]">
-              Consign With <br/><span className="text-gold font-serif italic font-light lowercase tracking-normal">authority.</span>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif mb-6 tracking-wide leading-[1.1]">
+              Consign With <br/><span className="text-gold italic font-light">Elegance</span>
             </h2>
-            <p className="text-background/80 text-sm md:text-base font-medium mb-10 max-w-md leading-relaxed">
+            <p className="text-muted text-sm md:text-base font-light mb-10 max-w-md leading-relaxed">
               Unlock the true value of your collection. Start selling your vintage pieces to a dedicated global community of horological enthusiasts.
             </p>
-            <Link href="/sell" className="gold-sweep px-10 py-5 font-black text-[11px] uppercase tracking-widest shadow-lg inline-block text-white">
+            <Link href="/sell" className="px-10 py-4 bg-primary text-white border border-primary text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-transparent hover:text-primary transition-all duration-300 rounded-none inline-block shadow-sm hover:shadow-md">
               Request Valuation
             </Link>
           </div>
