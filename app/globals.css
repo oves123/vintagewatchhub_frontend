@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FFFFFF;
-  --foreground: #1A1A1A;
-  --primary: #111111;
-  --primary-light: #2A2A2A;
-  --gold: #C2A878;
-  --gold-dark: #9A8050;
-  --gold-light: #DED0B6;
-  --surface: #FAF9F6;
-  --border: #EAE6DF;
-  --muted: #737373;
+  --background: #FCFBF8;
+  --foreground: #2C2A25;
+  --primary: #1F1D19;
+  --primary-light: #3A362D;
+  --gold: #B89758;
+  --gold-dark: #8C703C;
+  --gold-light: #D4BD8A;
+  --surface: #F5F3EC;
+  --border: #E8E3D5;
+  --muted: #857F73;
   --radius: 0px;
-  --radius-sm: 8px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 4px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
 
@@ -165,6 +165,31 @@ body {
   position: relative;
   overflow: hidden;
 }
+
+/* 3D Hover Effects */
+.hover-3d {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.hover-3d:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.card-3d {
+  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+.card-3d:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+  border-color: var(--gold-light);
+}
+
+.vintage-shadow {
+  box-shadow: 0 10px 40px -10px rgba(44, 42, 37, 0.08);
+}
+
 .btn-shine::after {
   content: '';
   position: absolute;

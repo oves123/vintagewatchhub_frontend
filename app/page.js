@@ -210,10 +210,10 @@ function HomeContent() {
                Discover, consign, and collect the world's most exceptional pre-owned timepieces. Authenticity guaranteed.
              </p>
              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-               <button onClick={() => router.push('/?catalog=true#market')} className="px-10 py-4 bg-primary text-white border border-primary text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-transparent hover:text-primary transition-all duration-300 rounded-none w-full sm:w-auto">
+               <button onClick={() => router.push('/?catalog=true#market')} className="hover-3d px-10 py-4 bg-primary text-white border border-primary text-[11px] font-bold uppercase tracking-[0.2em] shadow-lg rounded-sm w-full sm:w-auto">
                  Shop Collection
                </button>
-               <Link href="/sell" className="px-10 py-4 bg-transparent text-foreground border border-foreground text-[11px] font-bold uppercase tracking-[0.2em] hover:border-gold hover:text-gold transition-all duration-300 rounded-none w-full sm:w-auto">
+               <Link href="/sell" className="hover-3d px-10 py-4 bg-surface text-foreground border border-border text-[11px] font-bold uppercase tracking-[0.2em] shadow-md hover:border-gold hover:text-gold rounded-sm w-full sm:w-auto">
                  Consign Watch
                </Link>
              </div>
@@ -223,29 +223,29 @@ function HomeContent() {
 
       {/* Trust Signals Bar */}
       {!isCatalogView && (
-        <section className="bg-surface border-b border-border py-8 overflow-hidden">
+        <section className="bg-surface border-b border-border py-8 overflow-hidden vintage-shadow relative z-20">
           <div className="max-w-[1400px] mx-auto px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 md:divide-x divide-border">
               
-              <div className="flex flex-col items-center justify-center text-center px-4 group">
+              <div className="flex flex-col items-center justify-center text-center px-4 group hover-3d">
                 <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                 <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">Secure Escrow</span>
                 <span className="text-xs text-muted hidden sm:block">Funds held safely</span>
               </div>
 
-              <div className="flex flex-col items-center justify-center text-center px-4 group">
+              <div className="flex flex-col items-center justify-center text-center px-4 group hover-3d">
                 <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">100% Verified</span>
                 <span className="text-xs text-muted hidden sm:block">Authenticity guaranteed</span>
               </div>
 
-              <div className="flex flex-col items-center justify-center text-center px-4 group">
+              <div className="flex flex-col items-center justify-center text-center px-4 group hover-3d">
                 <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
                 <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">Insured Shipping</span>
                 <span className="text-xs text-muted hidden sm:block">Fully tracked delivery</span>
               </div>
 
-              <div className="flex flex-col items-center justify-center text-center px-4 group">
+              <div className="flex flex-col items-center justify-center text-center px-4 group hover-3d">
                 <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">Mumbai Based</span>
                 <span className="text-xs text-muted hidden sm:block">Local concierge service</span>

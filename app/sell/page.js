@@ -530,7 +530,7 @@ export default function SellPage() {
             onComplete={handleOnboardingComplete} 
          />
          {showSuccess.show && (
-            <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-white/96 backdrop-blur-md">
+            <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-surface/96 backdrop-blur-md">
                <style>{`
                  @keyframes cfpop{0%{transform:scale(0) translateY(0);opacity:0}60%{opacity:1}100%{transform:scale(1.2) translateY(-30px);opacity:0}}
                  @keyframes ringpulse{0%,100%{transform:scale(1);opacity:.35}50%{transform:scale(1.5);opacity:0}}
@@ -693,7 +693,7 @@ export default function SellPage() {
                                  <button
                                     key={c.c}
                                     onClick={() => handleInputChange({ target: { name: 'condition_code', value: c.c } })}
-                                    className={`p-5 rounded-xl border text-left transition-all ${formData.condition_code === c.c ? 'border-blue-600 bg-blue-50/50 shadow-sm' : 'border-gray-100 bg-white hover:bg-gray-50'}`}
+                                    className={`p-5 rounded-xl border text-left transition-all ${formData.condition_code === c.c ? 'border-blue-600 bg-blue-50/50 shadow-sm' : 'border-gray-100 bg-surface hover:bg-gray-50'}`}
                                  >
                                     <p className="text-[13px] font-bold text-gray-900">{c.l}</p>
                                     <p className="text-[10px] font-medium text-gray-500 mt-1">{c.d}</p>
@@ -709,7 +709,7 @@ export default function SellPage() {
                                   {selectedCategory.conditions.map(cf => {
                                      const isManual = formData.condition_details[`${cf.field_name}_manual_mode`];
                                      return (
-                                        <div key={cf.id} className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm space-y-3">
+                                        <div key={cf.id} className="p-5 bg-surface border border-gray-100 rounded-2xl shadow-sm space-y-3">
                                            <div className="flex justify-between items-center">
                                               <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">{cf.field_label}</p>
                                               <button 
@@ -769,7 +769,7 @@ export default function SellPage() {
                               onChange={handleInputChange}
                               rows="6"
                               placeholder="Add a detailed description about your item..."
-                              className="w-full bg-white border border-gray-200 p-6 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium text-gray-700 text-[15px] placeholder:text-gray-300 resize-none shadow-sm"
+                              className="w-full bg-surface border border-gray-200 p-6 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium text-gray-700 text-[15px] placeholder:text-gray-300 resize-none shadow-sm"
                            />
                         </div>
 
@@ -794,7 +794,7 @@ export default function SellPage() {
                                              type="text"
                                              onChange={(e) => handleNestedChange('item_specifics', s.field_name, e.target.value)}
                                              value={formData.item_specifics[s.field_name] || ""}
-                                             className="w-full bg-white border border-blue-100 p-4 rounded-xl font-black text-xs text-blue-600 outline-none shadow-sm placeholder:text-blue-200"
+                                             className="w-full bg-surface border border-blue-100 p-4 rounded-xl font-black text-xs text-blue-600 outline-none shadow-sm placeholder:text-blue-200"
                                              placeholder={`Enter Custom ${s.field_label}`}
                                           />
                                        ) : (
@@ -802,7 +802,7 @@ export default function SellPage() {
                                              <select
                                                 onChange={(e) => handleNestedChange('item_specifics', s.field_name, e.target.value)}
                                                 value={formData.item_specifics[s.field_name] || ""}
-                                                className="w-full bg-white border border-gray-200 p-4 rounded-xl font-bold text-xs text-gray-900 focus:border-blue-600 outline-none shadow-sm"
+                                                className="w-full bg-surface border border-gray-200 p-4 rounded-xl font-bold text-xs text-gray-900 focus:border-blue-600 outline-none shadow-sm"
                                              >
                                                 <option value="">Select Option</option>
                                                 {s.options.map(o => <option key={o} value={o}>{o}</option>)}
@@ -812,7 +812,7 @@ export default function SellPage() {
                                                 type={s.field_type}
                                                 onChange={(e) => handleNestedChange('item_specifics', s.field_name, e.target.value)}
                                                 value={formData.item_specifics[s.field_name] || ""}
-                                                className="w-full bg-white border border-gray-200 p-4 rounded-xl font-bold text-xs text-gray-900 focus:border-blue-600 outline-none shadow-sm"
+                                                className="w-full bg-surface border border-gray-200 p-4 rounded-xl font-bold text-xs text-gray-900 focus:border-blue-600 outline-none shadow-sm"
                                                 placeholder={`e.g. ${s.field_label}`}
                                              />
                                           )
@@ -847,7 +847,7 @@ export default function SellPage() {
 
                          <div className="max-w-2xl mx-auto space-y-10">
                              {/* Listing Type Options */}
-                             <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-8">
+                             <div className="bg-surface p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-8">
                                 <div className="text-center space-y-2">
                                    <div className="flex items-center justify-center gap-2 px-4 py-1.5 bg-indigo-50 rounded-full border border-indigo-100 w-fit mx-auto">
                                       <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
@@ -877,7 +877,7 @@ export default function SellPage() {
                                                value={formData.buy_it_now_price} 
                                                onChange={handleInputChange}
                                                placeholder="Enter price"
-                                               className="w-full bg-white border border-gray-200 p-3 rounded-xl font-bold text-lg outline-none focus:border-blue-500"
+                                               className="w-full bg-surface border border-gray-200 p-3 rounded-xl font-bold text-lg outline-none focus:border-blue-500"
                                             />
                                          </div>
                                       )}
@@ -905,7 +905,7 @@ export default function SellPage() {
                                                   value={formData.starting_bid} 
                                                   onChange={handleInputChange}
                                                   placeholder="0.00"
-                                                  className="w-full bg-white border border-gray-200 p-3 rounded-xl font-bold text-lg outline-none focus:border-amber-500"
+                                                  className="w-full bg-surface border border-gray-200 p-3 rounded-xl font-bold text-lg outline-none focus:border-amber-500"
                                                />
                                             </div>
                                             <div>
@@ -916,7 +916,7 @@ export default function SellPage() {
                                                    value={formData.reserve_price} 
                                                    onChange={handleInputChange}
                                                    placeholder="Minimum amount to sell"
-                                                   className="w-full bg-white border border-gray-200 p-3 rounded-xl font-bold text-lg outline-none focus:border-amber-500"
+                                                   className="w-full bg-surface border border-gray-200 p-3 rounded-xl font-bold text-lg outline-none focus:border-amber-500"
                                                 />
                                              </div>
                                              <div>
@@ -925,7 +925,7 @@ export default function SellPage() {
                                                    name="auction_duration" 
                                                    value={formData.auction_duration || "3"} 
                                                    onChange={handleInputChange}
-                                                   className="w-full bg-white border border-gray-200 p-3 rounded-xl font-bold text-xs outline-none focus:border-amber-500"
+                                                   className="w-full bg-surface border border-gray-200 p-3 rounded-xl font-bold text-xs outline-none focus:border-amber-500"
                                                 >
                                                    <option value="1">1 Day</option>
                                                    <option value="3">3 Days</option>
@@ -958,7 +958,7 @@ export default function SellPage() {
                              </div>
 
                             {/* Shipping Options */}
-                            <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-8">
+                            <div className="bg-surface p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 space-y-8">
                                <div className="flex flex-col items-center gap-2">
                                   <div className="flex items-center gap-2 px-4 py-1.5 bg-amber-50 rounded-full border border-amber-100">
                                      <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
@@ -1022,7 +1022,7 @@ export default function SellPage() {
                                   {/* Fixed Fee Input */}
                                   <div className={`p-6 rounded-2xl border-2 transition-all flex flex-col gap-4 ${formData.shipping_type === 'fixed' ? 'border-gray-900 bg-gray-50/30' : 'border-gray-50 opacity-40 grayscale pointer-events-none'}`}>
                                      <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
+                                        <div className="p-2 bg-surface rounded-lg border border-gray-100 shadow-sm">
                                            <svg className="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                                         </div>
                                         <span className="text-[11px] font-black uppercase tracking-widest text-gray-900">Fixed Fee</span>
@@ -1125,7 +1125,7 @@ export default function SellPage() {
                               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1">This is how your asset will appear on the Hub</p>
                            </div>
                            <div className="flex gap-3 mt-4 md:mt-0">
-                               <button onClick={prevStep} className="bg-white text-gray-600 border border-gray-200 px-6 py-3 rounded-lg font-bold text-[11px] uppercase tracking-wider hover:bg-gray-50 transition-all">
+                               <button onClick={prevStep} className="bg-surface text-gray-600 border border-gray-200 px-6 py-3 rounded-lg font-bold text-[11px] uppercase tracking-wider hover:bg-gray-50 transition-all">
                                   Edit Details
                                </button>
                                <button
@@ -1139,7 +1139,7 @@ export default function SellPage() {
                         </div>
 
                         {/* Preview Container */}
-                        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden relative opacity-100 border-2 border-blue-100">
+                        <div className="bg-surface rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden relative opacity-100 border-2 border-blue-100">
                            {/* Watermark/Banner */}
                            <div className="absolute top-0 right-0 bg-blue-600 text-white px-6 py-1.5 rounded-bl-2xl font-black text-[9px] uppercase tracking-[0.2em] shadow-md z-20">
                               Live Preview
@@ -1148,7 +1148,7 @@ export default function SellPage() {
                           <div className="grid grid-cols-1 lg:grid-cols-12">
                             {/* Gallery Preview */}
                             <div className="lg:col-span-6 p-6 md:p-10 border-r border-gray-100 bg-gray-50/10">
-                              <div className="aspect-square bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative">
+                              <div className="aspect-square bg-surface rounded-2xl border border-gray-100 shadow-sm overflow-hidden relative">
                                 {previews[0]?.type === 'video' ? (
                                   <video 
                                     src={previews[0].url} 
@@ -1166,7 +1166,7 @@ export default function SellPage() {
                               </div>
                               <div className="grid grid-cols-4 md:grid-cols-5 gap-3 mt-6">
                                  {previews.map((item, i) => (
-                                    <div key={i} className="aspect-square bg-white border border-gray-100 rounded-lg overflow-hidden relative">
+                                    <div key={i} className="aspect-square bg-surface border border-gray-100 rounded-lg overflow-hidden relative">
                                        {item.type === 'video' ? (
                                          <div className="w-full h-full bg-gray-900 flex items-center justify-center">
                                             <svg className="w-6 h-6 text-white opacity-50" fill="currentColor" viewBox="0 0 20 20">
@@ -1231,7 +1231,7 @@ export default function SellPage() {
                                           <span>Chat with Seller</span>
                                        </button>
                                        {formData.allow_offers && (
-                                          <button disabled className="w-full h-14 mt-4 bg-white border-2 border-gray-200 text-gray-400 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 cursor-not-allowed">
+                                          <button disabled className="w-full h-14 mt-4 bg-surface border-2 border-gray-200 text-gray-400 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 cursor-not-allowed">
                                              <span>Make Offer</span>
                                           </button>
                                        )}
@@ -1243,7 +1243,7 @@ export default function SellPage() {
                           </div>
                           
                           {/* Specs Grid Preview */}
-                          <div className="border-t border-gray-100 bg-white">
+                          <div className="border-t border-gray-100 bg-surface">
                              <div className="p-8 pb-4">
                                <h2 className="text-lg font-bold text-gray-950 tracking-tight text-left">Technical Asset Specifications</h2>
                              </div>
@@ -1260,7 +1260,7 @@ export default function SellPage() {
                           </div>
 
                           {/* Description Tab Preview */}
-                          <div className="border-t border-gray-100 bg-white p-8 px-8 md:px-12 text-left">
+                          <div className="border-t border-gray-100 bg-surface p-8 px-8 md:px-12 text-left">
                              <div className="flex gap-10 border-b border-gray-100 mb-8">
                                 <button className="pb-4 text-[12px] font-bold uppercase tracking-widest border-b-2 border-blue-600 text-blue-600">
                                    Description

@@ -620,12 +620,12 @@ export default function ProductPage({ params }) {
                 ) : (
                   <>
                     {product.allow_buy_now && bidHistory.length === 0 && (
-                      <button onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow} className="flex-1 md:flex-none px-6 py-3 bg-foreground text-background rounded font-bold text-xs uppercase tracking-widest hover:bg-gold hover:text-white transition whitespace-nowrap btn-shine">
+                      <button onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow} className="hover-3d flex-1 md:flex-none px-6 py-3 bg-foreground text-background rounded font-bold text-xs uppercase tracking-widest hover:bg-gold hover:text-white transition whitespace-nowrap btn-shine">
                         {product.shipping_type === 'contact' ? 'Discuss' : 'Buy Now'}
                       </button>
                     )}
                     {product.allow_auction && (
-                      <button onClick={() => setShowBidModal(true)} disabled={timeLeft === "AUCTION ENDED"} className="flex-1 md:flex-none px-6 py-3 bg-amber-600 text-white rounded font-bold text-xs uppercase tracking-widest hover:bg-amber-700 disabled:opacity-50 whitespace-nowrap btn-shine">
+                      <button onClick={() => setShowBidModal(true)} disabled={timeLeft === "AUCTION ENDED"} className="hover-3d flex-1 md:flex-none px-6 py-3 bg-amber-600 text-white rounded font-bold text-xs uppercase tracking-widest hover:bg-amber-700 disabled:opacity-50 whitespace-nowrap btn-shine">
                         Place Bid
                       </button>
                     )}
@@ -642,7 +642,7 @@ export default function ProductPage({ params }) {
             {/* Gallery - Edge to Edge on Mobile */}
             <div className="lg:col-span-7 bg-surface/50 lg:rounded-2xl lg:p-8">
               <div 
-                className="aspect-square sm:aspect-[4/3] lg:aspect-[4/3] bg-background lg:rounded-xl lg:border border-border/50 overflow-hidden relative group/gallery cursor-zoom-in shadow-2xl"
+                className="aspect-square sm:aspect-[4/3] lg:aspect-[4/3] bg-surface rounded-none overflow-hidden relative group/gallery cursor-zoom-in"
                 onMouseMove={mediaItems[selectedImage]?.type === 'image' ? handleMouseMove : null}
                 onMouseLeave={() => setZoom({ ...zoom, show: false })}
                 onClick={() => setLightboxOpen(true)}
@@ -662,7 +662,7 @@ export default function ProductPage({ params }) {
                       alt={product.title}
                       fill
                       priority
-                      className="object-contain p-8"
+                      className="object-contain p-0"
                       size="large"
                     />
                     {zoom.show && (
@@ -735,7 +735,7 @@ export default function ProductPage({ params }) {
             </div>
 
             {/* Content & sticky sidebar */}
-            <div className="lg:col-span-5 p-6 md:p-10 flex flex-col lg:sticky lg:top-24 lg:self-start bg-background/80 backdrop-blur-md rounded-2xl border border-border shadow-xl">
+            <div className="lg:col-span-5 pt-4 lg:pt-0 flex flex-col lg:sticky lg:top-24 lg:self-start">
               <div className="flex-grow">
                 <div className="flex items-center gap-3 mb-6">
                     <span className="bg-gold/10 text-gold-dark px-3 py-1 rounded text-[10px] font-black uppercase tracking-[0.2em] border border-gold/20 shadow-sm">{product.condition_code || "PRE-OWNED"}</span>
@@ -752,36 +752,35 @@ export default function ProductPage({ params }) {
                     </div>
                  </div>
 
-                <h1 className="text-3xl md:text-4xl font-serif font-bold tracking-wide text-foreground leading-tight tracking-tight mb-6 uppercase">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold tracking-widest text-foreground leading-tight mb-4 uppercase">
                   {product.title}
                 </h1>
                 
-                <div className="flex flex-wrap items-center gap-5 text-sm font-bold uppercase tracking-wider text-muted">
-                  <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                    Professional Hub Authentication
+                <div className="flex flex-col gap-3 text-[11px] font-bold uppercase tracking-[0.2em] text-foreground mt-8 mb-10">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>Professional Hub Authentication</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-primary bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                    Verified Listing
+                  <div className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>Verified Listing</span>
                   </div>
                 </div>
 
-                <div className="mt-10 p-8 md:p-10 bg-background/50 rounded-xl border border-border relative overflow-hidden">
+                <div className="card-3d mt-10 p-8 md:p-10 bg-surface rounded-none border border-border relative overflow-hidden">
                   <div className="space-y-6 relative z-10">
                     <div>
-                      <p className="text-sm font-bold text-muted uppercase tracking-widest mb-2">Live Valuation</p>
+                      <p className="text-xs font-bold text-muted uppercase tracking-[0.2em] mb-2">Live Valuation</p>
                        <div className="flex flex-col gap-1">
-                          <span className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">₹{parseFloat(product?.price || 0).toLocaleString()}</span>
-                          <div className="flex items-center gap-1.5 mt-1">
-                             <svg className="w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                             <span className="text-sm font-black uppercase tracking-widest text-muted">
+                          <span className="text-4xl md:text-5xl font-serif font-bold text-foreground tracking-tight">₹{parseFloat(product?.price || 0).toLocaleString()}</span>
+                          <div className="flex items-center gap-1.5 mt-2">
+                             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted">
                                 {product.shipping_type === 'free' ? (
-                                   <span className="text-emerald-600">Free Shipping</span>
+                                   <span className="text-gold">Free Shipping Included</span>
                                 ) : product.shipping_type === 'contact' ? (
-                                   <span className="text-primary">Contact for Shipping Quote</span>
+                                   <span className="text-muted">Contact for Shipping Quote</span>
                                 ) : (
-                                   <>+ ₹{parseFloat(product.shipping_fee || 0).toLocaleString()} Shipping</>
+                                   <>+ ₹{parseFloat(product.shipping_fee || 0).toLocaleString()} Premium Shipping</>
                                 )}
                              </span>
                           </div>
@@ -794,7 +793,7 @@ export default function ProductPage({ params }) {
                         {isSeller ? (
                            <Link 
                              href={`/sell?edit=${product.id}`}
-                             className="w-full h-14 bg-emerald-600 text-white rounded-lg font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-3 group"
+                             className="hover-3d w-full h-14 bg-emerald-600 text-white rounded-lg font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-3 group"
                            >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                               <span>Manage This Listing</span>
@@ -804,7 +803,7 @@ export default function ProductPage({ params }) {
                               {product.allow_buy_now && bidHistory.length === 0 && (
                                 <button 
                                   onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow}
-                                  className={`w-full h-14 rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all border flex items-center justify-center gap-3 group ${product.shipping_type === 'contact' ? 'bg-background border-gold text-gold hover:bg-gold hover:text-white' : 'bg-foreground text-background border-foreground hover:bg-gold hover:border-gold hover:text-white shadow-xl'}`}
+                                  className={`hover-3d w-full h-14 rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all border flex items-center justify-center gap-3 group ${product.shipping_type === 'contact' ? 'bg-background border-gold text-gold hover:bg-gold hover:text-white' : 'bg-foreground text-background border-foreground hover:bg-gold hover:border-gold hover:text-white shadow-xl'}`}
                                 >
                                    {product.shipping_type === 'contact' ? (
                                       <>
@@ -836,7 +835,7 @@ export default function ProductPage({ params }) {
                                       setShowBidModal(true);
                                     }}
                                     disabled={timeLeft === "AUCTION ENDED"}
-                                    className={`w-full h-14 text-white rounded-none font-bold text-[11px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-3 group ${timeLeft === "AUCTION ENDED" ? 'bg-gray-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 shadow-amber-100'}`}
+                                    className={`hover-3d w-full h-14 text-white rounded-none font-bold text-[11px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-3 group ${timeLeft === "AUCTION ENDED" ? 'bg-gray-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 shadow-amber-100'}`}
                                   >
                                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                      <span>{timeLeft === "AUCTION ENDED" ? "Auction Ended" : "Place Bid"}</span>
@@ -860,7 +859,7 @@ export default function ProductPage({ params }) {
                                      if (!user) return router.push("/login?redirect=/products/" + id);
                                      setShowOfferModal(true);
                                    }}
-                                   className="w-full h-14 bg-surface border-2 border-gray-900 text-foreground rounded-none font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-background transition-all flex items-center justify-center gap-3 group"
+                                   className="hover-3d w-full h-14 bg-surface border-2 border-gray-900 text-foreground rounded-none font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-background transition-all flex items-center justify-center gap-3 group"
                                  >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     <span>Make Offer</span>
@@ -869,7 +868,7 @@ export default function ProductPage({ params }) {
 
                               <button 
                                  onClick={handleChatWithSeller}
-                                 className="w-full h-14 bg-background border border-border text-muted rounded-none font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-surface hover:border-gold hover:text-gold transition-all flex items-center justify-center gap-3 group"
+                                 className="hover-3d w-full h-14 bg-background border border-border text-muted rounded-none font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-surface hover:border-gold hover:text-gold transition-all flex items-center justify-center gap-3 group"
                               >
                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -903,7 +902,7 @@ export default function ProductPage({ params }) {
 
                {/* Seller Profile Card */}
                {product.seller_id && (
-                 <div className="mt-8 p-6 bg-surface border border-border rounded-none shadow-sm hover:shadow-md transition-shadow">
+                 <div className="card-3d mt-8 p-6 bg-surface border border-border rounded-none shadow-sm">
                    <div className="flex items-center justify-between mb-6">
                      <div className="flex items-center gap-4">
                        <div className="w-12 h-12 rounded-none bg-primary flex items-center justify-center text-white font-bold text-lg shadow-sm">
@@ -980,7 +979,7 @@ export default function ProductPage({ params }) {
         {/* Technical Grid (Specs & Condition) */}
         <section className="mt-20">
            <h2 className="text-xl font-bold text-foreground tracking-tight mb-8">Technical Asset Specifications</h2>
-           <div className="bg-surface rounded-none border border-border shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 overflow-hidden">
+           <div className="card-3d bg-surface rounded-none border border-border shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 overflow-hidden">
               {Object.entries(product.item_specifics || {})
                 .filter(([key]) => !key.endsWith('_manual_mode'))
                 .map(([key, value], i) => (

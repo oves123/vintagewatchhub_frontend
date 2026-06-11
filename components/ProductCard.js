@@ -156,7 +156,7 @@ export default function ProductCard({ product, horizontal = false }) {
 
   if (horizontal) {
     return (
-      <div className="bg-surface border border-border overflow-hidden hover:border-gold/30 transition-all duration-500 group flex flex-col sm:flex-row mb-6 fade-up shadow-sm hover:shadow-lg">
+      <div className="card-3d rounded-lg overflow-hidden group flex flex-col sm:flex-row mb-6 fade-up">
         <div className="relative w-full sm:w-48 md:w-64 flex-shrink-0">
           <Link href={`/products/${product.id}`} className="block w-full aspect-[4/3] sm:aspect-square bg-background relative overflow-hidden sm:rounded-l-xl">
             {isVideo(images[currentImageIndex]?.url) ? (
@@ -239,7 +239,7 @@ export default function ProductCard({ product, horizontal = false }) {
   }
 
   return (
-    <div className="bg-surface border border-border overflow-hidden transition-all duration-[800ms] group flex flex-col h-full hover:-translate-y-1 hover:shadow-xl hover:border-gold/50">
+    <div className="card-3d rounded-lg overflow-hidden group flex flex-col h-full">
       <div className="relative">
         <Link href={`/products/${product.id}`} className="block aspect-[5/4] bg-background relative overflow-hidden rounded-t-xl">
         {isVideo(images[currentImageIndex]?.url) ? (

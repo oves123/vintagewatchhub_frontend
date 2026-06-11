@@ -55,7 +55,7 @@ export default function LoginPage() {
       </header>
 
       <main className="flex-grow flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[440px] bg-background rounded-none border border-border p-8 sm:p-12">
+        <div className="card-3d w-full max-w-[440px] bg-background rounded-none border border-border p-8 sm:p-12">
           <div className="mb-10 text-center">
             <h1 className="text-2xl font-serif uppercase tracking-[0.2em] text-foreground mb-3">Sign In</h1>
             <p className="text-xs text-muted font-medium">
@@ -120,7 +120,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-black text-white border border-black hover:bg-gold hover:text-black transition-all duration-300 rounded-lg font-serif uppercase tracking-[0.2em] text-sm font-bold disabled:opacity-50 mt-6"
+              className="hover-3d w-full py-4 bg-black text-white border border-black hover:bg-gold hover:text-black transition-all duration-300 rounded-lg font-serif uppercase tracking-[0.2em] text-sm font-bold disabled:opacity-50 mt-6"
             >
               {loading ? "Signing in..." : "Enter Boutique"}
             </button>
