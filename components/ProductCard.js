@@ -151,7 +151,7 @@ export default function ProductCard({ product, horizontal = false }) {
     }
   };
 
-  const price = parseFloat(product.allow_auction ? (product.current_bid || product.starting_bid) : product.price).toLocaleString();
+  const price = parseFloat(product.allow_auction ? (product.current_bid || product.starting_bid || 0) : (product.price || 0)).toLocaleString();
   const isAuction = product.allow_auction;
 
   if (horizontal) {

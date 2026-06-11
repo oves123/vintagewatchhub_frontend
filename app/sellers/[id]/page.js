@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
@@ -82,6 +82,11 @@ export default function SellerPage({ params }) {
                 {seller?.username || "Seller"}
               </h1>
               <div className="flex flex-wrap items-center gap-4 text-xs font-bold uppercase tracking-widest text-muted">
+                {seller?.rating && (
+                  <span className="text-gold flex items-center gap-1">
+                    ★ {Number(seller.rating).toFixed(1)} Rating
+                  </span>
+                )}
                 {seller?.seller_badge && (
                   <span className="text-gold flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">

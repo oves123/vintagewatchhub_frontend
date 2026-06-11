@@ -25,11 +25,11 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-[13px] text-muted leading-relaxed mb-6">
-              The premium marketplace for pre-owned, authentic timepieces. Buy, sell, and trade watches with verified collectors worldwide.
+              The premium marketplace for pre-owned, authentic timepieces. Buy, sell, and trade watches with verified collectors in Mumbai.
             </p>
 
             {/* Escrow Trust Badge */}
-            <div className="bg-background border border-border p-4 rounded-xl">
+            <div className="bg-background border border-border p-4 rounded-none">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center">
                   <svg className="w-5 h-5 text-gold-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +132,7 @@ export default function Footer() {
             </ul>
 
             {/* Gold Foil Stamp */}
-            <div className="mt-6 border border-gold/20 p-4 text-center bg-gold/5 rounded-xl">
+            <div className="mt-6 border border-gold/20 p-4 text-center bg-gold/5 rounded-none">
               <p className="text-[10px] text-gold-dark uppercase tracking-[0.3em] font-black">Authenticity Seal</p>
               <p className="text-xs text-gold font-serif italic mt-1">Verified & Certified</p>
             </div>

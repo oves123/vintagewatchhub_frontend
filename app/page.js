@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Image from "next/image";
 import ProductCard from "../components/ProductCard";
 import { ProductGridSkeleton } from "../components/Skeleton";
 import Link from "next/link";
@@ -190,10 +191,12 @@ function HomeContent() {
         <section className="relative w-full h-[70vh] min-h-[500px] flex items-center justify-center bg-[#FAF9F6] overflow-hidden border-b border-border">
           {/* Background Image / Placeholder */}
           <div className="absolute inset-0 z-0 flex justify-center items-center opacity-30">
-             <img 
+             <Image 
                src="https://images.unsplash.com/photo-1547996160-81dfa63595aa?q=80&w=2574&auto=format&fit=crop" 
                alt="Luxury Watch Background" 
-               className="w-full h-full object-cover object-center scale-105 transform hover:scale-100 transition-transform duration-[15s] ease-out mix-blend-multiply" 
+               fill
+               priority
+               className="object-cover object-center scale-105 transform hover:scale-100 transition-transform duration-[15s] ease-out mix-blend-multiply" 
              />
              <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9F6]/80 via-transparent to-[#FAF9F6]/80"></div>
           </div>
@@ -218,6 +221,40 @@ function HomeContent() {
         </section>
       )}
 
+      {/* Trust Signals Bar */}
+      {!isCatalogView && (
+        <section className="bg-surface border-b border-border py-8 overflow-hidden">
+          <div className="max-w-[1400px] mx-auto px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 md:divide-x divide-border">
+              
+              <div className="flex flex-col items-center justify-center text-center px-4 group">
+                <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">Secure Escrow</span>
+                <span className="text-xs text-muted hidden sm:block">Funds held safely</span>
+              </div>
+
+              <div className="flex flex-col items-center justify-center text-center px-4 group">
+                <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">100% Verified</span>
+                <span className="text-xs text-muted hidden sm:block">Authenticity guaranteed</span>
+              </div>
+
+              <div className="flex flex-col items-center justify-center text-center px-4 group">
+                <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">Insured Shipping</span>
+                <span className="text-xs text-muted hidden sm:block">Fully tracked delivery</span>
+              </div>
+
+              <div className="flex flex-col items-center justify-center text-center px-4 group">
+                <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">Mumbai Based</span>
+                <span className="text-xs text-muted hidden sm:block">Local concierge service</span>
+              </div>
+
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Brand Quick Links - New Section */}
       {!isCatalogView && brands.length > 0 && (

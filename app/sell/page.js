@@ -7,7 +7,6 @@ import { getCategories, createProduct, updateProduct, API_URL, API_BASE_URL, get
 import { Camera, RefreshCw, X, Circle } from "lucide-react";
 import ProfileOnboardingModal from "../../components/ProfileOnboardingModal";
 import Breadcrumbs from "../../components/Breadcrumbs";
-import "./sell.css";
 
 export default function SellPage() {
    const [step, setStep] = useState(1);
@@ -586,8 +585,8 @@ export default function SellPage() {
            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] to-transparent"></div>
            <div className="relative z-10 text-center px-4 mt-8">
              <h1 className="text-4xl md:text-5xl font-serif tracking-[0.2em] uppercase mb-4">
-               {step === 1 && "Consign an Asset"}
-               {step === 2 && "Visual Authentication"}
+               {step === 1 && "Asset & Media"}
+               {step === 2 && "Condition & Specs"}
                {step === 3 && "Valuation & Sales Format"}
                {step === 4 && "Shipping & Protocol"}
              </h1>
@@ -759,185 +758,8 @@ export default function SellPage() {
                      </div>
                   )}
 
-                  {/* STEP 3: Media */}
+                  {/* STEP 3: Detailed Specs */}
                   {step === 3 && (
-                     <div className="animate-in fade-in duration-500 space-y-10">
-                         <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                            <div 
-                               className={`flex-1 p-10 rounded-2xl text-center relative hover:bg-white transition-all group overflow-hidden border border-dashed ${isDragging ? 'border-blue-600 bg-blue-50/50 scale-[1.02]' : 'bg-gray-50 border-gray-300'}`}
-                               onDragEnter={handleDragEnter}
-                               onDragOver={handleDragOver}
-                               onDragLeave={handleDragLeave}
-                               onDrop={handleDrop}
-                            >
-                               <div className="space-y-4 transition-transform group-hover:scale-105 duration-300">
-                                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-gray-100">
-                                     <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                     </svg>
-                                  </div>
-                                  <div>
-                                     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">{isDragging ? "Drop Files Now" : "Upload Gallery"}</h3>
-                                     <p className="text-[10px] font-medium text-gray-400 mt-1 uppercase tracking-tight">Drag or Browse (Max 20)</p>
-                                  </div>
-                               </div>
-                               <input type="file" multiple accept="image/*,video/*" onChange={handleMediaChange} className="absolute inset-0 opacity-0 cursor-pointer" title="" />
-                            </div>
-
-                            <button 
-                               onClick={startCamera}
-                               className="flex-1 p-10 bg-blue-50 border border-dashed border-blue-200 rounded-2xl text-center hover:bg-white hover:border-blue-400 transition-all group flex flex-col items-center justify-center gap-4"
-                            >
-                               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-blue-100 group-hover:scale-110 transition-transform">
-                                  <Camera size={24} className="text-blue-600" />
-                               </div>
-                               <div>
-                                  <h3 className="text-sm font-bold text-blue-600 uppercase tracking-widest">Take Live Photo</h3>
-                                  <p className="text-[10px] font-medium text-blue-400 mt-1 uppercase tracking-tight">Use mobile/pc camera</p>
-                               </div>
-                            </button>
-                         </div>
-
-                         {showCamera && (
-                            <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-10 animate-in fade-in duration-300">
-                               <div className="relative w-full max-w-2xl aspect-[3/4] sm:aspect-video bg-gray-900 rounded-[2rem] overflow-hidden shadow-2xl border border-white/10">
-                                  <video 
-                                     ref={videoRef} 
-                                     autoPlay 
-                                     playsInline 
-                                     className="w-full h-full object-cover"
-                                  />
-                                  <canvas ref={canvasRef} className="hidden" />
-                                  
-                                  {/* Camera UI Overlay */}
-                                  <div className="absolute inset-0 flex flex-col justify-between p-6 sm:p-8">
-                                     <div className="flex justify-between items-start">
-                                        <div className="flex flex-col gap-2">
-                                           <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/20">
-                                              <div className={`w-2 h-2 rounded-full ${isRecording ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
-                                              <span className="text-[10px] font-black text-white uppercase tracking-widest">
-                                                 {isRecording ? `Recording ${recordingTime}s` : 'Live Hub View'}
-                                              </span>
-                                           </div>
-                                           {!isRecording && (
-                                              <div className="flex bg-black/40 backdrop-blur-md rounded-xl p-1 border border-white/10 self-start">
-                                                 <button 
-                                                    onClick={() => setCameraMode('photo')}
-                                                    className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${cameraMode === 'photo' ? 'bg-white text-gray-900 shadow-lg' : 'text-white/60 hover:text-white'}`}
-                                                 >
-                                                    Photo
-                                                 </button>
-                                                 <button 
-                                                    onClick={() => setCameraMode('video')}
-                                                    className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${cameraMode === 'video' ? 'bg-white text-gray-900 shadow-lg' : 'text-white/60 hover:text-white'}`}
-                                                 >
-                                                    Video
-                                                 </button>
-                                              </div>
-                                           )}
-                                        </div>
-                                        <button 
-                                           onClick={stopCamera} 
-                                           disabled={isRecording}
-                                           className="p-3 bg-black/40 backdrop-blur-md text-white rounded-full border border-white/20 hover:bg-rose-500/80 transition-all disabled:opacity-20"
-                                        >
-                                           <X size={20} />
-                                        </button>
-                                     </div>
-
-                                     <div className="flex flex-col items-center gap-6">
-                                        <p className="text-[10px] sm:text-[11px] font-bold text-white/80 uppercase tracking-[0.3em] text-center max-w-xs leading-relaxed drop-shadow-lg">
-                                           {cameraMode === 'photo' ? 'Capture high-res authentication photo' : (isRecording ? 'Recording Hub authentication clip...' : 'Record 15s authentication clip')}
-                                        </p>
-                                        
-                                        {cameraMode === 'photo' ? (
-                                           <button 
-                                              onClick={capturePhoto}
-                                              className="w-20 h-20 bg-white rounded-full flex items-center justify-center p-1 border-4 border-white/30 hover:scale-110 active:scale-95 transition-all shadow-2xl"
-                                           >
-                                              <div className="w-full h-full bg-white rounded-full border-2 border-gray-900 flex items-center justify-center">
-                                                 <div className="w-12 h-12 bg-gray-900 rounded-full" />
-                                              </div>
-                                           </button>
-                                        ) : (
-                                           <button 
-                                              onClick={isRecording ? stopRecording : startRecording}
-                                              className={`w-20 h-20 rounded-full flex items-center justify-center p-1 border-4 transition-all shadow-2xl ${isRecording ? 'bg-rose-500 border-rose-500/30' : 'bg-white border-white/30 hover:scale-110'}`}
-                                           >
-                                              {isRecording ? (
-                                                 <div className="w-8 h-8 bg-white rounded-md" />
-                                              ) : (
-                                                 <div className="w-14 h-14 bg-rose-600 rounded-full border-4 border-white" />
-                                              )}
-                                           </button>
-                                        )}
-                                     </div>
-                                  </div>
-                               </div>
-                            </div>
-                         )}
-
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                           {previews.map((media, i) => (
-                              <div 
-                                 key={i} 
-                                 draggable
-                                 onDragStart={() => handleItemDragStart(i)}
-                                 onDragOver={handleItemDragOver}
-                                 onDrop={() => handleItemDrop(i)}
-                                 className={`aspect-square bg-white rounded-xl border overflow-hidden relative group shadow-sm cursor-move transition-all ${draggedIdx === i ? 'opacity-20 scale-95' : 'border-gray-100 hover:border-blue-400 hover:shadow-md'}`}
-                              >
-                                 {media.type === 'video' ? (
-                                    <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                                       <svg className="w-10 h-10 text-white opacity-50" fill="currentColor" viewBox="0 0 20 20">
-                                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                                       </svg>
-                                       <video src={media.url} className="absolute inset-0 w-full h-full object-cover opacity-30" muted={media.muted} />
-                                       <button 
-                                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMute(i); }}
-                                          className={`absolute bottom-2 right-2 px-2 py-1 rounded text-[8px] font-black uppercase tracking-tighter transition-all z-20 ${media.muted ? 'bg-rose-500 text-white' : 'bg-white/80 text-gray-900 hover:bg-white'}`}
-                                       >
-                                          {media.muted ? "Muted" : "Mute Audio"}
-                                       </button>
-                                    </div>
-                                 ) : (
-                                    <img src={media.url} className="w-full h-full object-cover" />
-                                 )}
-                                 <button 
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeMedia(i); }} 
-                                    className="absolute top-2 right-2 w-6 h-6 bg-white/90 backdrop-blur text-red-600 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity font-bold shadow-md z-30"
-                                 >
-                                    âœ•
-                                 </button>
-                                 {i === 0 && <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-blue-600 text-[9px] font-bold text-white rounded uppercase shadow-sm z-10">Main</div>}
-                                 <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/50 text-[8px] font-bold text-white rounded uppercase backdrop-blur-sm z-10">{media.type}</div>
-                              </div>
-                           ))}
-                           {Array.from({ length: Math.max(0, 5 - previews.length) }).map((_, idx) => (
-                              <div key={idx} className="aspect-square bg-gray-50/50 border border-gray-100 rounded-xl flex items-center justify-center">
-                                 <span className="text-gray-300 text-xl">+</span>
-                              </div>
-                           ))}
-                        </div>
-
-                        <div className="pt-8 flex justify-between items-center">
-                           <button onClick={prevStep} className="text-[12px] font-semibold text-gray-400 hover:text-gray-900 transition-colors">Back</button>
-                           <div className="flex flex-col items-end gap-2 text-right">
-                              {!previews.some(p => p.type === 'video') && <p className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">At least one video is required</p>}
-                              <button
-                                 onClick={handleMediaContinue}
-                                 disabled={previews.length === 0 || !previews.some(p => p.type === 'video')}
-                                 className="bg-blue-600 text-white px-10 py-4 rounded-lg font-bold text-[13px] uppercase tracking-wider hover:bg-blue-700 transition-all disabled:opacity-20 shadow-lg shadow-blue-100"
-                              >
-                                 Continue
-                              </button>
-                           </div>
-                        </div>
-                     </div>
-                  )}
-
-                  {/* STEP 4: Detailed Specs */}
-                  {step === 4 && (
                      <div className="animate-in fade-in duration-500 space-y-10">
                         <div className="space-y-3">
                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest ml-1">Item Description</label>
@@ -1015,8 +837,8 @@ export default function SellPage() {
 
 
 
-                   {/* STEP 5: Pricing */}
-                   {step === 5 && (
+                   {/* STEP 4: Pricing */}
+                   {step === 4 && (
                       <div className="animate-in fade-in slide-in-from-bottom-10 duration-700 space-y-12 py-6">
                          <div className="text-center space-y-3">
                             <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Set Your Valuation</h2>
@@ -1294,8 +1116,8 @@ export default function SellPage() {
                       </div>
                    )}
 
-                  {/* STEP 6: Review & Preview */}
-                  {step === 6 && (
+                  {/* STEP 5: Review & Preview */}
+                  {step === 5 && (
                      <div className="animate-in fade-in duration-500 space-y-10">
                         <div className="flex flex-col md:flex-row justify-between items-center mb-6">
                            <div>

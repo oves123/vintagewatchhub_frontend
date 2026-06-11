@@ -19,7 +19,7 @@ export const getSocket = () => {
   }
 
   socket = io(API_BASE_URL, {
-    autoConnect: true,
+    autoConnect: false,
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 10000,

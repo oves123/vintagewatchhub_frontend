@@ -98,7 +98,10 @@ export default function Navbar() {
         fetchNotifications();
         
         // Join user room for private notifications
-        if (uid) socket.emit("joinUser", uid);
+        if (uid) {
+          if (!socket.connected) socket.connect();
+          socket.emit("joinUser", uid);
+        }
       } catch (err) { console.error("Failed to parse user session"); }
     } else {
       setUser(null);
@@ -293,12 +296,12 @@ export default function Navbar() {
 
           {/* Right Actions */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/watchlist" onClick={(e) => requireAuth(e, '/watchlist')} className="relative text-muted hover:text-gold transition-colors flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest">
+            <Link href="/watchlist" onClick={(e) => requireAuth(e, '/watchlist')} className="relative text-muted hover:text-gold transition-colors flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em]">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-              Wishlist
+              Watchlist
               {watchlistCount > 0 && <span className="absolute -top-1.5 -right-2 bg-gold text-white text-[8px] px-1 rounded-full">{watchlistCount}</span>}
             </Link>
-            <Link href="/sell" onClick={(e) => requireAuth(e, '/sell')} className="bg-primary text-white border border-primary hover:bg-transparent hover:text-primary transition-colors px-6 py-2.5 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-sm hover:shadow-none">
+            <Link href="/sell" onClick={(e) => requireAuth(e, '/sell')} className="bg-primary text-white border border-primary hover:bg-transparent hover:text-primary transition-colors px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 shadow-sm hover:shadow-none">
               Submit Asset
             </Link>
           </div>
@@ -321,7 +324,7 @@ export default function Navbar() {
               <Link
                 key={cat.href}
                 href={cat.href}
-                className={`text-[12px] font-serif uppercase tracking-[0.2em] transition-colors hover:text-gold ${
+                className={`text-[12px] font-serif uppercase tracking-[0.15em] transition-colors hover:text-gold ${
                   pathname === cat.href || (cat.href !== "/" && pathname.startsWith(cat.href.split("?")[0]))
                     ? 'text-gold'
                     : 'text-foreground'
@@ -387,23 +390,23 @@ export default function Navbar() {
 
               <div className="border-t border-border my-3 pt-3 space-y-1">
                 <Link href="/sell" onClick={(e) => { setMobileOpen(false); requireAuth(e, '/sell'); }} className="flex items-center px-4 py-3 text-[13px] font-semibold text-muted hover:text-primary hover:bg-blue-50 rounded-none transition-all">
-                  ðŸ·ï¸ Sell a Watch
+                  Sell a Watch
                 </Link>
                 <Link href="/messages" onClick={() => setMobileOpen(false)} className="flex items-center justify-between px-4 py-3 text-[13px] font-semibold text-muted hover:text-primary hover:bg-blue-50 rounded-none transition-all">
-                  <span>ðŸ’¬ Messages</span>
+                  <span>Messages</span>
                   {unreadMessagesCount > 0 && (
                     <span className="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full">{unreadMessagesCount}</span>
                   )}
                 </Link>
                 <Link href="/watchlist" onClick={(e) => { setMobileOpen(false); requireAuth(e, '/watchlist'); }} className="flex items-center px-4 py-3 text-[13px] font-semibold text-muted hover:text-primary hover:bg-blue-50 rounded-none transition-all">
-                  â¤ï¸ Watchlist
+                  Watchlist
                 </Link>
                 <Link href="/profile" onClick={() => setMobileOpen(false)} className="flex items-center px-4 py-3 text-[13px] font-semibold text-muted hover:text-primary hover:bg-blue-50 rounded-none transition-all">
-                  ðŸ‘¤ My Profile
+                  My Profile
                 </Link>
                 {user?.role === "admin" && (
                   <Link href="/admin" onClick={() => setMobileOpen(false)} className="flex items-center px-4 py-3 text-[13px] font-semibold text-rose-600 hover:bg-rose-50 rounded-none transition-all">
-                    ðŸ”§ Admin Panel
+                    Admin Panel
                   </Link>
                 )}
               </div>

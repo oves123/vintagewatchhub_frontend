@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import socket from "../../../services/socket";
 import ProfileOnboardingModal from "../../../components/ProfileOnboardingModal";
 import { ShieldCheck, Truck, Clock, CheckCircle, ArrowLeft, ExternalLink, Info, X, Camera, Send, FileText, Edit2 } from "lucide-react";
-import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
+
 
 
 export default function ProductPage({ params }) {
@@ -61,16 +61,18 @@ export default function ProductPage({ params }) {
   const [showDealSecured, setShowDealSecured] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const { scrollY } = useScroll();
-
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    // Show sticky bar after scrolling past the main buy buttons (approx 800px)
-    if (latest > 800 && !showStickyBar) {
-      setShowStickyBar(true);
-    } else if (latest <= 800 && showStickyBar) {
-      setShowStickyBar(false);
-    }
-  });
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > 800 && !showStickyBar) {
+        setShowStickyBar(true);
+      } else if (currentScrollY <= 800 && showStickyBar) {
+        setShowStickyBar(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [showStickyBar]);
   
   const showToast = (message, type = 'success', duration = 4500) => {
     setToast({ message, type });
@@ -594,14 +596,9 @@ export default function ProductPage({ params }) {
       ]} />
 
       {/* Sticky Conversion Bar */}
-      <AnimatePresence>
-        {showStickyBar && (
-          <motion.div 
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] p-4 md:p-6"
+      {showStickyBar && (
+          <div 
+            className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] p-4 md:p-6 animate-in slide-in-from-bottom-full duration-300"
           >
             <div className="max-w-[1500px] mx-auto flex items-center justify-between gap-4">
               <div className="hidden md:flex items-center gap-4">
@@ -636,9 +633,8 @@ export default function ProductPage({ params }) {
                 )}
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
 
       <main className="max-w-[1500px] mx-auto px-0 lg:px-4 py-0 lg:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-12">

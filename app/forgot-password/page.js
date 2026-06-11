@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState } from "react";
 import Link from "next/link";
 import { forgotPassword } from "@/services/api";
@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0B1221] px-4 py-12">
-      <div className="max-w-md w-full space-y-8 bg-[#161F32] p-8 rounded-xl border border-border/40 shadow-2xl">
+      <div className="max-w-md w-full space-y-8 bg-[#161F32] p-8 rounded-none border border-border/40 shadow-2xl">
         <div className="text-center">
           <h2 className="text-3xl font-serif uppercase tracking-[0.1em] text-white mb-3">Forgot Password?</h2>
           <p className="text-muted text-xs">

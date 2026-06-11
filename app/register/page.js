@@ -54,7 +54,7 @@ export default function RegisterPage() {
       </header>
       
       <main className="flex-grow flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[440px] bg-background rounded-xl border border-border p-8 sm:p-12">
+        <div className="w-full max-w-[440px] bg-background rounded-none border border-border p-8 sm:p-12">
           <div className="mb-10 text-center">
             <h1 className="text-2xl font-serif uppercase tracking-[0.2em] text-foreground mb-3">Register</h1>
             <p className="text-xs text-muted font-medium">Join our global community of collectors</p>

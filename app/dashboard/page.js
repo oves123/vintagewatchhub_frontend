@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useMemo } from "react";
 import Breadcrumbs from "../../components/Breadcrumbs";
@@ -227,7 +227,7 @@ export default function Dashboard() {
                     contentStyle={{ background: '#faf8f5', border: '1px solid #e6ddd0', borderRadius: 0, fontSize: 12 }}
                     formatter={(value) => [`₹${value.toLocaleString()}`, 'Revenue']}
                   />
-                  <Area type="monotone" dataKey="revenue" stroke="#d4a853" strokeWidth={2} fill="url(#revenueGrad)" />
+                  <Area type="monotone" dataKey="revenue" stroke="#C2A878" strokeWidth={2} fill="#C2A878" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -249,7 +249,7 @@ export default function Dashboard() {
                     contentStyle={{ background: '#faf8f5', border: '1px solid #e6ddd0', borderRadius: 0, fontSize: 12 }}
                     formatter={(value) => [value, 'Sales']}
                   />
-                  <Bar dataKey="sales" fill="#b8860b" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="sales" fill="#C2A878" stroke="#C2A878" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
