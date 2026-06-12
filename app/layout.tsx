@@ -1,16 +1,5 @@
-import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import MobileBottomNavWrapper from "../components/MobileBottomNavWrapper";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-});
 
 export const metadata = {
   title: "Aera | The Ultimate Pre-Owned Watch Marketplace",
@@ -38,7 +27,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${playfair.variable} font-sans bg-background text-foreground antialiased transition-colors duration-500 pb-16 lg:pb-0`}
+        className={`font-sans bg-background text-foreground antialiased transition-colors duration-500 pb-16 lg:pb-0`}
       >
         <NavigationLoader />
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-6 focus:py-3 focus:bg-foreground focus:text-background focus:rounded-xl focus:font-bold focus:text-sm focus:uppercase focus:tracking-widest">

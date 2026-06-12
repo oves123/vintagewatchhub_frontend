@@ -3,10 +3,10 @@
 import { useEffect, useState, Suspense } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import Image from "next/image";
+
 import ProductCard from "../components/ProductCard";
 import { ProductGridSkeleton } from "../components/Skeleton";
-import Link from "next/link";
+
 import { useSearchParams, useRouter } from "next/navigation";
 import { API_URL } from "../services/api";
 
@@ -99,7 +99,7 @@ function HomeContent() {
         setCurrentPage(1);
 
         if (!search && !category) {
-          const sortedData = [...items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          const sortedData = [...items].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
           const mix = [];
           const usedCats = new Set();
 
@@ -186,75 +186,7 @@ function HomeContent() {
     <div className="bg-background min-h-screen flex flex-col transition-colors duration-500">
       <Navbar />
 
-      {/* Hero Section */}
-      {!isCatalogView && (
-        <section className="relative w-full h-[70vh] min-h-[500px] flex items-center justify-center bg-[#FAF9F6] overflow-hidden border-b border-border">
-          {/* Background Image / Placeholder */}
-          <div className="absolute inset-0 z-0 flex justify-center items-center opacity-30">
-             <Image 
-               src="https://images.unsplash.com/photo-1547996160-81dfa63595aa?q=80&w=2574&auto=format&fit=crop" 
-               alt="Luxury Watch Background" 
-               fill
-               priority
-               className="object-cover object-center scale-105 transform hover:scale-100 transition-transform duration-[15s] ease-out mix-blend-multiply" 
-             />
-             <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9F6]/80 via-transparent to-[#FAF9F6]/80"></div>
-          </div>
-          
-          <div className="relative z-10 text-center px-4 max-w-4xl mx-auto flex flex-col items-center">
-             <span className="text-xs font-bold text-gold uppercase tracking-[0.3em] mb-4 block">Welcome to AERA</span>
-             <h1 className="text-5xl sm:text-7xl font-serif text-foreground tracking-wide mb-6 leading-tight">
-               The Pinnacle of <br className="hidden sm:block"/> Vintage Horology
-             </h1>
-             <p className="text-muted text-lg font-light mb-10 max-w-2xl mx-auto leading-relaxed">
-               Discover, consign, and collect the world's most exceptional pre-owned timepieces. Authenticity guaranteed.
-             </p>
-             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-               <button onClick={() => router.push('/?catalog=true#market')} className="hover-3d px-10 py-4 bg-primary text-white border border-primary text-[11px] font-bold uppercase tracking-[0.2em] shadow-lg rounded-sm w-full sm:w-auto">
-                 Shop Collection
-               </button>
-               <Link href="/sell" className="hover-3d px-10 py-4 bg-surface text-foreground border border-border text-[11px] font-bold uppercase tracking-[0.2em] shadow-md hover:border-gold hover:text-gold rounded-sm w-full sm:w-auto">
-                 Consign Watch
-               </Link>
-             </div>
-          </div>
-        </section>
-      )}
 
-      {/* Trust Signals Bar */}
-      {!isCatalogView && (
-        <section className="bg-surface border-b border-border py-8 overflow-hidden vintage-shadow relative z-20">
-          <div className="max-w-[1400px] mx-auto px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 md:divide-x divide-border">
-              
-              <div className="flex flex-col items-center justify-center text-center px-4 group hover-3d">
-                <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">Secure Escrow</span>
-                <span className="text-xs text-muted hidden sm:block">Funds held safely</span>
-              </div>
-
-              <div className="flex flex-col items-center justify-center text-center px-4 group hover-3d">
-                <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">100% Verified</span>
-                <span className="text-xs text-muted hidden sm:block">Authenticity guaranteed</span>
-              </div>
-
-              <div className="flex flex-col items-center justify-center text-center px-4 group hover-3d">
-                <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">Insured Shipping</span>
-                <span className="text-xs text-muted hidden sm:block">Fully tracked delivery</span>
-              </div>
-
-              <div className="flex flex-col items-center justify-center text-center px-4 group hover-3d">
-                <svg className="w-8 h-8 text-gold mb-3 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground mb-1">Mumbai Based</span>
-                <span className="text-xs text-muted hidden sm:block">Local concierge service</span>
-              </div>
-
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Brand Quick Links - New Section */}
       {!isCatalogView && brands.length > 0 && (
@@ -526,7 +458,7 @@ function HomeContent() {
                   <>
                     <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6' : 'grid-cols-1 gap-4'}`}>
                       {products.map(p => (
-                        <ProductCard key={p.id} product={p} horizontal={viewMode === 'list'} viewMode={viewMode} />
+                        <ProductCard key={p.id} product={p} horizontal={viewMode === 'list'} />
                       ))}
                     </div>
                     
@@ -546,7 +478,7 @@ function HomeContent() {
                             if (formatParam) moreParams.append("format", formatParam);
                             if (sortParam) moreParams.append("sort", sortParam);
                             if (strapParam) moreParams.append("strap_type", strapParam);
-                            moreParams.append("page", nextPage);
+                            moreParams.append("page", String(nextPage));
                             try {
                               const res = await fetch(`${API_URL}/products?${moreParams.toString()}`);
                               const data = await res.json();
@@ -578,60 +510,6 @@ function HomeContent() {
           </div>
         )}
 
-        {/* Popular Categories */}
-        {!isCatalogView && (
-          <section className="mt-32 border-t border-border pt-16">
-            <div className="flex items-end justify-between mb-12">
-              <div>
-                <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Acquisition Verticals</h2>
-                <p className="text-[11px] font-bold text-gold uppercase tracking-[0.2em] mt-2">Explore specific horological categories</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                { name: "New Watches", icon: "✨", desc: "Unworn luxury timepieces with original provenance." },
-                { name: "Pre-Owned Watches", icon: "🕰️", desc: "Rare and historically significant finds." },
-                { name: "Watch Lots", icon: "📦", desc: "Curated collections and estate acquisitions." },
-                { name: "Accessories", icon: "🎁", desc: "Premium straps, bespoke tools, and storage." },
-              ].map((cat) => (
-                <Link
-                  href={`/?category=${cat.name}`}
-                  key={cat.name}
-                  className="bg-surface/50 p-8 border border-border/50 hover:bg-surface hover:border-gold/30 hover:-translate-y-1 transition-all duration-500 group flex flex-col justify-between min-h-[220px]"
-                >
-                  <span className="text-5xl mb-6 block transform group-hover:scale-110 group-hover:rotate-3 transition duration-500 grayscale group-hover:grayscale-0">{cat.icon}</span>
-                  <div>
-                    <p className="font-serif tracking-wide text-foreground text-lg mb-2">{cat.name}</p>
-                    <p className="text-xs font-medium text-muted leading-relaxed">{cat.desc}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Promotional Banner */}
-        <section className="mt-32 mb-16 bg-[#F6F4ED] text-foreground overflow-hidden relative border border-border">
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <img 
-              src="https://images.unsplash.com/photo-1547996160-81dfa63595aa?q=80&w=2574&auto=format&fit=crop" 
-              alt="Promotional background" 
-              className="w-full h-full object-cover scale-125 mix-blend-multiply" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#F6F4ED] via-[#F6F4ED]/90 to-transparent"></div>
-          </div>
-          <div className="relative z-10 p-12 md:p-24 md:w-2/3">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif mb-6 tracking-wide leading-[1.1]">
-              Consign With <br/><span className="text-gold italic font-light">Elegance</span>
-            </h2>
-            <p className="text-muted text-sm md:text-base font-light mb-10 max-w-md leading-relaxed">
-              Unlock the true value of your collection. Start selling your vintage pieces to a dedicated global community of horological enthusiasts.
-            </p>
-            <Link href="/sell" className="px-10 py-4 bg-primary text-white border border-primary text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-transparent hover:text-primary transition-all duration-300 rounded-none inline-block shadow-sm hover:shadow-md">
-              Request Valuation
-            </Link>
-          </div>
-        </section>
       </main>
 
       <Footer />

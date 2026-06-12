@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FCFBF8;
-  --foreground: #2C2A25;
-  --primary: #1F1D19;
-  --primary-light: #3A362D;
-  --gold: #B89758;
-  --gold-dark: #8C703C;
-  --gold-light: #D4BD8A;
-  --surface: #F5F3EC;
-  --border: #E8E3D5;
-  --muted: #857F73;
+  --background: #ffffff;
+  --foreground: #000000;
+  --primary: #000000;
+  --primary-light: #333333;
+  --gold: #000000;
+  --gold-dark: #000000;
+  --gold-light: #000000;
+  --surface: #ffffff;
+  --border: #cccccc;
+  --muted: #000000;
   --radius: 0px;
   --radius-sm: 4px;
   --radius-lg: 12px;
@@ -29,8 +29,8 @@
   --color-surface: var(--surface);
   --color-border: var(--border);
   --color-muted: var(--muted);
-  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-playfair), "Playfair Display", ui-serif, Georgia, serif;
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-serif: Arial, Helvetica, sans-serif;
 }
 
 html {
@@ -41,7 +41,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 15px;
   font-weight: 400;
   line-height: 1.7;
@@ -61,14 +61,14 @@ body {
 
 /* Typography */
 .section-title {
-  font-family: var(--font-playfair), "Playfair Display", ui-serif, Georgia, serif;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 1.875rem;
   letter-spacing: 0.02em;
   color: var(--foreground);
 }
 
 .price-serif {
-  font-family: var(--font-playfair), "Playfair Display", ui-serif, Georgia, serif;
+  font-family: Arial, Helvetica, sans-serif;
   font-style: italic;
   color: var(--foreground);
 }

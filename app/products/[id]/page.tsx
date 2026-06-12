@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use, useMemo } from "react";
 import Navbar from "../../../components/Navbar";
+import Footer from "../../../components/Footer";
 import ProductCard from "../../../components/ProductCard";
 import OptimizedImage from "../../../components/OptimizedImage";
 import Breadcrumbs from "../../../components/Breadcrumbs";
@@ -11,12 +12,14 @@ import { useRouter } from "next/navigation";
 import socket from "../../../services/socket";
 import ProfileOnboardingModal from "../../../components/ProfileOnboardingModal";
 import { ShieldCheck, Truck, Clock, CheckCircle, ArrowLeft, ExternalLink, Info, X, Camera, Send, FileText, Edit2 } from "lucide-react";
+import ImageLightbox from "../../../components/ImageLightbox";
 
 
 
-export default function ProductPage({ params }) {
+export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const { id } = use(params);
+  const resolvedParams: any = use(params as any);
+  const id = resolvedParams?.id;
   const [product, setProduct] = useState(null);
   const [activeTab, setActiveTab] = useState("description");
   const [notFound, setNotFound] = useState(false);
@@ -59,20 +62,7 @@ export default function ProductPage({ params }) {
   // UX State
   const [toast, setToast] = useState(null);
   const [showDealSecured, setShowDealSecured] = useState(false);
-  const [showStickyBar, setShowStickyBar] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > 800 && !showStickyBar) {
-        setShowStickyBar(true);
-      } else if (currentScrollY <= 800 && showStickyBar) {
-        setShowStickyBar(false);
-      }
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [showStickyBar]);
   
   const showToast = (message, type = 'success', duration = 4500) => {
     setToast({ message, type });
@@ -113,7 +103,7 @@ export default function ProductPage({ params }) {
   useEffect(() => {
     if (!id) return;
     
-    socket.emit("joinAuction", id);
+    (socket as any).emit("joinAuction", id);
 
     const handleNewBid = (data) => {
       console.log("Real-time bid received:", data);
@@ -139,10 +129,10 @@ export default function ProductPage({ params }) {
       }
     };
 
-    socket.on("newBid", handleNewBid);
+    (socket as any).on("newBid", handleNewBid);
 
     return () => {
-      socket.off("newBid", handleNewBid);
+      (socket as any).off("newBid", handleNewBid);
     };
   }, [id]);
 
@@ -150,7 +140,7 @@ export default function ProductPage({ params }) {
     if (!product?.allow_auction || !product?.auction_end) return;
 
     const calculateTimeLeft = () => {
-      const difference = new Date(product.auction_end) - new Date();
+      const difference = new Date(product.auction_end).getTime() - new Date().getTime();
       if (difference <= 0) return "AUCTION ENDED";
 
       const days = Math.floor(difference / (1000 * 60 * 60 * 24));
@@ -326,7 +316,7 @@ export default function ProductPage({ params }) {
        setShowOnboarding(true);
        return;
     }
-    if (!offerAmount || isNaN(offerAmount) || parseFloat(offerAmount) <= 0) {
+    if (!offerAmount || isNaN(Number(offerAmount)) || parseFloat(offerAmount) <= 0) {
        showToast("Please enter a valid offer amount.", "error");
        return;
     }
@@ -375,7 +365,7 @@ export default function ProductPage({ params }) {
        setShowOnboarding(true);
        return;
     }
-    if (!bidAmount || isNaN(bidAmount) || parseFloat(bidAmount) <= 0) {
+    if (!bidAmount || isNaN(Number(bidAmount)) || parseFloat(bidAmount) <= 0) {
       showToast("Please enter a valid bid amount.", "error");
       return;
     }
@@ -537,7 +527,7 @@ export default function ProductPage({ params }) {
     return list;
   }, [product]);
 
-  const [zoom, setZoom] = useState({ x: 0, y: 0, show: false });
+
   const [selectedImage, setSelectedImage] = useState(0);
 
   const handleNextImage = () => {
@@ -548,14 +538,7 @@ export default function ProductPage({ params }) {
     setSelectedImage((prev) => (prev - 1 + mediaItems.length) % mediaItems.length);
   };
 
-  const handleMouseMove = (e) => {
-    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-    const x = ((e.pageX - left - window.scrollX) / width) * 100;
-    const y = ((e.pageY - top - window.scrollY) / height) * 100;
-    const pxX = e.pageX - left - window.scrollX;
-    const pxY = e.pageY - top - window.scrollY;
-    setZoom({ x, y, pxX, pxY, show: true });
-  };
+
 
   const handleOnboardingComplete = (updatedUser) => {
      setUser(updatedUser);
@@ -583,6 +566,7 @@ export default function ProductPage({ params }) {
 
   return (
     <div className="bg-background min-h-screen pb-32 lg:pb-0 text-foreground transition-colors duration-500">
+      <Navbar />
       <ProfileOnboardingModal 
          isOpen={showOnboarding} 
          onClose={() => setShowOnboarding(false)} 
@@ -595,56 +579,13 @@ export default function ProductPage({ params }) {
         { label: product.title },
       ]} />
 
-      {/* Sticky Conversion Bar */}
-      {showStickyBar && (
-          <div 
-            className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] p-4 md:p-6 animate-in slide-in-from-bottom-full duration-300"
-          >
-            <div className="max-w-[1500px] mx-auto flex items-center justify-between gap-4">
-              <div className="hidden md:flex items-center gap-4">
-                <div className="w-12 h-12 relative rounded overflow-hidden border border-border">
-                  <OptimizedImage src={mediaItems[0]?.url} alt={product.title} fill className="object-cover" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground line-clamp-1">{product.brand} {product.title}</h3>
-                  <p className="text-xs text-muted font-medium">₹{parseFloat(product?.price || 0).toLocaleString()}</p>
-                </div>
-              </div>
-              <div className="flex-1 md:flex-none flex items-center gap-3">
-                <div className="flex-1 md:hidden">
-                   <p className="text-sm font-bold text-foreground">₹{parseFloat(product?.price || 0).toLocaleString()}</p>
-                   <p className="text-[10px] text-muted truncate">{product.title}</p>
-                </div>
-                {isSeller ? (
-                  <Link href={`/sell?edit=${product.id}`} className="px-6 py-3 bg-emerald-600 text-white rounded font-bold text-xs uppercase tracking-widest hover:bg-emerald-700 whitespace-nowrap">Manage</Link>
-                ) : (
-                  <>
-                    {product.allow_buy_now && bidHistory.length === 0 && (
-                      <button onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow} className="hover-3d flex-1 md:flex-none px-6 py-3 bg-foreground text-background rounded font-bold text-xs uppercase tracking-widest hover:bg-gold hover:text-white transition whitespace-nowrap btn-shine">
-                        {product.shipping_type === 'contact' ? 'Discuss' : 'Buy Now'}
-                      </button>
-                    )}
-                    {product.allow_auction && (
-                      <button onClick={() => setShowBidModal(true)} disabled={timeLeft === "AUCTION ENDED"} className="hover-3d flex-1 md:flex-none px-6 py-3 bg-amber-600 text-white rounded font-bold text-xs uppercase tracking-widest hover:bg-amber-700 disabled:opacity-50 whitespace-nowrap btn-shine">
-                        Place Bid
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-      <main className="max-w-[1500px] mx-auto px-0 lg:px-4 py-0 lg:py-8">
+      <main className="max-w-[1500px] mx-auto px-4 md:px-6 lg:px-8 py-0 lg:py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-12">
             
             {/* Gallery - Edge to Edge on Mobile */}
-            <div className="lg:col-span-7 bg-surface/50 lg:rounded-2xl lg:p-8">
+            <div className="lg:col-span-7 bg-surface/50 lg:rounded-2xl lg:p-8 -mx-4 md:mx-0">
               <div 
-                className="aspect-square sm:aspect-[4/3] lg:aspect-[4/3] bg-surface rounded-none overflow-hidden relative group/gallery cursor-zoom-in"
-                onMouseMove={mediaItems[selectedImage]?.type === 'image' ? handleMouseMove : null}
-                onMouseLeave={() => setZoom({ ...zoom, show: false })}
+                className="aspect-square sm:aspect-[4/3] lg:aspect-[4/3] bg-surface rounded-none overflow-hidden relative group/gallery cursor-pointer"
                 onClick={() => setLightboxOpen(true)}
               >
                 {mediaItems[selectedImage]?.type === 'video' ? (
@@ -656,7 +597,7 @@ export default function ProductPage({ params }) {
                     muted={product.video_settings?.[mediaItems[selectedImage].path]?.muted ?? true} 
                   />
                 ) : (
-                  <div className="w-full h-full relative cursor-none">
+                  <div className="w-full h-full relative cursor-pointer">
                     <OptimizedImage
                       src={mediaItems[selectedImage]?.url}
                       alt={product.title}
@@ -665,25 +606,6 @@ export default function ProductPage({ params }) {
                       className="object-contain p-0"
                       size="large"
                     />
-                    {zoom.show && (
-                      <div 
-                        className="absolute pointer-events-none rounded-full border border-gold/50 shadow-[0_0_20px_rgba(0,0,0,0.5)] z-20 backdrop-blur-sm bg-background/10"
-                        style={{
-                          width: '300px',
-                          height: '300px',
-                          left: `${zoom.pxX}px`,
-                          top: `${zoom.pxY}px`,
-                          transform: 'translate(-50%, -50%)',
-                          backgroundImage: `url(${mediaItems[selectedImage]?.url})`,
-                          backgroundRepeat: 'no-repeat',
-                          backgroundPosition: `${zoom.x}% ${zoom.y}%`,
-                          backgroundSize: '350%',
-                        }}
-                      >
-                         <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_rgba(255,255,255,0.2)]"></div>
-                         <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 border border-white/50 rounded-full"></div>
-                      </div>
-                    )}
                   </div>
                 )}
 
@@ -713,12 +635,12 @@ export default function ProductPage({ params }) {
                 )}
               </div>
               
-              <div className="grid grid-cols-4 md:grid-cols-5 gap-3 mt-6">
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 mt-6 pb-2 no-scrollbar px-4 md:px-0">
                  {mediaItems.map((item, i) => (
                     <button 
                       key={i} 
                       onClick={() => setSelectedImage(i)}
-                      className={`aspect-square bg-surface border rounded-none overflow-hidden transition-all relative ${selectedImage === i ? "border-gold shadow-md ring-1 ring-gold/20" : "border-border opacity-60 hover:opacity-100"}`}
+                      className={`flex-none w-[80px] sm:w-[100px] aspect-square snap-start bg-surface border rounded-none overflow-hidden transition-all relative ${selectedImage === i ? "border-gold shadow-md ring-1 ring-gold/20 opacity-100" : "border-border opacity-60 hover:opacity-100"}`}
                     >
                        {item.type === 'video' ? (
                          <div className="w-full h-full bg-foreground flex items-center justify-center">
@@ -865,44 +787,48 @@ export default function ProductPage({ params }) {
                                     <span>Make Offer</span>
                                  </button>
                               )}
-
-                              <button 
-                                 onClick={handleChatWithSeller}
-                                 className="hover-3d w-full h-14 bg-background border border-border text-muted rounded-none font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-surface hover:border-gold hover:text-gold transition-all flex items-center justify-center gap-3 group"
-                              >
-                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                 </svg>
-                                 <span>Chat with Seller</span>
-                              </button>
                            </>
                         )}
                       </div>
                     </div>
                     <p className="text-[10px] text-center text-muted font-bold uppercase tracking-widest mt-4">Direct acquisition via verified hub support</p>
                   </div>
-
-                <div className={`mt-10 grid gap-3 ${isSeller ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                <div className="flex flex-wrap items-center gap-4 mt-5 justify-start">
                   {!isSeller && (
                     <button 
                       onClick={toggleWatchlist}
-                      className={`bg-surface border px-6 py-4 rounded-none font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${isInWatchlist ? 'border-rose-200 text-rose-600 bg-rose-50' : 'border-border text-muted hover:bg-background'}`}
+                      className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ${isInWatchlist ? 'border-rose-200 text-rose-600 bg-rose-50' : 'border-border text-muted hover:bg-background hover:text-foreground shadow-sm'}`}
+                      title={isInWatchlist ? 'Watchlisted' : 'Watchlist'}
                     >
-                       <svg className={`w-4 h-4 ${isInWatchlist ? 'text-rose-600' : 'text-muted'}`} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" /></svg>
-                       {isInWatchlist ? 'Watchlisted' : 'Watchlist'}
+                       <svg className={`w-5 h-5 ${isInWatchlist ? 'fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                     </button>
                   )}
                   <button 
                     onClick={handleShare}
-                    className="bg-surface border border-border text-muted px-6 py-4 rounded-none font-bold text-[11px] uppercase tracking-widest hover:text-foreground hover:border-border transition-all w-full"
+                    className="relative w-12 h-12 rounded-full border border-border text-muted flex items-center justify-center hover:bg-background hover:text-foreground transition-all shadow-sm"
+                    title="Share Listing"
                   >
-                    {copied ? 'Copied!' : 'Share Listing'}
+                    {copied ? (
+                      <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                    )}
+                    {copied && (
+                      <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-surface text-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded border shadow-lg whitespace-nowrap z-10">Copied!</span>
+                    )}
                   </button>
-               </div>
+                  <button 
+                     onClick={handleChatWithSeller}
+                     className="w-12 h-12 rounded-full border border-border text-muted flex items-center justify-center hover:bg-background hover:text-foreground transition-all shadow-sm"
+                     title="Chat with Seller"
+                  >
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                  </button>
+                </div>
 
                {/* Seller Profile Card */}
                {product.seller_id && (
-                 <div className="card-3d mt-8 p-6 bg-surface border border-border rounded-none shadow-sm">
+                 <div className="card-3d mt-5 p-6 bg-surface border border-border rounded-none shadow-sm">
                    <div className="flex items-center justify-between mb-6">
                      <div className="flex items-center gap-4">
                        <div className="w-12 h-12 rounded-none bg-primary flex items-center justify-center text-white font-bold text-lg shadow-sm">
@@ -949,14 +875,14 @@ export default function ProductPage({ params }) {
                      </div>
                    </div>
 
-                   <div className="flex flex-col gap-3">
-                     <button 
-                       onClick={() => setShowItemsModal(true)}
-                       className="w-full py-3.5 bg-background border border-border rounded-none text-[11px] font-bold text-foreground uppercase tracking-widest hover:bg-primary hover:text-white hover:border-gold transition-all flex items-center justify-center gap-2 group"
-                     >
-                       <span>Seller other items</span>
-                       <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                     </button>
+                   <div className="flex flex-col gap-3 mt-2 pt-4 border-t border-border">
+                      <button 
+                        onClick={() => setShowItemsModal(true)}
+                        className="text-[11px] font-bold text-foreground uppercase tracking-widest hover:text-gold transition-colors flex items-center gap-2 group"
+                      >
+                        <span>Seller other items</span>
+                        <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                      </button>
                      
                      {(!user || user.id !== product.seller_id) && (
                         <button 
@@ -978,14 +904,14 @@ export default function ProductPage({ params }) {
 
         {/* Technical Grid (Specs & Condition) */}
         <section className="mt-20">
-           <h2 className="text-xl font-bold text-foreground tracking-tight mb-8">Technical Asset Specifications</h2>
-           <div className="card-3d bg-surface rounded-none border border-border shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 overflow-hidden">
+           <h2 className="text-xl font-bold text-foreground tracking-tight mb-6">Technical Asset Specifications</h2>
+           <div className="bg-surface rounded-none border border-border shadow-sm divide-y divide-border">
               {Object.entries(product.item_specifics || {})
                 .filter(([key]) => !key.endsWith('_manual_mode'))
                 .map(([key, value], i) => (
-                <div key={key} className="p-8 border-b border-gray-50 md:border-r hover:bg-background transition-colors">
-                   <p className="text-[11px] font-bold text-muted uppercase tracking-widest mb-1.5">{key.replace(/_/g, ' ')}</p>
-                   <p className="text-base font-bold text-foreground uppercase">{value}</p>
+                <div key={key} className="flex flex-col sm:flex-row sm:items-center py-5 px-6 sm:px-8 hover:bg-background transition-colors">
+                   <p className="text-[11px] font-bold text-muted uppercase tracking-widest sm:w-1/3 mb-1 sm:mb-0">{key.replace(/_/g, ' ')}</p>
+                   <p className="text-sm font-bold text-foreground uppercase sm:w-2/3">{String(value)}</p>
                 </div>
               ))}
               {/* Fallback internal fields */}
@@ -995,9 +921,9 @@ export default function ProductPage({ params }) {
                 { l: "Case", v: product.case_size + "mm" },
                 { l: "Movement", v: product.movement_type }
               ].map((s, i) => (
-                <div key={i} className="p-8 border-b border-gray-50 md:border-r hover:bg-background transition-colors">
-                   <p className="text-[11px] font-bold text-muted uppercase tracking-widest mb-2">{s.l}</p>
-                   <p className="text-xl font-serif text-foreground capitalize">{s.v || "N/A"}</p>
+                <div key={i} className="flex flex-col sm:flex-row sm:items-center py-5 px-6 sm:px-8 hover:bg-background transition-colors">
+                   <p className="text-[11px] font-bold text-muted uppercase tracking-widest sm:w-1/3 mb-1 sm:mb-0">{s.l}</p>
+                   <p className="text-sm font-bold text-foreground uppercase sm:w-2/3">{s.v || "N/A"}</p>
                 </div>
               ))}
            </div>
@@ -1024,7 +950,7 @@ export default function ProductPage({ params }) {
                 <div className="animate-in fade-in duration-500">
                     {product.description ? (
                        <div className="prose prose-lg max-w-none">
-                         <p className="text-lg md:text-xl font-serif text-foreground/80 leading-loose whitespace-pre-wrap first-letter:text-7xl first-letter:font-black first-letter:text-foreground first-letter:float-left first-letter:mr-4 first-letter:mt-2 first-letter:leading-none">
+                         <p className="text-[15px] md:text-[16px] text-foreground/90 leading-relaxed whitespace-pre-wrap font-medium">
                            {product.description}
                          </p>
                        </div>
@@ -1108,7 +1034,7 @@ export default function ProductPage({ params }) {
                              <p className="text-[11px] font-black text-muted uppercase tracking-[0.2em] group-hover:text-gold transition-colors">{key.replace(/_/g, ' ')}</p>
                              <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/></svg>
                            </div>
-                           <p className="text-sm font-bold text-foreground capitalize leading-snug">{value}</p>
+                           <p className="text-sm font-bold text-foreground capitalize leading-snug">{String(value)}</p>
                         </div>
                      ))}
                      {(!product.condition_details || Object.keys(product.condition_details).length === 0) && (
@@ -1634,6 +1560,7 @@ export default function ProductPage({ params }) {
         </div>
       )}
      {/* Floating Mobile Concierge Bar (Visible only on mobile/tablet) */}
+     <Footer />
      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 p-4 pb-safe bg-background/80 backdrop-blur-xl border-t border-border shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
        <div className="flex items-center gap-3 max-w-md mx-auto">
          <button 
@@ -1665,8 +1592,54 @@ export default function ProductPage({ params }) {
            </button>
          )}
        </div>
-     </div>
+   </div>
 
+      {/* Lightbox for Zoom */}
+      {lightboxOpen && (
+        <ImageLightbox 
+          images={mediaItems} 
+          initialIndex={selectedImage} 
+          onClose={() => setLightboxOpen(false)} 
+        />
+      )}
+
+      {/* Seller Items Modal */}
+      {showItemsModal && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="relative w-full max-w-6xl h-[85vh] bg-background border border-border shadow-2xl flex flex-col overflow-hidden">
+              <div className="p-6 border-b border-border flex items-center justify-between bg-surface sticky top-0 z-10">
+                 <div>
+                    <h3 className="text-xl font-black text-foreground uppercase tracking-tight">Seller Collection</h3>
+                    <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">
+                      {sellerListings.length} items from {product.seller_name || `Seller #${product.seller_id}`}
+                    </p>
+                 </div>
+                 <button 
+                   onClick={() => setShowItemsModal(false)}
+                   className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center text-muted hover:text-foreground hover:border-foreground transition-all"
+                 >
+                    <X className="w-5 h-5" />
+                 </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 bg-background">
+                 {sellerListings.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {sellerListings.map(item => (
+                        <div key={item.id} className="transform scale-95 origin-top-left w-[105.26%]">
+                           <ProductCard product={item} />
+                        </div>
+                      ))}
+                    </div>
+                 ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                       <svg className="w-16 h-16 text-muted mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                       <p className="text-sm font-bold text-muted uppercase tracking-widest">No other items found.</p>
+                    </div>
+                 )}
+              </div>
+           </div>
+        </div>
+      )}
    </div>
   );
 }

@@ -214,10 +214,10 @@ export default function Navbar() {
         <div className="hidden md:flex bg-primary text-white text-[10px] font-bold tracking-widest uppercase z-[110]">
           <div className="max-w-[1400px] w-full mx-auto px-6 py-2 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <span className="text-gold">Aera Concierge</span>
+              <span className="text-white">Aera Concierge</span>
               <span className="opacity-40">|</span>
               {user ? (
-                <span>Welcome, <span className="text-gold">{user.name}</span></span>
+                <span>Welcome, <span className="text-white">{user.name}</span></span>
               ) : (
                 <span className="opacity-80">Authentic · Verified · Trusted</span>
               )}
@@ -225,10 +225,10 @@ export default function Navbar() {
             <div className="flex items-center gap-6">
               {user ? (
                 <>
-                  <Link href="/profile" className="hover:text-gold transition-colors">My Collection</Link>
-                  <Link href="/messages" className="hover:text-gold transition-colors">Messages {unreadMessagesCount > 0 && <span className="text-gold">({unreadMessagesCount})</span>}</Link>
+                  <Link href="/profile" className="hover:opacity-70 transition-opacity">My Collection</Link>
+                  <Link href="/messages" className="hover:opacity-70 transition-opacity">Messages {unreadMessagesCount > 0 && <span className="text-white">({unreadMessagesCount})</span>}</Link>
                   <div className="relative">
-                    <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="hover:text-gold transition-colors flex items-center gap-1">
+                    <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="hover:opacity-70 transition-opacity flex items-center gap-1">
                       Alerts {unreadNotificationsCount > 0 && <span className="w-1.5 h-1.5 bg-rose-500 rounded-full inline-block ml-1"></span>}
                     </button>
                     {notificationsOpen && (
@@ -261,13 +261,13 @@ export default function Navbar() {
                       </>
                     )}
                   </div>
-                  {user.role === "admin" && <Link href="/admin" className="text-gold">Admin Panel</Link>}
-                  <button onClick={handleLogout} className="hover:text-gold transition-colors">Logout</button>
+                  {user.role === "admin" && <Link href="/admin" className="text-white hover:opacity-70 transition-opacity">Admin Panel</Link>}
+                  <button onClick={handleLogout} className="hover:opacity-70 transition-opacity">Logout</button>
                 </>
               ) : (
                 <>
-                  <Link href="/login" className="hover:text-gold transition-colors">Sign In</Link>
-                  <Link href="/register" className="hover:text-gold transition-colors">Register</Link>
+                  <Link href="/login" className="hover:opacity-70 transition-opacity">Sign In</Link>
+                  <Link href="/register" className="hover:opacity-70 transition-opacity">Register</Link>
                 </>
               )}
             </div>
@@ -302,7 +302,7 @@ export default function Navbar() {
               {watchlistCount > 0 && <span className="absolute -top-1.5 -right-2 bg-gold text-white text-[8px] px-1 rounded-full">{watchlistCount}</span>}
             </Link>
             <Link href="/sell" onClick={(e) => requireAuth(e, '/sell')} className="bg-primary text-white border border-primary hover:bg-transparent hover:text-primary transition-colors px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 shadow-sm hover:shadow-none">
-              Submit Asset
+              Sell
             </Link>
           </div>
 

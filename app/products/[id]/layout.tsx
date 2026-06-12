@@ -4,7 +4,7 @@
  * even though the page.js itself is a client component ("use client").
  */
 
-import { API_URL, API_BASE_URL } from "@/services/api";
+import { API_URL, API_BASE_URL } from "../../../services/api";
 
 export async function generateMetadata({ params }) {
   try {
