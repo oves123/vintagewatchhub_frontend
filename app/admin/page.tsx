@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { Menu, RefreshCw, ChevronRight, Bell, X, Users, ShoppingCart, Package, IndianRupee } from "lucide-react";
 import { API_URL, API_BASE_URL, getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "../../services/api";
 import OptimizedImage from "../../components/OptimizedImage";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import socket from "../../services/socket";
 
 import AdminSidebar from "../../components/AdminSidebar";
@@ -46,6 +46,7 @@ function AdminPageContent() {
     setFetchVersion(v => v + 1);
   };
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [adminUser, setAdminUser] = useState(null);
 
@@ -224,7 +225,7 @@ function AdminPageContent() {
     }
     
     setLoading(true);
-    Promise.all([fetchStats(), fetchAnalytics(), fetchCategories(), fetchNotifications()]).then(() => {
+    Promise.all([fetchStats(), fetchCategories(), fetchNotifications()]).then(() => {
         const u = JSON.parse(localStorage.getItem("user") || "{}");
         if (u.id) fetchUnreadMessagesCount(u.id);
     }).finally(() => setLoading(false));
@@ -239,9 +240,11 @@ function AdminPageContent() {
     
     // Join private room if user available
     const storedUser = localStorage.getItem("user");
+    let userId = null;
     if (storedUser) {
       try {
         const u = JSON.parse(storedUser);
+        userId = u.id;
         socket.emit("joinUser", u.id);
       } catch (e) {
         console.error(e);
@@ -250,25 +253,25 @@ function AdminPageContent() {
 
     return () => {
       socket.off("newNotification", handleNewNotification);
+      if (userId) socket.emit("leaveUser", userId);
     };
   }, []);
 
   useEffect(() => { fetchAnalytics(); }, [analyticsRange]);
 
   useEffect(() => {
-    if (activeTab === "users" && users.length === 0) fetchUsers();
-    if (activeTab === "products" && products.length === 0) fetchProducts();
-    if (activeTab === "orders" && orders.length === 0) fetchOrders();
-    if (activeTab === "escrow" && escrowDeals.length === 0) fetchEscrowDeals();
-    if (activeTab === "chats" && chats.length === 0) fetchChats();
-    if (activeTab === "auctions" && auctions.length === 0) fetchAuctions();
-    if (activeTab === "bids" && bids.length === 0) fetchBids();
-    if (activeTab === "reports" && reports.length === 0) fetchReports();
-    if (activeTab === "financials" && adminLedger.length === 0) fetchAdminLedger();
-    if (activeTab === "disputes" && disputes.length === 0) loadDisputes("open");
-    if (activeTab === "coupons" && coupons.length === 0) loadCoupons();
-    if (activeTab === "verification" && verifications.length === 0) loadVerifications("all");
-    if (activeTab === "featured") fetchProducts();
+    if (activeTab === "users") fetchUsers();
+    else if (activeTab === "products" || activeTab === "featured") fetchProducts();
+    else if (activeTab === "orders") fetchOrders();
+    else if (activeTab === "escrow") fetchEscrowDeals();
+    else if (activeTab === "chats") fetchChats();
+    else if (activeTab === "auctions") fetchAuctions();
+    else if (activeTab === "bids") fetchBids();
+    else if (activeTab === "reports") fetchReports();
+    else if (activeTab === "financials") fetchAdminLedger();
+    else if (activeTab === "disputes") loadDisputes("open");
+    else if (activeTab === "coupons") loadCoupons();
+    else if (activeTab === "verification") loadVerifications("all");
   }, [activeTab, fetchVersion]);
 
   const fetchStats = async () => {
@@ -472,7 +475,7 @@ function AdminPageContent() {
     } catch (err) { console.error("Notifications fetch error:", err); }
   };
 
-  const handleMarkRead = async (id, e) => {
+  const handleMarkRead = async (id: any, e?: any) => {
     if (e) e.stopPropagation();
     try {
       await markNotificationAsRead(id);
@@ -703,7 +706,13 @@ function AdminPageContent() {
                             key={n.id} 
                             onClick={() => {
                               handleMarkRead(n.id);
-                              if (n.link) setActiveTab(n.link.startsWith('/admin/') ? n.link.replace('/admin/', '') : n.link);
+                              if (n.link) {
+                                if (n.link.startsWith('/admin/')) {
+                                  setActiveTab(n.link.replace('/admin/', ''));
+                                } else {
+                                  router.push(n.link);
+                                }
+                              }
                               setNotificationsOpen(false);
                             }}
                             className={`p-4 border-b border-gray-50 hover:bg-background cursor-pointer transition-colors relative ${!n.is_read ? 'bg-blue-50/30' : ''}`}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { Search, RefreshCw, Filter } from "lucide-react";
@@ -76,9 +76,9 @@ export default function AuditLogTab({ API_URL, getHeaders, showToast }) {
           </thead>
           <tbody className="divide-y divide-border">
             {loading ? (
-              <tr><td colSpan="5" className="p-10 text-center text-muted text-sm">Loading...</td></tr>
+              <tr><td colSpan={5} className="p-10 text-center text-muted text-sm">Loading...</td></tr>
             ) : logs.length === 0 ? (
-              <tr><td colSpan="5" className="p-10 text-center text-muted text-sm">
+              <tr><td colSpan={5} className="p-10 text-center text-muted text-sm">
                 <div className="mb-2">No audit logs found</div>
                 <p className="text-xs">Admin actions are automatically logged here.</p>
               </td></tr>

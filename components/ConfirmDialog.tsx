@@ -47,7 +47,7 @@ export default function ConfirmDialog({
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      if (prev && typeof prev.focus === "function") prev.focus();
+      if (prev && typeof (prev as HTMLElement).focus === "function") (prev as HTMLElement).focus();
     };
   }, [isOpen, onClose]);
 

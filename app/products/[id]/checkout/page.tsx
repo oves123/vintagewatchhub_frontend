@@ -2,16 +2,16 @@
 import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, Truck, Clock, CheckCircle, ArrowLeft, ExternalLink, Info, CreditCard, MapPin, Lock, Package } from "lucide-react";
-import Breadcrumbs from "@/components/Breadcrumbs";
-import CheckoutStepper from "@/components/CheckoutStepper";
-import Navbar from "@/components/Navbar";
-import OptimizedImage from "@/components/OptimizedImage";
+import Breadcrumbs from "../../../../components/Breadcrumbs";
+import CheckoutStepper from "../../../../components/CheckoutStepper";
+import Navbar from "../../../../components/Navbar";
+import OptimizedImage from "../../../../components/OptimizedImage";
 
-import { API_URL, API_BASE_URL } from "@/services/api";
+import { API_URL, API_BASE_URL } from "../../../../services/api";
 const STEPS = ["Review Order", "Payment", "Confirmation"];
 
-export default function CheckoutPage({ params: paramsPromise }) {
-  const params = use(paramsPromise);
+export default function CheckoutPage({ params: paramsPromise }: any) {
+  const params: any = use(paramsPromise);
   const id = params.id;
   const router = useRouter();
   const [product, setProduct] = useState(null);
@@ -20,6 +20,7 @@ export default function CheckoutPage({ params: paramsPromise }) {
   const [loading, setLoading] = useState(true);
   const [isSecuring, setIsSecuring] = useState(false);
   const [step, setStep] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("razorpay");
   const [confirmed, setConfirmed] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
@@ -380,28 +381,20 @@ export default function CheckoutPage({ params: paramsPromise }) {
               </h3>
 
               <div className="space-y-4 mb-6">
-                <div className="flex items-center gap-4 p-4 border border-border hover:border-gold/30 transition-colors cursor-pointer bg-background">
+                <div 
+                  onClick={() => setPaymentMethod("razorpay")}
+                  className={`flex items-center gap-4 p-4 border transition-colors cursor-pointer bg-background ${paymentMethod === 'razorpay' ? 'border-gold' : 'border-border hover:border-gold/30'}`}
+                >
                   <div className="w-10 h-10 bg-gold/10 border border-gold/20 flex items-center justify-center">
-                    <ShieldCheck className="w-5 h-5 text-gold" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-foreground text-sm">Hub Escrow</p>
-                    <p className="text-xs text-muted">Secure escrow-backed transaction</p>
-                  </div>
-                  <div className="w-5 h-5 rounded-full border-2 border-gold flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-gold"></div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 p-4 border border-border opacity-50 cursor-not-allowed bg-background">
-                  <div className="w-10 h-10 bg-background border border-border flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-muted" />
+                    <CreditCard className="w-5 h-5 text-gold" />
                   </div>
                   <div className="flex-1">
                     <p className="font-bold text-foreground text-sm">Pay Online (Razorpay)</p>
-                    <p className="text-xs text-muted">Credit/Debit card, UPI, Net Banking</p>
+                    <p className="text-xs text-muted">Credit/Debit card, UPI, Net Banking via Secure Escrow</p>
                   </div>
-                  <span className="text-xs font-black text-gold-dark uppercase tracking-widest border border-gold/20 px-1.5 py-0.5">Proceed via Dashboard</span>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'razorpay' ? 'border-gold' : 'border-border'}`}>
+                    {paymentMethod === 'razorpay' && <div className="w-2.5 h-2.5 rounded-full bg-gold"></div>}
+                  </div>
                 </div>
               </div>
 

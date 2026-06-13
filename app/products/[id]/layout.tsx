@@ -6,8 +6,9 @@
 
 import { API_URL, API_BASE_URL } from "../../../services/api";
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params: paramsPromise }) {
   try {
+    const params = await paramsPromise;
     const res = await fetch(`${API_URL}/products/${params.id}`, {
       next: { revalidate: 60 }, // Cache for 60s on the CDN edge
     });

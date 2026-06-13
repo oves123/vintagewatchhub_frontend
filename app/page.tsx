@@ -16,6 +16,7 @@ function HomeContent() {
   const [brands, setBrands] = useState([]);
   const [featuredSelection, setFeaturedSelection] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [totalProducts, setTotalProducts] = useState(0);
@@ -47,16 +48,19 @@ function HomeContent() {
     router.push(`/?${params.toString()}`);
   };
 
-  const toggleMultiFilter = (key, val) => {
-    const currentParam = searchParams.get(key) || "";
-    let values = currentParam ? currentParam.split(',') : [];
-    if (values.includes(val)) {
-      values = values.filter(v => v !== val);
-    } else {
-      values.push(val);
+  useEffect(() => {
+    setLocalMin(minPrice || "");
+    setLocalMax(maxPrice || "");
+  }, [minPrice, maxPrice]);
+
+  useEffect(() => {
+    try {
+      const storedViewed = localStorage.getItem("recentlyViewed");
+      if (storedViewed) setRecentlyViewed(JSON.parse(storedViewed));
+    } catch (e) {
+      console.error("Error loading recently viewed", e);
     }
-    updateFilters(key, values.join(','));
-  };
+  }, []);
 
   useEffect(() => {
     setIsLoading(true);
@@ -142,7 +146,9 @@ function HomeContent() {
       .finally(() => {
         setIsLoading(false);
       });
+  }, [search, category, brand, minPrice, maxPrice, conditionParam, formatParam, sortParam, strapParam]);
 
+  useEffect(() => {
     // Fetch categories for sidebar
     fetch(`${API_URL}/products/categories`)
       .then(res => {
@@ -180,7 +186,7 @@ function HomeContent() {
         console.error("Brands fetch error:", err);
         setBrands([]);
       });
-  }, [search, category, brand, minPrice, maxPrice, conditionParam, formatParam, sortParam, strapParam]);
+  }, []);
 
   return (
     <div className="bg-background min-h-screen flex flex-col transition-colors duration-500">
@@ -188,33 +194,7 @@ function HomeContent() {
 
 
 
-      {/* Brand Quick Links - New Section */}
-      {!isCatalogView && brands.length > 0 && (
-         <section className="bg-background border-b border-border py-6 overflow-x-auto selection:bg-none">
-            <div className="max-w-[1300px] mx-auto px-5">
-               <div className="flex items-center gap-6">
-                  <span className="text-[10px] font-black text-muted uppercase tracking-widest whitespace-nowrap">Shop by Brand:</span>
-                  <div className="flex items-center gap-4">
-                     {brands.slice(0, 10).map(b => (
-                        <button 
-                           key={b}
-                           onClick={() => updateFilters('brand', b.toLowerCase())}
-                           className="px-4 py-2 bg-background border border-border text-[11px] font-bold text-foreground uppercase tracking-widest hover:border-gold hover:text-gold transition-all whitespace-nowrap rounded-none"
-                        >
-                           {b}
-                        </button>
-                     ))}
-                     <button 
-                        onClick={() => router.push('/?catalog=true#market')}
-                        className="text-[10px] font-bold text-gold hover:text-primary uppercase tracking-widest hover:underline whitespace-nowrap transition-colors"
-                     >
-                        View All →
-                     </button>
-                  </div>
-               </div>
-            </div>
-         </section>
-      )}
+
 
       {/* Main Container */}
       <main id="market" className="w-full px-4 sm:px-8 py-8 min-h-screen animate-in fade-in duration-700">
@@ -260,6 +240,23 @@ function HomeContent() {
                       <ProductCard key={p.id} product={p} />
                     ))
                   )}
+                </div>
+              </section>
+            )}
+
+            {/* Recently Viewed Section */}
+            {recentlyViewed.length > 0 && (
+              <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+                <div className="flex items-center justify-between mb-8 border-b border-border pb-4">
+                  <div>
+                    <h2 className="text-3xl font-serif text-foreground tracking-wide">Recently Viewed</h2>
+                    <p className="text-[11px] text-muted font-bold uppercase tracking-widest mt-2">Pick up right where you left off</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {recentlyViewed.map((p: any) => (
+                    <ProductCard key={p.id} product={p} />
+                  ))}
                 </div>
               </section>
             )}

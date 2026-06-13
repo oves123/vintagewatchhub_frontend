@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 
-const RecentlyViewedContext = createContext();
+const RecentlyViewedContext = createContext<any>(null);
 const STORAGE_KEY = "recently_viewed";
 const MAX_ITEMS = 12;
 

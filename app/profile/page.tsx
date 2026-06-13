@@ -49,7 +49,7 @@ function ProfileContent() {
     payment_methods: { upi: '', bank_name: '', account_number: '', ifsc: '' }
   });
   const [reportsLoading, setReportsLoading] = useState(false);
-  const [financialReports, setFinancialReports] = useState({ totals: { total_sales: 0, total_items_sold: 0 }, year: new Date().getFullYear() });
+  const [financialReports, setFinancialReports] = useState<any>({ totals: { total_sales: 0, total_items_sold: 0 }, year: new Date().getFullYear() });
   const [verifDocType, setVerifDocType] = useState("");
   const [verifDocUrl, setVerifDocUrl] = useState("");
   const [counterForm, setCounterForm] = useState({ offerId: null, amount: "" });
@@ -550,7 +550,7 @@ function ProfileContent() {
     if (!expiresAt) return null;
     const now = new Date();
     const expiry = new Date(expiresAt);
-    const diff = expiry - now;
+    const diff = expiry.getTime() - now.getTime();
     if (diff <= 0) return "EXPIRED";
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -772,7 +772,7 @@ function ProfileContent() {
                       <div className="md:col-span-2 space-y-4 pt-4">
                           <label className="text-xs font-bold text-muted uppercase tracking-widest">Collector Biography</label>
                           <textarea 
-                             rows="4" value={profileForm.bio}
+                             rows={4} value={profileForm.bio}
                              onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
                              className="w-full border border-border bg-background/50 p-6 rounded-lg outline-none text-[13px] font-medium leading-relaxed focus:border-gold focus:bg-surface transition-all"
                              placeholder="Briefly describe your watch collection interest..."
@@ -1751,7 +1751,7 @@ function ProfileContent() {
                                      <span className="text-xs font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-lg border border-emerald-500/30">Liquidated Assets</span>
                                  </div>
                                  <p className="text-xs font-bold text-muted uppercase tracking-[0.2em]">Total Sales Volume</p>
-                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">Rs.{parseFloat(financialReports?.totals?.total_sales || 0).toLocaleString()}</h3>
+                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">Rs.{Number(financialReports?.totals?.total_sales || 0).toLocaleString()}</h3>
                                  <p className="text-xs font-medium text-muted mt-4 uppercase tracking-wider">{financialReports?.totals?.total_items_sold || 0} Orders Successfully Audited</p>
                               </div>
 
@@ -1764,7 +1764,7 @@ function ProfileContent() {
                                      <span className="text-xs font-black uppercase tracking-widest bg-surface/20 text-white px-3 py-1 rounded-lg border border-white/30">Acquired Inventory</span>
                                  </div>
                                  <p className="text-xs font-bold text-gold uppercase tracking-[0.2em]">Total Acquisition Cost</p>
-                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">Rs.{parseFloat(financialReports?.totals?.total_spent || 0).toLocaleString()}</h3>
+                                 <h3 className="text-4xl font-black mt-2 tracking-tighter">Rs.{Number(financialReports?.totals?.total_spent || 0).toLocaleString()}</h3>
                                  <p className="text-xs font-medium text-white/60 mt-4 uppercase tracking-wider">{financialReports?.totals?.total_items_bought || 0} Products in Vault</p>
                               </div>
                            </div>
@@ -2157,7 +2157,7 @@ function ProfileContent() {
                  <div className="space-y-4">
                     <label className="text-xs font-black text-muted uppercase tracking-[0.2em]">Feedback Log</label>
                     <textarea 
-                       rows="4"
+                       rows={4}
                        value={reviewForm.comment}
                        onChange={(e) => setReviewForm({...reviewForm, comment: e.target.value})}
                         className="w-full bg-background border border-border p-6 rounded-lg outline-none focus:border-gold focus:bg-surface transition-all text-sm font-medium"

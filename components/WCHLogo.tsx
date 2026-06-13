@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-export default function WCHLogo({ className = "", onClick, showAdminLabel = false, size = 32 }) {
+export default function WCHLogo({ className = "", onClick, showAdminLabel = false, size = 32 }: any) {
   return (
     <Link href="/" onClick={onClick} className={`flex items-center gap-2 flex-shrink-0 ${className}`}>
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">

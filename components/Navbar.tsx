@@ -9,7 +9,7 @@ import socket from "../services/socket";
 import OptimizedImage from "./OptimizedImage";
 
 // Inline SVG Logo Component
-function WCHLogo({ className = "", onClick }) {
+function WCHLogo({ className = "", onClick = undefined }: { className?: string; onClick?: any }) {
   return (
     <Link href="/" onClick={onClick} className={`flex items-center gap-2 flex-shrink-0 ${className}`}>
       {/* Crown + Watch Icon */}
@@ -182,7 +182,7 @@ export default function Navbar() {
     router.push("/login");
   };
 
-  const handleMarkRead = async (id, e) => {
+  const handleMarkRead = async (id, e?: any) => {
     if (e) e.stopPropagation();
     try {
       await markNotificationAsRead(id);

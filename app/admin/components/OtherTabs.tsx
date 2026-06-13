@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState } from "react";
 import { Search, RefreshCw, Eye, CheckCircle, XCircle, Image, Gavel, TrendingUp, PieChart, Download, Filter, ArrowRight, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 
@@ -678,7 +678,7 @@ export function AuctionsTab({ auctions, tabLoading, onOpenBids, API_BASE_URL }) 
 
   const getRemainingTime = (endTime) => {
     if (!endTime) return "N/A";
-    const diff = new Date(endTime) - new Date();
+    const diff = new Date(endTime).getTime() - new Date().getTime();
     if (diff <= 0) return "EXPIRED";
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);

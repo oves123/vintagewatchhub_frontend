@@ -10,8 +10,8 @@ import { ProductGridSkeleton } from "../../../components/Skeleton";
 import { Package } from "lucide-react";
 import { API_URL } from "../../../services/api";
 
-export default function SellerPage({ params }) {
-  const { id } = use(params);
+export default function SellerPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params) as { id: string };
   const router = useRouter();
   const [seller, setSeller] = useState(null);
   const [products, setProducts] = useState([]);
@@ -27,13 +27,13 @@ export default function SellerPage({ params }) {
 
         let sellerData = null;
         if (userRes.ok) {
-          const data = await userRes.json();
+          const data = await (userRes as Response).json();
           sellerData = data.user || data;
         }
 
         let productsData = [];
         if (prodRes.ok) {
-          const data = await prodRes.json();
+          const data = await (prodRes as Response).json();
           productsData = Array.isArray(data) ? data : data.products || [];
         }
 

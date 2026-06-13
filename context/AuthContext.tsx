@@ -4,7 +4,7 @@ import { createContext, useState, useEffect, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { getHeaders, API_URL } from "../services/api";
 
-const AuthContext = createContext();
+const AuthContext = createContext<any>(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

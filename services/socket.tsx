@@ -76,4 +76,4 @@ export default new Proxy({}, {
     const s = getSocket();
     return s ? Reflect.get(s, prop) : undefined;
   },
-});
+}) as any;

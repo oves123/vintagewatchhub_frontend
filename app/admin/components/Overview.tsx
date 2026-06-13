@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
+import { useMemo } from "react";
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, ArrowUpRight, Users, Package, ShoppingCart, Eye, RefreshCw } from "lucide-react";
 
-function Stat({ label, value, sub, color = "#1e3a5f" }) {
+function Stat({ label, value, sub, color = "#1e3a5f" }: any) {
   return (
     <div className="bg-surface rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-shadow">
       <p className="text-xs font-bold text-muted uppercase tracking-widest mb-1">{label}</p>
@@ -13,13 +14,13 @@ function Stat({ label, value, sub, color = "#1e3a5f" }) {
 }
 
 export default function Overview({ stats, analytics, analyticsRange, setAnalyticsRange, setActiveTab, fetchStats, fetchAnalytics, showToast }) {
-  const chartData = (() => {
-    const m = {};
-    (analytics.products || []).forEach(p => { m[p.date] = { ...m[p.date], products: +p.count }; });
-    (analytics.users || []).forEach(u => { m[u.date] = { ...m[u.date], users: +u.count }; });
-    (analytics.orders || []).forEach(o => { m[o.date] = { ...m[o.date], orders: +o.count }; });
+  const chartData = useMemo(() => {
+    const m: any = {};
+    (analytics.products || []).forEach((p: any) => { m[p.date] = { ...m[p.date], products: +p.count }; });
+    (analytics.users || []).forEach((u: any) => { m[u.date] = { ...m[u.date], users: +u.count }; });
+    (analytics.orders || []).forEach((o: any) => { m[o.date] = { ...m[o.date], orders: +o.count }; });
     return Object.keys(m).sort().map(d => ({ name: d, products: m[d].products || 0, users: m[d].users || 0, orders: m[d].orders || 0 }));
-  })();
+  }, [analytics]);
 
   const kpis = [
     { label: "Total Users", value: stats?.totalUsers?.toLocaleString() },
@@ -85,8 +86,6 @@ export default function Overview({ stats, analytics, analyticsRange, setAnalytic
           ))}
         </div>
       </div>
-
-
 
       {/* Quick actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

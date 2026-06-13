@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 
-const ComparisonContext = createContext();
+const ComparisonContext = createContext<any>(null);
 
 export function ComparisonProvider({ children }) {
   const [comparedProducts, setComparedProducts] = useState([]);

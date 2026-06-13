@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo } from "react";
 
@@ -6,7 +6,7 @@ export default function PriceHistoryChart({ bids, price }) {
   const chartData = useMemo(() => {
     if (!bids || bids.length < 2) return null;
 
-    const sorted = [...bids].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const sorted = [...bids].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     const min = Math.min(...sorted.map((b) => parseFloat(b.bid_amount)));
     const max = Math.max(...sorted.map((b) => parseFloat(b.bid_amount)), parseFloat(price || 0));
     const range = max - min || 1;
@@ -58,8 +58,8 @@ export default function PriceHistoryChart({ bids, price }) {
         ))}
       </svg>
       <div className="flex justify-between text-xs font-bold text-muted mt-1">
-        <span>₹{parseFloat(chartData.min).toLocaleString()}</span>
-        <span>₹{parseFloat(chartData.max).toLocaleString()}</span>
+        <span>₹{Number(chartData.min).toLocaleString()}</span>
+        <span>₹{Number(chartData.max).toLocaleString()}</span>
       </div>
     </div>
   );

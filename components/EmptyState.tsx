@@ -9,7 +9,7 @@ export default function EmptyState({
   actionLabel,
   actionHref,
   onAction,
-}) {
+}: any) {
   return (
     <div className="bg-background rounded-none p-12 md:p-20 text-center border-2 border-dashed border-border shadow-sm relative overflow-hidden group">
       {/* Subtle Background Pattern / Glow */}

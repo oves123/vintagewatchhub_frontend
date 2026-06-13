@@ -33,7 +33,7 @@ export default function ProductCard({ product, horizontal = false }) {
     if (!product.auction_end) return null;
     const end = new Date(product.auction_end);
     const now = new Date();
-    const diff = end - now;
+    const diff = end.getTime() - now.getTime();
     if (diff <= 0) return "Ended";
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));

@@ -133,6 +133,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
     return () => {
       (socket as any).off("newBid", handleNewBid);
+      if (id) (socket as any).emit("leaveAuction", id);
     };
   }, [id]);
 
@@ -184,6 +185,18 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     .then(([productData, settingsData]) => {
       setProduct(productData);
       setPlatformSettings(settingsData);
+      
+      // Track recently viewed
+      try {
+        const storedViewed = localStorage.getItem("recentlyViewed");
+        let viewedArr = storedViewed ? JSON.parse(storedViewed) : [];
+        viewedArr = viewedArr.filter((p: any) => p.id !== productData.id);
+        viewedArr.unshift(productData);
+        if (viewedArr.length > 4) viewedArr = viewedArr.slice(0, 4);
+        localStorage.setItem("recentlyViewed", JSON.stringify(viewedArr));
+      } catch (e) {
+        console.error("Error saving recently viewed", e);
+      }
     })
     .catch(err => {
       if (err.message === "404") setNotFound(true);
@@ -252,6 +265,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       router.push(`/messages?chat=${chat.id}`);
     } catch (err) {
       console.error("Failed to initiate chat:", err);
+      showToast("Failed to initiate chat with seller.", "error");
     }
   };
 
@@ -370,10 +384,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       return;
     }
     
-    // We skip frontend highest-bid validation to avoid rejecting valid bids if the local state is stale.
-    // The backend will enforce the minimum increment and return an error if invalid.
-    if (parseFloat(bidAmount) < parseFloat(product.starting_bid)) {
-       showToast(`Your bid must be at least the starting bid of ₹${parseFloat(product.starting_bid).toLocaleString()}`, "error");
+    // Validate against current highest bid or starting bid
+    const currentHighest = bidHistory.length > 0 ? parseFloat(bidHistory[0].bid_amount) : parseFloat(product.starting_bid);
+    if (parseFloat(bidAmount) <= currentHighest) {
+       showToast(`Your bid must be higher than ₹${currentHighest.toLocaleString()}`, "error");
        return;
     }
 
@@ -542,7 +556,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   const handleOnboardingComplete = (updatedUser) => {
      setUser(updatedUser);
-     localStorage.setItem("user", JSON.stringify({...JSON.parse(localStorage.getItem("user")), ...updatedUser}));
+     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+     localStorage.setItem("user", JSON.stringify({...currentUser, ...updatedUser}));
      setShowOnboarding(false);
      if (pendingAction) {
         pendingAction();
@@ -1603,43 +1618,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         />
       )}
 
-      {/* Seller Items Modal */}
-      {showItemsModal && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="relative w-full max-w-6xl h-[85vh] bg-background border border-border shadow-2xl flex flex-col overflow-hidden">
-              <div className="p-6 border-b border-border flex items-center justify-between bg-surface sticky top-0 z-10">
-                 <div>
-                    <h3 className="text-xl font-black text-foreground uppercase tracking-tight">Seller Collection</h3>
-                    <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">
-                      {sellerListings.length} items from {product.seller_name || `Seller #${product.seller_id}`}
-                    </p>
-                 </div>
-                 <button 
-                   onClick={() => setShowItemsModal(false)}
-                   className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center text-muted hover:text-foreground hover:border-foreground transition-all"
-                 >
-                    <X className="w-5 h-5" />
-                 </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-6 bg-background">
-                 {sellerListings.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                      {sellerListings.map(item => (
-                        <div key={item.id} className="transform scale-95 origin-top-left w-[105.26%]">
-                           <ProductCard product={item} />
-                        </div>
-                      ))}
-                    </div>
-                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-center">
-                       <svg className="w-16 h-16 text-muted mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                       <p className="text-sm font-bold text-muted uppercase tracking-widest">No other items found.</p>
-                    </div>
-                 )}
-              </div>
-           </div>
-        </div>
-      )}
+
    </div>
   );
 }

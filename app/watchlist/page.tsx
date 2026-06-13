@@ -123,7 +123,7 @@ export default function WatchlistPage() {
     if (!endTime) return null;
     const now = new Date();
     const end = new Date(endTime);
-    const diff = end - now;
+    const diff = end.getTime() - now.getTime();
 
     if (diff <= 0) return "Auction Ended";
 
@@ -161,7 +161,7 @@ export default function WatchlistPage() {
               <div key={f.id} className="flex items-center gap-1">
                 <button onClick={() => setSelectedFolder(f.id)} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${selectedFolder === f.id ? 'bg-primary text-white' : 'bg-surface text-muted border border-border hover:bg-background'}`}>{f.name}</button>
                 {editingFolder === f.id ? (
-                  <input defaultValue={f.name} onBlur={e => handleRenameFolder(f.id, e.target.value)} onKeyDown={e => e.key === 'Enter' && handleRenameFolder(f.id, e.target.value)} className="w-24 px-2 py-1 bg-background border border-border text-xs font-bold" autoFocus />
+                  <input defaultValue={f.name} onBlur={e => handleRenameFolder(f.id, (e.target as HTMLInputElement).value)} onKeyDown={e => e.key === 'Enter' && handleRenameFolder(f.id, (e.target as HTMLInputElement).value)} className="w-24 px-2 py-1 bg-background border border-border text-xs font-bold" autoFocus />
                 ) : (
                   <button onClick={() => setEditingFolder(f.id)} className="text-xs text-muted hover:text-primary p-1">✎</button>
                 )}

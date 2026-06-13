@@ -418,7 +418,7 @@ export default function SellPage() {
          finalData.append("title", formData.title);
          finalData.append("description", formData.description);
           const mainPrice = formData.allow_auction ? formData.starting_bid : (formData.allow_buy_now ? formData.buy_it_now_price : 0);
-          finalData.append("price", mainPrice);
+          finalData.append("price", String(mainPrice));
          finalData.append("category_id", formData.category_id);
          finalData.append("product_type", formData.product_type);
          finalData.append("seller_id", user.id);
@@ -430,12 +430,12 @@ export default function SellPage() {
          finalData.append("condition_details", JSON.stringify(formData.condition_details));
          finalData.append("shipping_info", JSON.stringify(formData.shipping_info));
          finalData.append("payment_info", JSON.stringify(formData.payment_info));
-         finalData.append("allow_offers", formData.allow_offers);
-         finalData.append("allow_buy_now", formData.allow_buy_now);
-         finalData.append("buy_it_now_price", formData.buy_it_now_price || 0);
-         finalData.append("allow_auction", formData.allow_auction);
-         finalData.append("starting_bid", formData.starting_bid || 0);
-         finalData.append("reserve_price", formData.reserve_price || 0);
+         finalData.append("allow_offers", String(formData.allow_offers));
+         finalData.append("allow_buy_now", String(formData.allow_buy_now));
+         finalData.append("buy_it_now_price", String(formData.buy_it_now_price || 0));
+         finalData.append("allow_auction", String(formData.allow_auction));
+         finalData.append("starting_bid", String(formData.starting_bid || 0));
+         finalData.append("reserve_price", String(formData.reserve_price || 0));
          
          if (formData.allow_auction && !editId) {
             const durationDays = parseInt(formData.auction_duration || "3");
@@ -446,7 +446,7 @@ export default function SellPage() {
             finalData.append("auction_end", formData.auction_end || "");
          }
 
-         finalData.append("shipping_fee", formData.shipping_fee || 0);
+         finalData.append("shipping_fee", String(formData.shipping_fee || 0));
          finalData.append("shipping_type", formData.shipping_type);
 
          images.forEach(img => finalData.append("images", img));
@@ -767,7 +767,7 @@ export default function SellPage() {
                               name="description"
                               value={formData.description}
                               onChange={handleInputChange}
-                              rows="6"
+                              rows={6}
                               placeholder="Add a detailed description about your item..."
                               className="w-full bg-surface border border-gray-200 p-6 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium text-gray-700 text-[15px] placeholder:text-gray-300 resize-none shadow-sm"
                            />
@@ -1211,7 +1211,7 @@ export default function SellPage() {
                                     <div>
                                       <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Live Valuation</p>
                                        <div className="flex flex-col gap-1">
-                                          <span className="text-4xl md:text-5xl font-bold text-gray-950 tracking-tight">â‚¹{parseFloat(formData.allow_buy_now ? formData.buy_it_now_price : (formData.allow_auction ? formData.starting_bid : 0)).toLocaleString()}</span>
+                                          <span className="text-4xl md:text-5xl font-bold text-gray-950 tracking-tight">₹{Number(formData.allow_buy_now ? formData.buy_it_now_price : (formData.allow_auction ? formData.starting_bid : 0)).toLocaleString()}</span>
                                           <div className="flex items-center gap-1.5 mt-1">
                                              <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                                              <span className="text-[11px] font-black uppercase tracking-widest text-gray-500">
@@ -1220,7 +1220,7 @@ export default function SellPage() {
                                                 ) : formData.shipping_type === 'contact' ? (
                                                     <span className="text-blue-600">Contact for Quote</span>
                                                 ) : (
-                                                   <>+ â‚¹{parseFloat(formData.shipping_fee || 0).toLocaleString()} Shipping</>
+                                                   <>+ â‚¹{Number(formData.shipping_fee || 0).toLocaleString()} Shipping</>
                                                 )}
                                              </span>
                                           </div>
@@ -1253,7 +1253,7 @@ export default function SellPage() {
                                   .map(([key, value], i) => (
                                   <div key={key} className="p-8 border-b border-gray-50 md:border-r">
                                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{key.replace(/_/g, ' ')}</p>
-                                     <p className="text-base font-bold text-gray-900 uppercase">{value || 'N/A'}</p>
+                                     <p className="text-base font-bold text-gray-900 uppercase">{String(value) || 'N/A'}</p>
                                   </div>
                                 ))}
                              </div>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
@@ -196,7 +196,7 @@ export default function DashboardPage() {
   );
 }
 
-function DashboardItem({ title, image, price, status, id, statusColor, label, isSelling, onDelete }) {
+function DashboardItem({ title, image, price, status, id, statusColor, label, isSelling, onDelete }: any) {
   const imageUrl = image 
     ? (image.startsWith('http') ? image : `${API_BASE_URL}/uploads/${image}`)
     : "https://www.omegawatches.com/chronicle/img/template/mobile/1952/1952-the-first-model-in-the-omega-constellation-collection.jpg";

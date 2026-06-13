@@ -43,7 +43,7 @@ function MessagesContent() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(false);
   const [toast, setToast] = useState(null);
-  const [labels, setLabels] = useState({});
+  const [labels, setLabels] = useState<any>({});
   const [quickReplies, setQuickReplies] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -246,7 +246,7 @@ function MessagesContent() {
     }
   };
 
-  const handleSendMessage = async (e) => {
+  const handleSendMessage = async (e?: any) => {
     if (e) e.preventDefault();
     if (!newMessage.trim() || !activeChat) return;
 
@@ -287,7 +287,7 @@ function MessagesContent() {
 
   const handleMakeOffer = async () => {
     const amount = prompt("Enter your offer amount (₹):");
-    if (amount && !isNaN(amount)) {
+    if (amount && !isNaN(Number(amount))) {
       try {
         const res = await createOffer({
           product_id: activeChat.product_id,
@@ -356,7 +356,7 @@ function MessagesContent() {
 
   const handleConfirmDirectDeal = async () => {
     if (confirmingDeal) return;
-    if (!finalPrice || isNaN(finalPrice)) {
+    if (!finalPrice || isNaN(Number(finalPrice))) {
       showToast("Please enter a valid price", "error");
       return;
     }
@@ -752,7 +752,7 @@ function MessagesContent() {
                       </div>
 
                        <textarea 
-                         rows="1"
+                         rows={1}
                          value={newMessage}
                          onChange={(e) => {
                            setNewMessage(e.target.value);

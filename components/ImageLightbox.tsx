@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function ImageLightbox({ images, startIndex = 0, onClose }) {
-  const [currentIndex, setCurrentIndex] = useState(startIndex);
+export default function ImageLightbox({ images, startIndex = 0, initialIndex = 0, onClose }) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex || startIndex);
   const overlayRef = useRef(null);
 
   useEffect(() => {
@@ -24,12 +24,12 @@ export default function ImageLightbox({ images, startIndex = 0, onClose }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentIndex, onClose]);
 
-  const goNext = (e) => {
+  const goNext = (e?: any) => {
     e?.stopPropagation();
     setCurrentIndex((prev) => (prev + 1) % images.length);
   };
 
-  const goPrev = (e) => {
+  const goPrev = (e?: any) => {
     e?.stopPropagation();
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   };
