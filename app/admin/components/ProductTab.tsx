@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState } from "react";
 import { Search, Eye, CheckCircle2, XCircle, RefreshCw, MessageSquare, Send } from "lucide-react";
 import ConfirmDialog from "../../../components/ConfirmDialog";
@@ -146,7 +146,7 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                       <td className="px-4 py-4">
                         <div className="flex flex-col">
                           <span className="text-xs font-black text-foreground">
-                             {p.shipping_type === 'free' ? 'FREE' : p.shipping_type === 'contact' ? 'TBD' : `₹${parseFloat(p.shipping_fee||0).toLocaleString()}`}
+                             {p.shipping_type === 'free' ? 'FREE' : `₹${parseFloat(p.shipping_fee||0).toLocaleString()}`}
                           </span>
                           <span className="text-xs font-bold text-muted uppercase">{p.shipping_type}</span>
                         </div>
@@ -194,7 +194,7 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-sm font-black text-primary">₹{parseFloat(p.price||0).toLocaleString()}</p>
                         <span className="text-xs font-bold text-muted uppercase">
-                           + {p.shipping_type === 'free' ? 'Free' : p.shipping_type === 'contact' ? 'TBD' : `₹${parseFloat(p.shipping_fee||0).toLocaleString()}`} Ship
+                           + {p.shipping_type === 'free' ? 'Free' : `₹${parseFloat(p.shipping_fee||0).toLocaleString()}`} Ship
                         </span>
                       </div>
                     </div>
@@ -298,7 +298,7 @@ export default function ProductTab({ products, tabLoading, API_BASE_URL, API_URL
                   ["Auction", selectedProduct.allow_auction ? `Yes (Start: ₹${parseFloat(selectedProduct.starting_bid).toLocaleString()})` : "No"],
                   ["Auction End", selectedProduct.auction_end ? new Date(selectedProduct.auction_end).toLocaleString() : "—"],
                   ["Offers Allowed", selectedProduct.allow_offers ? "Yes" : "No"],
-                  ["Shipping Fee", selectedProduct.shipping_type === 'free' ? "Free" : selectedProduct.shipping_type === 'contact' ? "TBD" : `₹${parseFloat(selectedProduct.shipping_fee||0).toLocaleString()}`],
+                  ["Shipping Fee", selectedProduct.shipping_type === 'free' ? "Free" : `₹${parseFloat(selectedProduct.shipping_fee||0).toLocaleString()}`],
                   ["Shipping Type", selectedProduct.shipping_type || "fixed"],
                 ].map(([k,v]) => (
                   <div key={k} className="flex justify-between bg-surface rounded-xl px-3 py-2 border border-border">

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Truck, Clock, CheckCircle, ArrowLeft, ExternalLink, Info, CreditCard, MapPin, Lock, Package } from "lucide-react";
+import { ShieldCheck, CheckCircle, ArrowLeft, Info, CreditCard, MapPin, Lock, Package } from "lucide-react";
 import Breadcrumbs from "../../../../components/Breadcrumbs";
 import CheckoutStepper from "../../../../components/CheckoutStepper";
 import Navbar from "../../../../components/Navbar";
@@ -118,12 +118,7 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
         return;
       }
 
-      if (product.shipping_type === 'contact') {
-        setConfirmed(true);
-        setStep(2);
-        setIsSecuring(false);
-        return;
-      }
+
 
       // Proceed to Razorpay
       const isScriptLoaded = await loadRazorpayScript();
@@ -133,7 +128,7 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
         return;
       }
 
-      const orderRes = await fetch(`${API_URL}/payments/create-order`, {
+      const orderRes = await fetch(`${API_URL}/payment/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
         body: JSON.stringify({ deal_id: data.deal.id })
@@ -141,7 +136,7 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
       const orderData = await orderRes.json();
       
       if (!orderRes.ok) {
-        alert("Failed to initialize payment: " + orderData.message);
+        alert("Failed to initialize payment: " + (orderData.message || orderData.error || "Unknown error"));
         setIsSecuring(false);
         return;
       }
@@ -155,7 +150,7 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
         order_id: orderData.order_id,
         handler: async function (response) {
           try {
-            const verifyRes = await fetch(`${API_URL}/payments/verify`, {
+            const verifyRes = await fetch(`${API_URL}/payment/verify`, {
               method: "POST",
               headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
               body: JSON.stringify({
@@ -190,6 +185,10 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
       };
 
       const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+         alert("Payment failed: " + response.error.description);
+         setIsSecuring(false);
+      });
       rzp.open();
     } catch (err) {
       alert("Error securing deal. Please try again.");
@@ -227,7 +226,7 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
   const buyerCommissionRate = parseFloat(platformSettings?.buyer_commission_rate || 0);
   const buyerCommissionFee = itemPrice * (buyerCommissionRate / 100);
   const totalAmount = itemPrice + shippingFee + buyerCommissionFee;
-  const totalAfterDiscount = totalAmount - couponDiscount;
+  const totalAfterDiscount = Math.max(0, totalAmount - couponDiscount);
 
   return (
     <div className="bg-background min-h-screen flex flex-col">
@@ -259,7 +258,7 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
                 <div className="flex gap-5">
                   <div className="w-24 h-24 bg-background border border-border flex-shrink-0 overflow-hidden relative">
                     <OptimizedImage
-                      src={product.images?.[0] ? (product.images[0].startsWith('http') ? product.images[0] : `${API_BASE_URL}/uploads/${product.images[0]}`) : '/placeholder.png'}
+                      src={product.images?.[0] ? (product.images[0].startsWith('http') ? product.images[0] : `${API_BASE_URL}/uploads/${product.images[0]}`) : (product.image ? (product.image.startsWith('http') ? product.image : `${API_BASE_URL}/uploads/${product.image}`) : '/placeholder.png')}
                       alt={product.title}
                       fill
                       className="object-contain p-2"
@@ -292,7 +291,7 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
                 </div>
                 <p className="text-xs text-muted mt-3 flex items-center gap-1">
                   <Info className="w-3 h-3" />
-                  Seller ships within 48-72 hours of payment confirmation
+                  {product.shipping_type === 'free' ? 'Free shipping included' : 'Standard premium shipping timeline applies'}
                 </p>
               </div>
 
@@ -323,10 +322,12 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
                     <span className="text-sm text-muted uppercase tracking-widest font-bold">Shipping</span>
                     <span className="text-sm font-bold text-foreground">{shippingFee > 0 ? `₹${shippingFee.toLocaleString()}` : 'FREE'}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted uppercase tracking-widest font-bold">Buyer Premium ({buyerCommissionRate}%)</span>
-                    <span className="text-sm font-bold text-foreground">₹{buyerCommissionFee.toLocaleString()}</span>
-                  </div>
+                  {buyerCommissionFee > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted uppercase tracking-widest font-bold">Buyer Premium ({buyerCommissionRate}%)</span>
+                      <span className="text-sm font-bold text-foreground">₹{buyerCommissionFee.toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-sm text-muted uppercase tracking-widest font-bold">Authentication</span>
                     <span className="text-sm font-bold text-emerald-600">Included</span>
@@ -362,12 +363,19 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => setStep(1)}
-                  className="gold-sweep w-full mt-6 py-4 text-sm font-black uppercase tracking-widest"
-                >
-                  Continue to Payment
-                </button>
+                {!user?.address ? (
+                   <div className="mt-6 p-4 border border-rose-200 bg-rose-50 rounded-lg text-center">
+                     <p className="text-xs font-bold text-rose-600 uppercase tracking-widest mb-2">Shipping Address Required</p>
+                     <button onClick={() => router.push('/profile')} className="px-4 py-2 bg-rose-600 text-white rounded text-[10px] font-black uppercase tracking-widest hover:bg-rose-700">Add Address in Profile</button>
+                   </div>
+                ) : (
+                   <button
+                     onClick={() => setStep(1)}
+                     className="gold-sweep w-full mt-6 py-4 text-sm font-black uppercase tracking-widest"
+                   >
+                     Continue to Payment
+                   </button>
+                )}
               </div>
             </div>
           </div>
@@ -421,15 +429,13 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
-                    {product.shipping_type === 'contact' 
-                      ? 'Request Shipping Quote & Secure Asset' 
-                      : `Pay & Secure Asset — ₹${totalAfterDiscount.toLocaleString()}`}
+                    Pay & Secure Asset — ₹{totalAfterDiscount.toLocaleString()}
                   </>
                 )}
               </button>
 
               <p className="text-xs text-center text-muted font-bold uppercase tracking-widest mt-4">
-                {product.shipping_type === 'contact' ? 'Seller will provide a shipping quote before you pay' : 'Funds held in escrow until you confirm receipt'}
+                Funds held in escrow until you confirm receipt
               </p>
             </div>
           </div>
@@ -449,23 +455,6 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
               <div className="bg-surface/50 border border-border p-5 mb-6 text-left">
                 <h4 className="font-bold text-foreground text-xs mb-3 uppercase tracking-widest">Next Steps</h4>
                 <ul className="space-y-3">
-                  {product.shipping_type === 'contact' ? (
-                    <>
-                      <li className="flex items-start gap-2 text-sm text-muted">
-                        <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">1</span></span>
-                        Wait for the seller to provide a shipping quote.
-                      </li>
-                      <li className="flex items-start gap-2 text-sm text-muted">
-                        <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">2</span></span>
-                        Complete payment via the Buyer Hub once quoted.
-                      </li>
-                      <li className="flex items-start gap-2 text-sm text-muted">
-                        <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">3</span></span>
-                        Inspect and confirm receipt to release payment.
-                      </li>
-                    </>
-                  ) : (
-                    <>
                       <li className="flex items-start gap-2 text-sm text-muted">
                         <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">1</span></span>
                         Your payment is held safely in Escrow.
@@ -478,8 +467,6 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
                         <span className="w-5 h-5 rounded-full bg-gold/10 flex items-center justify-center shrink-0 mt-0.5"><span className="text-xs text-gold font-black">3</span></span>
                         Inspect and confirm receipt to release payment
                       </li>
-                    </>
-                  )}
                 </ul>
               </div>
 

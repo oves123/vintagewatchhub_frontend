@@ -594,7 +594,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         { label: product.title },
       ]} />
 
-      <main className="max-w-[1500px] mx-auto px-4 md:px-6 lg:px-8 py-0 lg:py-4">
+      <main className="w-full max-w-full px-4 md:px-8 lg:px-12 xl:px-16 py-0 lg:py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-12">
             
             {/* Gallery - Edge to Edge on Mobile */}
@@ -714,8 +714,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted">
                                 {product.shipping_type === 'free' ? (
                                    <span className="text-gold">Free Shipping Included</span>
-                                ) : product.shipping_type === 'contact' ? (
-                                   <span className="text-muted">Contact for Shipping Quote</span>
                                 ) : (
                                    <>+ ₹{parseFloat(product.shipping_fee || 0).toLocaleString()} Premium Shipping</>
                                 )}
@@ -739,20 +737,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                            <>
                               {product.allow_buy_now && bidHistory.length === 0 && (
                                 <button 
-                                  onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow}
-                                  className={`hover-3d w-full h-14 rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all border flex items-center justify-center gap-3 group ${product.shipping_type === 'contact' ? 'bg-background border-gold text-gold hover:bg-gold hover:text-white' : 'bg-foreground text-background border-foreground hover:bg-gold hover:border-gold hover:text-white shadow-xl'}`}
+                                  onClick={handleBuyNow}
+                                  className="hover-3d w-full h-14 rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all border flex items-center justify-center gap-3 group bg-foreground text-background border-foreground hover:bg-gold hover:border-gold hover:text-white shadow-xl"
                                 >
-                                   {product.shipping_type === 'contact' ? (
-                                      <>
-                                         <span>Discuss with Seller</span>
-                                         <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                                      </>
-                                   ) : (
-                                      <>
-                                         <span>Secure Asset Now</span>
-                                         <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                                      </>
-                                   )}
+                                   <>
+                                      <span>Buy Now</span>
+                                      <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                   </>
                                 </button>
                               )}
 
@@ -924,7 +915,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               {Object.entries(product.item_specifics || {})
                 .filter(([key]) => !key.endsWith('_manual_mode'))
                 .map(([key, value], i) => (
-                <div key={key} className="flex flex-col sm:flex-row sm:items-center py-5 px-6 sm:px-8 hover:bg-background transition-colors">
+                <div key={key} className="flex flex-col sm:flex-row sm:items-center py-5 px-6 sm:px-8">
                    <p className="text-[11px] font-bold text-muted uppercase tracking-widest sm:w-1/3 mb-1 sm:mb-0">{key.replace(/_/g, ' ')}</p>
                    <p className="text-sm font-bold text-foreground uppercase sm:w-2/3">{String(value)}</p>
                 </div>
@@ -936,7 +927,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 { l: "Case", v: product.case_size + "mm" },
                 { l: "Movement", v: product.movement_type }
               ].map((s, i) => (
-                <div key={i} className="flex flex-col sm:flex-row sm:items-center py-5 px-6 sm:px-8 hover:bg-background transition-colors">
+                <div key={i} className="flex flex-col sm:flex-row sm:items-center py-5 px-6 sm:px-8">
                    <p className="text-[11px] font-bold text-muted uppercase tracking-widest sm:w-1/3 mb-1 sm:mb-0">{s.l}</p>
                    <p className="text-sm font-bold text-foreground uppercase sm:w-2/3">{s.v || "N/A"}</p>
                 </div>
@@ -960,7 +951,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               })}
            </div>
 
-           <div className="max-w-4xl">
+           <div className="w-full">
               {activeTab === "description" && (
                 <div className="animate-in fade-in duration-500">
                     {product.description ? (
@@ -1044,9 +1035,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                      {product.condition_details && Object.entries(product.condition_details)
                         .filter(([key]) => !key.endsWith('_manual_mode'))
                         .map(([key, value]) => (
-                         <div key={key} className="p-5 border border-border/50 rounded-xl bg-surface/50 hover:bg-surface transition-colors group">
+                         <div key={key} className="p-5 border border-border/50 rounded-xl bg-surface/50">
                            <div className="flex justify-between items-start mb-2">
-                             <p className="text-[11px] font-black text-muted uppercase tracking-[0.2em] group-hover:text-gold transition-colors">{key.replace(/_/g, ' ')}</p>
+                             <p className="text-[11px] font-black text-muted uppercase tracking-[0.2em]">{key.replace(/_/g, ' ')}</p>
                              <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/></svg>
                            </div>
                            <p className="text-sm font-bold text-foreground capitalize leading-snug">{String(value)}</p>
@@ -1121,7 +1112,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           {reviews.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {reviews.map((review) => (
-                <div key={review.id} className="bg-background/50 border border-border p-8 rounded-3xl hover:bg-surface hover:shadow-xl hover:shadow-gray-100 transition-all group">
+                <div key={review.id} className="bg-background/50 border border-border p-8 rounded-3xl">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shadow-sm">
@@ -1599,11 +1590,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
            </button>
          ) : (
            <button 
-             onClick={product.shipping_type === 'contact' ? handleChatWithSeller : handleBuyNow}
+             onClick={handleBuyNow}
              disabled={!product.is_active}
              className={`flex-1 h-12 rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] flex items-center justify-center transition-all shadow-xl ${!product.is_active ? 'bg-surface border border-border text-muted cursor-not-allowed' : 'bg-foreground text-background border border-foreground hover:bg-gold hover:border-gold hover:text-white'}`}
            >
-             {product.shipping_type === 'contact' ? 'Discuss' : 'Secure Asset'}
+             Secure Asset
            </button>
          )}
        </div>

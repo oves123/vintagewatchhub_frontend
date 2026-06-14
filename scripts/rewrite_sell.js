@@ -1,7 +1,10 @@
+const fs = require('fs');
+const path = require('path');
+
+const newContent = `
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { createPortal } from "react-dom";
 import Navbar from "../../components/Navbar";
 import { useRouter } from "next/navigation";
 import { getCategories, createProduct, updateProduct, API_URL, API_BASE_URL, getUserProfile } from "../../services/api";
@@ -18,9 +21,8 @@ export default function SellPage() {
    const [productStatus, setProductStatus] = useState(null);
    const [rejectionReason, setRejectionReason] = useState(null);
    const [showOnboarding, setShowOnboarding] = useState(false);
-   const [showPreviewModal, setShowPreviewModal] = useState(false);
    const [currentUser, setCurrentUser] = useState(null);
-   const [errors, setErrors] = useState<any>({});
+   const [errors, setErrors] = useState({});
    const router = useRouter();
 
    const showToast = (message, type = 'success') => {
@@ -98,7 +100,7 @@ export default function SellPage() {
       }
 
       if (editId) {
-         fetch(`${API_URL}/products/${editId}`)
+         fetch(\`\${API_URL}/products/\${editId}\`)
             .then(res => res.json())
             .then(data => {
                setFormData({
@@ -136,9 +138,9 @@ export default function SellPage() {
                if (data.rejection_reason) setRejectionReason(data.rejection_reason);
                if (data.images) {
                   setPreviews(data.images.map(img => ({
-                     url: img.startsWith('http') ? img : `${API_BASE_URL}/uploads/${img}`,
+                     url: img.startsWith('http') ? img : \`\${API_BASE_URL}/uploads/\${img}\`,
                      path: img,
-                     type: img.match(/\.(mp4|mov|webm|quicktime|avi|mkv)$/i) ? 'video' : 'image',
+                     type: img.match(/\\.(mp4|mov|webm|quicktime|avi|mkv)$/i) ? 'video' : 'image',
                      isExisting: true,
                      muted: data.video_settings && data.video_settings[img] ? data.video_settings[img].muted : false
                   })));
@@ -306,7 +308,7 @@ export default function SellPage() {
          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
          const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
          fetch(dataUrl).then(res => res.blob()).then(blob => {
-            const file = new File([blob], `live_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            const file = new File([blob], \`live_photo_\${Date.now()}.jpg\`, { type: 'image/jpeg' });
             setImages(prev => [...prev, file]);
             setPreviews(prev => [...prev, { url: dataUrl, type: 'image' }]);
             stopCamera();
@@ -326,7 +328,7 @@ export default function SellPage() {
       mediaRecorder.onstop = () => {
          const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
          const url = URL.createObjectURL(blob);
-         const file = new File([blob], `live_video_${Date.now()}.webm`, { type: 'video/webm' });
+         const file = new File([blob], \`live_video_\${Date.now()}.webm\`, { type: 'video/webm' });
          setImages(prev => [...prev, file]);
          setPreviews(prev => [...prev, { url, type: 'video' }]);
          stopCamera();
@@ -345,7 +347,7 @@ export default function SellPage() {
    };
 
    const validateForm = () => {
-      const newErrors: any = {};
+      const newErrors = {};
       if (!formData.title) newErrors.title = "Title is required";
       if (!formData.category_id) newErrors.category_id = "Category is required";
       if (!formData.condition_code) newErrors.condition_code = "Condition is required";
@@ -449,7 +451,7 @@ export default function SellPage() {
             const autoApproved = res.product?.status === 'approved' && type !== 'draft';
             const msg = type === 'draft' ? "Saved as Draft!" : (editId ? "Listing Updated!" : "Watch Listed!");
             setShowSuccess({ show: true, message: msg, type, autoApproved });
-            setTimeout(() => { router.push("/profile?tab=selling"); }, 3200);
+            setTimeout(() => { router.push("/"); }, 3200);
          } else {
             showToast(res.message || "Failed to process listing.", 'error');
          }
@@ -489,7 +491,7 @@ export default function SellPage() {
          )}
 
          {toast && (
-            <div className={`fixed bottom-6 right-6 z-[4000] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl text-white text-[11px] font-black uppercase tracking-widest ${toast.type === 'error' ? 'bg-rose-500 shadow-rose-200' : 'bg-emerald-500 shadow-emerald-200'}`}>
+            <div className={\`fixed bottom-6 right-6 z-[4000] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl text-white text-[11px] font-black uppercase tracking-widest \${toast.type === 'error' ? 'bg-rose-500 shadow-rose-200' : 'bg-emerald-500 shadow-emerald-200'}\`}>
                <span className="leading-tight normal-case font-bold text-[12px] tracking-normal">{toast.message}</span>
             </div>
          )}
@@ -513,8 +515,15 @@ export default function SellPage() {
             </div>
          )}
 
-         <main className="w-full px-4 md:px-8 py-8 md:py-12">
+         <main className="max-w-4xl mx-auto px-4 py-8 md:py-12">
+            <div className="mb-8 flex justify-center">
+               <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Consign Asset' }]} />
+            </div>
 
+            <div className="mb-10 text-center">
+               <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-gray-900">Consign Your Asset</h1>
+               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mt-2">Complete the form below to list on the Hub</p>
+            </div>
 
             {productStatus === 'rejected' && rejectionReason && (
                <div className="mb-8 p-5 bg-rose-50 border border-rose-100 rounded-2xl">
@@ -538,7 +547,7 @@ export default function SellPage() {
                            value={formData.title}
                            onChange={handleInputChange}
                            placeholder="e.g. Omega Seamaster 300 Heritage 2021"
-                           className={`w-full bg-background border ${errors.title ? 'border-rose-500' : 'border-gray-200'} p-5 rounded-xl focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all font-semibold text-gray-900 text-lg placeholder:text-gray-400`}
+                           className={\`w-full bg-background border \${errors.title ? 'border-rose-500' : 'border-gray-200'} p-5 rounded-xl focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all font-semibold text-gray-900 text-lg placeholder:text-gray-400\`}
                         />
                         {errors.title && <p className="text-rose-500 text-xs font-bold px-1">{errors.title}</p>}
                      </div>
@@ -553,9 +562,9 @@ export default function SellPage() {
                                     handleInputChange({ target: { name: 'category_id', value: c.id.toString() } });
                                     if(errors.category_id) setErrors(prev => ({...prev, category_id: null}));
                                  }}
-                                 className={`p-4 rounded-xl border transition-all text-center ${formData.category_id === c.id.toString() ? 'border-blue-600 bg-blue-50/50 shadow-sm' : (errors.category_id ? 'border-rose-300 bg-rose-50' : 'border-gray-200 bg-background hover:bg-gray-50')}`}
+                                 className={\`p-4 rounded-xl border transition-all text-center \${formData.category_id === c.id.toString() ? 'border-blue-600 bg-blue-50/50 shadow-sm' : (errors.category_id ? 'border-rose-300 bg-rose-50' : 'border-gray-200 bg-background hover:bg-gray-50')}\`}
                               >
-                                 <p className={`text-[12px] font-bold uppercase tracking-widest ${formData.category_id === c.id.toString() ? 'text-blue-600' : 'text-gray-700'}`}>{c.name}</p>
+                                 <p className={\`text-[12px] font-bold uppercase tracking-widest \${formData.category_id === c.id.toString() ? 'text-blue-600' : 'text-gray-700'}\`}>{c.name}</p>
                               </button>
                            ))}
                         </div>
@@ -584,7 +593,7 @@ export default function SellPage() {
                                     handleInputChange({ target: { name: 'condition_code', value: c.c } });
                                     if(errors.condition_code) setErrors(prev => ({...prev, condition_code: null}));
                                  }}
-                                 className={`p-5 rounded-xl border text-left transition-all ${formData.condition_code === c.c ? 'border-blue-600 bg-blue-50/50' : (errors.condition_code ? 'border-rose-300 bg-rose-50' : 'border-gray-200 bg-background hover:bg-gray-50')}`}
+                                 className={\`p-5 rounded-xl border text-left transition-all \${formData.condition_code === c.c ? 'border-blue-600 bg-blue-50/50' : (errors.condition_code ? 'border-rose-300 bg-rose-50' : 'border-gray-200 bg-background hover:bg-gray-50')}\`}
                               >
                                  <p className="text-[13px] font-bold text-gray-900">{c.l}</p>
                                  <p className="text-[10px] font-medium text-gray-500 mt-1">{c.d}</p>
@@ -599,13 +608,13 @@ export default function SellPage() {
                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest ml-1">Technical Condition Specs</label>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {selectedCategory.conditions.map(cf => {
-                                 const isManual = formData.condition_details[`${cf.field_name}_manual_mode`];
+                                 const isManual = formData.condition_details[\`\${cf.field_name}_manual_mode\`];
                                  return (
                                     <div key={cf.id} className="p-5 bg-background border border-gray-200 rounded-xl space-y-3">
                                        <div className="flex justify-between items-center">
                                           <p className="text-[10px] font-black text-gray-500 uppercase tracking-wider">{cf.field_label}</p>
                                           <button 
-                                             onClick={() => handleNestedChange('condition_details', `${cf.field_name}_manual_mode`, !isManual)}
+                                             onClick={() => handleNestedChange('condition_details', \`\${cf.field_name}_manual_mode\`, !isManual)}
                                              className="text-[9px] font-bold text-blue-500 uppercase hover:underline"
                                           >
                                              {isManual ? "List View" : "Manual Input"}
@@ -618,7 +627,7 @@ export default function SellPage() {
                                              onChange={(e) => handleNestedChange('condition_details', cf.field_name, e.target.value)}
                                              value={formData.condition_details[cf.field_name] || ""}
                                              className="w-full bg-surface border border-gray-200 p-3 rounded-lg font-bold text-xs text-gray-900 outline-none focus:border-blue-600"
-                                             placeholder={`Describe ${cf.field_label}`}
+                                             placeholder={\`Describe \${cf.field_label}\`}
                                           />
                                        ) : (
                                           <select
@@ -651,7 +660,7 @@ export default function SellPage() {
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        className={`border-2 border-dashed rounded-xl p-10 text-center transition-all ${isDragging ? 'border-blue-600 bg-blue-50' : (errors.media ? 'border-rose-400 bg-rose-50' : 'border-gray-300 bg-background hover:bg-gray-50')}`}
+                        className={\`border-2 border-dashed rounded-xl p-10 text-center transition-all \${isDragging ? 'border-blue-600 bg-blue-50' : (errors.media ? 'border-rose-400 bg-rose-50' : 'border-gray-300 bg-background hover:bg-gray-50')}\`}
                      >
                         <input type="file" multiple accept="image/*,video/*" onChange={handleMediaChange} className="hidden" id="media-upload" />
                         <div className="flex flex-col items-center justify-center gap-4">
@@ -713,13 +722,13 @@ export default function SellPage() {
                      {selectedCategory?.specs?.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                            {selectedCategory.specs.map(s => {
-                              const isManual = formData.item_specifics[`${s.field_name}_manual_mode`];
+                              const isManual = formData.item_specifics[\`\${s.field_name}_manual_mode\`];
                               return (
                                  <div key={s.id} className="space-y-3 bg-background p-5 rounded-xl border border-gray-200">
                                     <div className="flex justify-between items-center">
                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{s.field_label} {s.is_required && "*"}</label>
                                        <button 
-                                          onClick={() => handleNestedChange('item_specifics', `${s.field_name}_manual_mode`, !isManual)}
+                                          onClick={() => handleNestedChange('item_specifics', \`\${s.field_name}_manual_mode\`, !isManual)}
                                           className="text-[9px] font-bold text-blue-500 uppercase tracking-tight hover:underline"
                                        >
                                           {isManual ? "Back to List" : "Manual Entry"}
@@ -732,7 +741,7 @@ export default function SellPage() {
                                           onChange={(e) => handleNestedChange('item_specifics', s.field_name, e.target.value)}
                                           value={formData.item_specifics[s.field_name] || ""}
                                           className="w-full bg-surface border border-gray-200 p-4 rounded-lg font-bold text-xs text-gray-900 outline-none focus:border-blue-600"
-                                          placeholder={`Enter Custom ${s.field_label}`}
+                                          placeholder={\`Enter Custom \${s.field_label}\`}
                                        />
                                     ) : (
                                        s.field_type === 'select' ? (
@@ -750,7 +759,7 @@ export default function SellPage() {
                                              onChange={(e) => handleNestedChange('item_specifics', s.field_name, e.target.value)}
                                              value={formData.item_specifics[s.field_name] || ""}
                                              className="w-full bg-surface border border-gray-200 p-4 rounded-lg font-bold text-xs text-gray-900 outline-none focus:border-blue-600"
-                                             placeholder={`e.g. ${s.field_label}`}
+                                             placeholder={\`e.g. \${s.field_label}\`}
                                           />
                                        )
                                     )}
@@ -767,11 +776,11 @@ export default function SellPage() {
                   <h2 className="text-lg font-black text-gray-900 uppercase tracking-widest mb-6">5. Pricing & Shipping <span className="text-rose-500">*</span></h2>
                   
                   <div className="space-y-10">
-                     <div className={`p-6 border-2 rounded-2xl ${errors.pricing ? 'border-rose-400 bg-rose-50' : 'border-gray-100'}`}>
+                     <div className={\`p-6 border-2 rounded-2xl \${errors.pricing ? 'border-rose-400 bg-rose-50' : 'border-gray-100'}\`}>
                         <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-6">Listing Formats (Select at least 1) <span className="text-rose-500">*</span></h3>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                           <label className={`p-6 rounded-xl border-2 cursor-pointer transition-all ${formData.allow_buy_now ? 'border-blue-600 bg-blue-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                           <label className={\`p-6 rounded-xl border-2 cursor-pointer transition-all \${formData.allow_buy_now ? 'border-blue-600 bg-blue-50/50' : 'border-gray-200 hover:border-gray-300'}\`}>
                               <div className="flex items-center justify-between mb-4">
                                  <span className="text-sm font-black uppercase tracking-widest text-gray-900">Buy It Now</span>
                                  <input type="checkbox" name="allow_buy_now" checked={formData.allow_buy_now} onChange={handleInputChange} className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
@@ -779,13 +788,13 @@ export default function SellPage() {
                               {formData.allow_buy_now && (
                                  <div className="space-y-2 mt-4">
                                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fixed Price (₹)</p>
-                                    <input type="text" name="buy_it_now_price" value={formData.buy_it_now_price} onChange={handleInputChange} placeholder="0.00" className={`w-full bg-background border ${errors.buy_it_now_price ? 'border-rose-500' : 'border-gray-300'} p-3 rounded-lg font-bold text-lg outline-none focus:border-blue-600`} />
+                                    <input type="text" name="buy_it_now_price" value={formData.buy_it_now_price} onChange={handleInputChange} placeholder="0.00" className={\`w-full bg-background border \${errors.buy_it_now_price ? 'border-rose-500' : 'border-gray-300'} p-3 rounded-lg font-bold text-lg outline-none focus:border-blue-600\`} />
                                     {errors.buy_it_now_price && <p className="text-rose-500 text-xs font-bold">{errors.buy_it_now_price}</p>}
                                  </div>
                               )}
                            </label>
 
-                           <label className={`p-6 rounded-xl border-2 cursor-pointer transition-all ${formData.allow_auction ? 'border-amber-500 bg-amber-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                           <label className={\`p-6 rounded-xl border-2 cursor-pointer transition-all \${formData.allow_auction ? 'border-amber-500 bg-amber-50/50' : 'border-gray-200 hover:border-gray-300'}\`}>
                               <div className="flex items-center justify-between mb-4">
                                  <span className="text-sm font-black uppercase tracking-widest text-gray-900">Auction</span>
                                  <input type="checkbox" name="allow_auction" checked={formData.allow_auction} onChange={handleInputChange} className="w-5 h-5 rounded border-gray-300 text-amber-500 focus:ring-amber-500"/>
@@ -811,7 +820,7 @@ export default function SellPage() {
                               )}
                            </label>
 
-                           <label className={`p-6 rounded-xl border-2 cursor-pointer transition-all ${formData.allow_offers ? 'border-emerald-600 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                           <label className={\`p-6 rounded-xl border-2 cursor-pointer transition-all \${formData.allow_offers ? 'border-emerald-600 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}\`}>
                               <div className="flex items-center justify-between mb-4">
                                  <span className="text-sm font-black uppercase tracking-widest text-gray-900">Accept Offers</span>
                                  <input type="checkbox" name="allow_offers" checked={formData.allow_offers} onChange={handleInputChange} className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"/>
@@ -825,24 +834,53 @@ export default function SellPage() {
                      {/* Shipping */}
                      <div className="space-y-6">
                         <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Shipping Configuration</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                           <div className={`col-span-1 p-5 rounded-xl border-2 ${formData.shipping_type === 'fixed' ? 'border-blue-600 bg-blue-50/50' : 'border-gray-200'}`}>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <label className={\`p-4 rounded-xl border-2 cursor-pointer transition-all \${formData.shipping_scope === 'LOCAL' ? 'border-blue-600 bg-blue-50/50' : 'border-gray-200'}\`}>
+                              <div className="flex items-start gap-3">
+                                 <input type="radio" name="shipping_scope" value="LOCAL" checked={formData.shipping_scope === 'LOCAL'} onChange={handleInputChange} className="mt-1 w-4 h-4 text-blue-600"/>
+                                 <div>
+                                    <span className="block text-sm font-black uppercase tracking-widest text-gray-900">Local State Only</span>
+                                    <span className="block text-[10px] text-gray-500 mt-1">Sell within your state (No GST required).</span>
+                                 </div>
+                              </div>
+                           </label>
+                           <label className={\`p-4 rounded-xl border-2 cursor-pointer transition-all \${formData.shipping_scope === 'PAN_INDIA' ? 'border-blue-600 bg-blue-50/50' : 'border-gray-200'} \${!currentUser?.gst_number ? 'opacity-50 grayscale' : ''}\`}>
+                              <div className="flex items-start gap-3">
+                                 <input type="radio" name="shipping_scope" value="PAN_INDIA" checked={formData.shipping_scope === 'PAN_INDIA'} disabled={!currentUser?.gst_number} onChange={(e) => { if (!currentUser?.gst_number) { showToast("GST Number required for Pan-India.", 'error'); return; } handleInputChange(e); }} className="mt-1 w-4 h-4 text-blue-600"/>
+                                 <div>
+                                    <span className="block text-sm font-black uppercase tracking-widest text-gray-900">Pan-India (Global)</span>
+                                    <span className="block text-[10px] text-gray-500 mt-1">Requires verified GST Number.</span>
+                                 </div>
+                              </div>
+                           </label>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                           <div className={\`col-span-1 p-5 rounded-xl border-2 \${formData.shipping_type === 'fixed' ? 'border-blue-600 bg-blue-50/50' : 'border-gray-200'}\`}>
                               <div className="flex items-center gap-2 mb-3">
                                  <input type="radio" name="shipping_type" value="fixed" checked={formData.shipping_type === 'fixed'} onChange={() => handleShippingToggle('fixed')} className="w-4 h-4"/>
                                  <span className="text-[11px] font-black uppercase tracking-widest text-gray-900">Fixed Fee</span>
                               </div>
                               {formData.shipping_type === 'fixed' && (
                                  <div>
-                                    <input type="text" name="shipping_fee" value={formData.shipping_fee} onChange={handleInputChange} placeholder="Fee amount (₹)" className={`w-full p-2 bg-background border-b-2 ${errors.shipping_fee ? 'border-rose-500' : 'border-gray-300'} focus:border-blue-600 outline-none font-bold`} />
+                                    <input type="text" name="shipping_fee" value={formData.shipping_fee} onChange={handleInputChange} placeholder="Fee amount (₹)" className={\`w-full p-2 bg-background border-b-2 \${errors.shipping_fee ? 'border-rose-500' : 'border-gray-300'} focus:border-blue-600 outline-none font-bold\`} />
                                     {errors.shipping_fee && <p className="text-rose-500 text-xs font-bold mt-1">{errors.shipping_fee}</p>}
                                  </div>
                               )}
                            </div>
-                           <label className={`col-span-1 p-5 rounded-xl border-2 cursor-pointer flex items-center gap-3 ${formData.shipping_type === 'free' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}`}>
+                           <label className={\`col-span-1 p-5 rounded-xl border-2 cursor-pointer flex items-center gap-3 \${formData.shipping_type === 'free' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}\`}>
                               <input type="radio" name="shipping_type" value="free" checked={formData.shipping_type === 'free'} onChange={() => handleShippingToggle('free')} className="w-4 h-4"/>
                               <div>
                                  <p className="text-[11px] font-black uppercase tracking-widest text-gray-900">Free Shipping</p>
                                  <p className="text-[9px] text-gray-500">Seller covers costs</p>
+                              </div>
+                           </label>
+                           <label className={\`col-span-1 p-5 rounded-xl border-2 cursor-pointer flex items-center gap-3 \${formData.shipping_type === 'contact' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}\`}>
+                              <input type="radio" name="shipping_type" value="contact" checked={formData.shipping_type === 'contact'} onChange={() => handleShippingToggle('contact')} className="w-4 h-4"/>
+                              <div>
+                                 <p className="text-[11px] font-black uppercase tracking-widest text-gray-900">Contact Quote</p>
+                                 <p className="text-[9px] text-gray-500">Decide after deal</p>
                               </div>
                            </label>
                         </div>
@@ -855,119 +893,21 @@ export default function SellPage() {
                   <button onClick={() => handleSubmit('draft')} disabled={loading} className="text-[11px] font-bold text-gray-500 hover:text-gray-900 uppercase tracking-widest px-6 py-4 rounded-xl border border-gray-200 bg-surface hover:bg-gray-50 transition-all w-full md:w-auto">
                      Save as Draft
                   </button>
-                  <div className="flex gap-4 w-full md:w-auto">
-                     <button
-                        onClick={() => setShowPreviewModal(true)}
-                        className="flex-1 md:flex-none bg-gray-900 text-white px-8 py-4 rounded-xl font-black text-[13px] uppercase tracking-[0.1em] hover:bg-gray-800 transition-all shadow-lg w-full md:w-auto"
-                     >
-                        Preview Listing
-                     </button>
-                     <button
-                        onClick={() => handleSubmit('pending')}
-                        disabled={loading}
-                        className="flex-1 md:flex-none bg-blue-600 text-white px-12 py-4 rounded-xl font-black text-[13px] uppercase tracking-[0.1em] hover:bg-blue-700 transition-all disabled:opacity-50 shadow-lg shadow-blue-200 w-full md:w-auto flex items-center justify-center gap-2"
-                     >
-                        {loading ? 'Processing...' : 'Submit Listing'}
-                     </button>
-                  </div>
+                  <button
+                     onClick={() => handleSubmit('pending')}
+                     disabled={loading}
+                     className="bg-blue-600 text-white px-12 py-4 rounded-xl font-black text-[13px] uppercase tracking-[0.1em] hover:bg-blue-700 transition-all disabled:opacity-50 shadow-lg shadow-blue-200 w-full md:w-auto flex items-center justify-center gap-2"
+                  >
+                     {loading ? 'Processing...' : 'Submit Listing'}
+                  </button>
                </div>
 
             </div>
          </main>
-
-         {/* Preview Modal */}
-         {showPreviewModal && typeof document !== 'undefined' && createPortal(
-            <div className="fixed inset-0 z-[6000] bg-black/80 flex items-center justify-center p-0 backdrop-blur-sm">
-               <div className="bg-background w-full h-full max-w-full overflow-hidden flex flex-col relative">
-                  {/* Modal Header */}
-                  <div className="p-5 border-b border-gray-200 flex justify-between items-center bg-surface sticky top-0 z-10">
-                     <div className="flex items-center gap-3">
-                        <h2 className="text-lg font-black uppercase tracking-widest text-gray-900">Listing Preview</h2>
-                        <span className="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-widest rounded-md">Draft View</span>
-                     </div>
-                     <button onClick={() => setShowPreviewModal(false)} className="text-gray-400 hover:text-gray-900 transition-colors bg-gray-100 hover:bg-gray-200 p-2 rounded-full"><X size={20}/></button>
-                  </div>
-                  
-                  {/* Modal Body */}
-                  <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                          {/* Left side: Images */}
-                          <div className="space-y-4">
-                             <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 flex items-center justify-center relative">
-                                {previews.length > 0 ? (
-                                    previews[0].type === 'video' ? (
-                                        <video src={previews[0].url} className="w-full h-full object-contain bg-black" controls />
-                                    ) : (
-                                        <img src={previews[0].url} className="w-full h-full object-contain" />
-                                    )
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center text-gray-300 gap-2">
-                                       <Camera size={48} />
-                                       <span className="font-bold uppercase tracking-widest text-[11px]">No Media Uploaded</span>
-                                    </div>
-                                )}
-                             </div>
-                             {previews.length > 1 && (
-                                <div className="flex gap-3 overflow-x-auto pb-2">
-                                   {previews.map((p, i) => (
-                                       <div key={i} className={`w-20 h-20 flex-shrink-0 bg-gray-50 rounded-xl overflow-hidden border ${i===0 ? 'border-blue-600 border-2' : 'border-gray-200'}`}>
-                                           {p.type === 'video' ? (
-                                             <div className="w-full h-full bg-black flex items-center justify-center">
-                                                <div className="w-0 h-0 border-t-[5px] border-t-transparent border-l-[8px] border-l-white border-b-[5px] border-b-transparent ml-0.5" />
-                                             </div>
-                                           ) : (
-                                             <img src={p.url} className="w-full h-full object-cover"/>
-                                           )}
-                                       </div>
-                                   ))}
-                                </div>
-                             )}
-                          </div>
-                          
-                          {/* Right side: Details */}
-                          <div className="space-y-8">
-                              <div>
-                                 <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-gray-900 leading-none">{formData.title || "Untitled Listing"}</h1>
-                                 <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mt-2">{formData.condition_code ? formData.condition_code.replace('_', ' ') : 'Condition Not Set'}</p>
-                              </div>
-                              
-                              <div className="p-6 bg-surface rounded-2xl border border-gray-100">
-                                 <div className="text-3xl font-black text-gray-900 mb-2">
-                                     {formData.allow_buy_now ? `₹${parseFloat(formData.buy_it_now_price||"0").toLocaleString()}` : (formData.allow_auction ? `Starting Bid: ₹${parseFloat(formData.starting_bid||"0").toLocaleString()}` : 'Price TBD')}
-                                 </div>
-                                 <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-                                    <span className="text-[11px] font-black uppercase tracking-widest text-gray-500">Shipping:</span>
-                                    <span className="text-[12px] font-bold text-gray-900">{formData.shipping_type === 'free' ? 'FREE SHIPPING' : (formData.shipping_fee ? `Fixed Fee: ₹${parseFloat(formData.shipping_fee).toLocaleString()}` : 'Not configured')}</span>
-                                 </div>
-                              </div>
-                              
-                              {Object.keys(formData.item_specifics).length > 0 && (
-                                 <div>
-                                    <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4">Item Specifics</p>
-                                    <div className="grid grid-cols-2 gap-4">
-                                       {Object.entries(formData.item_specifics).map(([k,v]) => (
-                                           <div key={k} className="flex flex-col gap-1 p-3 bg-gray-50 rounded-xl">
-                                             <span className="text-gray-500 uppercase text-[9px] font-black tracking-widest">{k.replace(/_/g,' ')}</span>
-                                             <span className="text-gray-900 text-[12px] font-bold">{String(v)}</span>
-                                           </div>
-                                       ))}
-                                    </div>
-                                 </div>
-                              )}
-                              
-                              <div>
-                                 <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">Description</p>
-                                 <div className="text-[13px] font-medium text-gray-600 leading-relaxed whitespace-pre-wrap bg-gray-50 p-5 rounded-2xl">
-                                    {formData.description || <span className="italic text-gray-400">No description provided.</span>}
-                                 </div>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-               </div>
-            </div>,
-            document.body
-         )}
       </div>
    );
 }
+\`;
+
+fs.writeFileSync(path.join(__dirname, '../app/sell/page.tsx'), newContent);
+console.log("Successfully rewrote page.tsx");
