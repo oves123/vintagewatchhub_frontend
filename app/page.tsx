@@ -77,7 +77,9 @@ function HomeContent() {
     if (strapParam) params.append("strap_type", strapParam);
 
     if (params.toString()) {
-      url += `?${params.toString()}`;
+      url += `?${params.toString()}&t=${Date.now()}`;
+    } else {
+      url += `?t=${Date.now()}`;
     }
 
     fetch(url)
@@ -87,7 +89,8 @@ function HomeContent() {
       })
       .then((data) => {
         // Handle both paginated { products, total, pages } and legacy plain array
-        const items = Array.isArray(data) ? data : (data.products || []);
+        const rawItems = Array.isArray(data) ? data : (data.products || []);
+        const items = rawItems.filter(p => p.status !== 'sold');
         const total = data.total ?? items.length;
         const pages = data.pages ?? 1;
 
@@ -477,9 +480,10 @@ function HomeContent() {
                             if (strapParam) moreParams.append("strap_type", strapParam);
                             moreParams.append("page", String(nextPage));
                             try {
-                              const res = await fetch(`${API_URL}/products?${moreParams.toString()}`);
+                              const res = await fetch(`${API_URL}/products?${moreParams.toString()}&t=${Date.now()}`);
                               const data = await res.json();
-                              const newItems = Array.isArray(data) ? data : (data.products || []);
+                              const rawNewItems = Array.isArray(data) ? data : (data.products || []);
+                              const newItems = rawNewItems.filter(p => p.status !== 'sold');
                               setProducts(prev => [...prev, ...newItems]);
                               setCurrentPage(nextPage);
                             } catch (e) { console.error(e); }

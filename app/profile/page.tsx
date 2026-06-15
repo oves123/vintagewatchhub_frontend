@@ -272,6 +272,10 @@ function ProfileContent() {
   };
 
   const handleSaveTracking = async (orderId) => {
+    if (!trackingForm.courier_name) {
+      showToast("Please select a courier.", "error");
+      return;
+    }
     if (!trackingForm.tracking_number.trim()) {
       showToast("Please enter a tracking number.", "error");
       return;
@@ -1409,7 +1413,7 @@ function ProfileContent() {
                                                       <div className="flex flex-col gap-2">
                                                          <div className="flex gap-2">
                                                             <select 
-                                                                className="flex-1 px-4 py-3 bg-surface border border-border rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 text-foreground"
+                                                                className="flex-1 px-4 py-3 bg-surface border border-border rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:border-gold focus:ring-1 focus:ring-gold text-foreground transition-all"
                                                                value={trackingForm.order_id === deal.id ? trackingForm.courier_name : (deal.courier_name || '')}
                                                                onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, courier_name: e.target.value })}
                                                             >
@@ -1423,7 +1427,7 @@ function ProfileContent() {
                                                             </select>
                                                             <input 
                                                                placeholder="TRACKING #" 
-                                                               className="flex-1 px-4 py-3 bg-surface border border-border rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-gray-200"
+                                                               className="flex-1 px-4 py-3 bg-surface border border-border rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:border-gold focus:ring-1 focus:ring-gold placeholder:text-gray-400 transition-all"
                                                                value={trackingForm.order_id === deal.id ? trackingForm.tracking_number : (deal.tracking_number || '')}
                                                                onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, tracking_number: e.target.value.toUpperCase() })}
                                                             />
@@ -1432,25 +1436,29 @@ function ProfileContent() {
                                                          <div className="relative group w-full">
                                                             <input 
                                                                 type="file" 
-                                                                accept="video/mp4,video/webm"
+                                                                accept="video/mp4,video/webm,video/quicktime,video/x-m4v"
                                                                 onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, packing_video: e.target.files[0] })}
                                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                                             />
-                                                             <div className="w-full bg-surface border-2 border-dashed border-border rounded-lg px-4 py-3 flex flex-col items-center justify-center gap-1 group-hover:border-blue-300 transition-colors">
-                                                               {trackingForm.order_id === deal.id && trackingForm.packing_video ? (
-                                                                  <span className="text-xs font-bold text-foreground truncate">Video Selected: {trackingForm.packing_video.name}</span>
-                                                               ) : (
-                                                                  <>
-                                                                    <span className="text-xs font-bold text-muted uppercase tracking-widest"><Camera className="w-3 h-3 inline-block mr-1" /> Upload Packing Video</span>
-                                                                    <span className="text-xs text-muted font-medium">Mandatory for shipment verification</span>
-                                                                  </>
-                                                               )}
-                                                            </div>
+                                                              <div className={`w-full bg-surface border-2 rounded-lg px-4 py-3 flex flex-col items-center justify-center gap-1 transition-all ${trackingForm.order_id === deal.id && trackingForm.packing_video ? 'border-solid border-emerald-500/50 bg-emerald-50/10' : 'border-dashed border-border group-hover:border-gold'}`}>
+                                                                {trackingForm.order_id === deal.id && trackingForm.packing_video ? (
+                                                                   <div className="flex items-center gap-2 w-full justify-center">
+                                                                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                                                      <span className="text-xs font-bold text-foreground truncate max-w-[200px]">{trackingForm.packing_video.name}</span>
+                                                                      <span className="text-[10px] text-muted underline ml-2">Click to change</span>
+                                                                   </div>
+                                                                ) : (
+                                                                   <>
+                                                                     <span className="text-xs font-bold text-muted uppercase tracking-widest"><Camera className="w-3 h-3 inline-block mr-1" /> Upload Packing Video</span>
+                                                                     <span className="text-[10px] text-muted font-medium">MP4, WEBM, MOV (Required)</span>
+                                                                   </>
+                                                                )}
+                                                             </div>
                                                          </div>
                                                       </div>
                                                       <div className="flex gap-2">
                                                          <button 
-                                                            disabled={isSubmittingTracking}
+                                                            disabled={isSubmittingTracking || !trackingForm.courier_name || !trackingForm.tracking_number || (deal.status !== 'SHIPPED' && !trackingForm.packing_video)}
                                                             onClick={() => handleSaveTracking(deal.id)}
                                                             className="gold-sweep flex-1 py-4 text-sm font-black uppercase tracking-widest shadow-xl"
                                                          >

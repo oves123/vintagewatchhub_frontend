@@ -21,7 +21,7 @@ export default function Footer() {
                 <circle cx="16" cy="18" r="1.5" fill="currentColor"/>
               </svg>
               <span className="font-bold text-[17px]">
-                Aera
+                AeraVintage
               </span>
             </div>
             <p className="text-[13px] text-muted leading-relaxed mb-6">
@@ -142,7 +142,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted font-bold uppercase tracking-widest">
-            &copy; {year} Aera Inc. All Rights Reserved.
+            &copy; {year} AeraVintage Inc. All Rights Reserved.
           </p>
           <div className="flex gap-6 text-[11px] font-bold uppercase tracking-widest text-muted">
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>

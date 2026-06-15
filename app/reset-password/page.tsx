@@ -151,7 +151,7 @@ function ResetPasswordContent() {
               <Link href="/privacy" className="hover:underline">Privacy Notice</Link>
               <Link href="/cookies" className="hover:underline">Cookies</Link>
             </div>
-            <p>Copyright 1995-2026 Aera Inc. All Rights Reserved.</p>
+            <p>Copyright 1995-2026 AeraVintage Inc. All Rights Reserved.</p>
          </div>
       </footer>
     </div>

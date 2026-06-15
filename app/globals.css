@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
-  --primary: #000000;
-  --primary-light: #333333;
-  --gold: #000000;
-  --gold-dark: #000000;
-  --gold-light: #000000;
-  --surface: #ffffff;
-  --border: #cccccc;
-  --muted: #000000;
+  --background: #F9F8F6;
+  --foreground: #1A1A1A;
+  --primary: #1E293B;
+  --primary-light: #334155;
+  --gold: #C9A96E;
+  --gold-dark: #A67C00;
+  --gold-light: #E2C792;
+  --surface: #FFFFFF;
+  --border: #E8E3DD;
+  --muted: #64748B;
   --radius: 0px;
   --radius-sm: 4px;
   --radius-lg: 12px;

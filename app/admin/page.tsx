@@ -449,7 +449,7 @@ function AdminPageContent() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Aera_Global_Audit_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `AeraVintage_Global_Audit_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -628,7 +628,7 @@ function AdminPageContent() {
             <div className="absolute inset-0 rounded-full border-4 border-[#1e3a5f] border-t-transparent animate-spin"/>
           </div>
           <div className="text-center">
-            <p className="text-[13px] font-black text-foreground">Aera</p>
+            <p className="text-[13px] font-black text-foreground">AeraVintage</p>
             <p className="text-xs font-bold text-muted uppercase tracking-widest mt-1">{!adminUser ? 'Authenticating...' : 'Loading Admin Panel...'}</p>
           </div>
         </div>
@@ -1127,7 +1127,7 @@ export default function AdminPage() {
             <div className="absolute inset-0 rounded-full border-4 border-[#1e3a5f] border-t-transparent animate-spin"/>
           </div>
           <div className="text-center">
-            <p className="text-[13px] font-black text-foreground">Aera</p>
+            <p className="text-[13px] font-black text-foreground">AeraVintage</p>
             <p className="text-xs font-bold text-muted uppercase tracking-widest mt-1">Initializing Admin Panel...</p>
           </div>
         </div>

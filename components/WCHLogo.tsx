@@ -15,7 +15,7 @@ export default function WCHLogo({ className = "", onClick, showAdminLabel = fals
       </svg>
       <div className="flex flex-col leading-none">
         <span className="font-serif font-black tracking-[0.2em] uppercase text-foreground text-[18px] sm:text-[22px] leading-none">
-          AERA
+          AERAVINTAGE
         </span>
         {showAdminLabel && (
           <span className="text-xs font-bold text-muted uppercase tracking-widest mt-0.5">Admin Panel</span>

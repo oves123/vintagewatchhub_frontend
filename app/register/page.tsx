@@ -185,7 +185,7 @@ export default function RegisterPage() {
       </main>
 
       <footer className="py-8 border-t border-border text-center bg-background">
-        <p className="text-xs font-serif uppercase tracking-widest text-muted">&copy; 2026 Aera Inc. All Rights Reserved.</p>
+        <p className="text-xs font-serif uppercase tracking-widest text-muted">&copy; 2026 AeraVintage Inc. All Rights Reserved.</p>
       </footer>
     </div>
   );

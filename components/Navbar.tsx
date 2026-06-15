@@ -22,7 +22,7 @@ function WCHLogo({ className = "", onClick = undefined }: { className?: string; 
         <circle cx="16" cy="18" r="1.5" fill="#1e3a5f"/>
       </svg>
       <span className="font-serif font-black tracking-[0.2em] uppercase text-foreground text-[18px] sm:text-[22px] leading-none">
-        AERA
+        AERAVINTAGE
       </span>
     </Link>
   );
@@ -214,7 +214,7 @@ export default function Navbar() {
         <div className="hidden md:flex bg-primary text-white text-[10px] font-bold tracking-widest uppercase z-[110]">
           <div className="max-w-[1400px] w-full mx-auto px-6 py-2 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <span className="text-white">Aera Concierge</span>
+              <span className="text-white">AeraVintage Concierge</span>
               <span className="opacity-40">|</span>
               {user ? (
                 <span>Welcome, <span className="text-white">{user.name}</span></span>

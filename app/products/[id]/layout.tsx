@@ -13,7 +13,7 @@ export async function generateMetadata({ params: paramsPromise }) {
       next: { revalidate: 60 }, // Cache for 60s on the CDN edge
     });
 
-    if (!res.ok) return { title: "Product | Aera" };
+    if (!res.ok) return { title: "Product | AeraVintage" };
 
     const product = await res.json();
 
@@ -28,8 +28,8 @@ export async function generateMetadata({ params: paramsPromise }) {
         : `${API_BASE_URL}/uploads/${rawImg}`
       : null;
 
-    const title       = `${product.title} | Aera`;
-    const description = (product.description || "Premium vintage watch available on Aera.").slice(0, 160);
+    const title       = `${product.title} | AeraVintage`;
+    const description = (product.description || "Premium vintage watch available on AeraVintage.").slice(0, 160);
     const brand       = product.item_specifics?.brand;
     const price       = product.allow_auction
       ? product.current_bid || product.starting_bid
@@ -63,7 +63,7 @@ export async function generateMetadata({ params: paramsPromise }) {
       },
     };
   } catch {
-    return { title: "Product | Aera" };
+    return { title: "Product | AeraVintage" };
   }
 }
 

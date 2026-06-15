@@ -2,8 +2,8 @@ import "./globals.css";
 import MobileBottomNavWrapper from "../components/MobileBottomNavWrapper";
 
 export const metadata = {
-  title: "Aera | The Ultimate Pre-Owned Watch Marketplace",
-  description: "Buy and sell pre-owned watches, rare collections, and authentic accessories at Aera.com — Authenticated, Verified, Trusted.",
+  title: "AeraVintage | The Ultimate Pre-Owned Watch Marketplace",
+  description: "Buy and sell pre-owned watches, rare collections, and authentic accessories at AeraVintage.com — Authenticated, Verified, Trusted.",
   manifest: "/manifest.json",
   other: {
     "apple-mobile-web-app-capable": "yes",
