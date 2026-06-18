@@ -1413,7 +1413,7 @@ function ProfileContent() {
                                                       <div className="flex flex-col gap-2">
                                                          <div className="flex gap-2">
                                                             <select 
-                                                                className="flex-1 px-4 py-3 bg-surface border border-border rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:border-gold focus:ring-1 focus:ring-gold text-foreground transition-all"
+                                                                className="flex-1 min-w-0 px-4 py-3 bg-surface border border-border rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:border-gold focus:ring-1 focus:ring-gold text-foreground transition-all"
                                                                value={trackingForm.order_id === deal.id ? trackingForm.courier_name : (deal.courier_name || '')}
                                                                onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, courier_name: e.target.value })}
                                                             >
@@ -1427,7 +1427,7 @@ function ProfileContent() {
                                                             </select>
                                                             <input 
                                                                placeholder="TRACKING #" 
-                                                               className="flex-1 px-4 py-3 bg-surface border border-border rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:border-gold focus:ring-1 focus:ring-gold placeholder:text-gray-400 transition-all"
+                                                               className="flex-1 min-w-0 px-4 py-3 bg-surface border border-border rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:border-gold focus:ring-1 focus:ring-gold placeholder:text-gray-400 transition-all"
                                                                value={trackingForm.order_id === deal.id ? trackingForm.tracking_number : (deal.tracking_number || '')}
                                                                onChange={(e) => setTrackingForm({ ...trackingForm, order_id: deal.id, tracking_number: e.target.value.toUpperCase() })}
                                                             />
