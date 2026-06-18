@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const newContent = `
+
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -907,7 +908,7 @@ export default function SellPage() {
       </div>
    );
 }
-\`;
+`;
 
 fs.writeFileSync(path.join(__dirname, '../app/sell/page.tsx'), newContent);
 console.log("Successfully rewrote page.tsx");
