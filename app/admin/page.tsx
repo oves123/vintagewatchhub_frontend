@@ -566,6 +566,30 @@ function AdminPageContent() {
     } catch (e) { showToast(e.message, "error"); }
   };
 
+  const markHubReceivedAdmin = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/admin/deals/${id}/mark-hub-received`, {
+        method: "PATCH",
+        headers: getHeaders()
+      });
+      if (!res.ok) throw new Error("Update failed");
+      showToast(`Deal #${id} marked as Received at Hub`);
+      fetchOrders();
+    } catch (e) { showToast(e.message, "error"); }
+  };
+
+  const markHubAuthenticatedAdmin = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/admin/deals/${id}/mark-hub-authenticated`, {
+        method: "PATCH",
+        headers: getHeaders()
+      });
+      if (!res.ok) throw new Error("Update failed");
+      showToast(`Deal #${id} marked as Authenticated`);
+      fetchOrders();
+    } catch (e) { showToast(e.message, "error"); }
+  };
+
   const releasePayoutAdmin = async (id) => {
     setConfirmDialog({
       title: "Release payout?",
@@ -810,7 +834,14 @@ function AdminPageContent() {
           )}
 
           {activeTab === "orders" && (
-            <OrdersTab orders={orders} tabLoading={tabLoading} onResolve={resolveDealAdmin} API_BASE_URL={API_BASE_URL}/>
+            <OrdersTab 
+              orders={orders} 
+              tabLoading={tabLoading} 
+              onResolve={resolveDealAdmin} 
+              onMarkHubReceived={markHubReceivedAdmin}
+              onMarkHubAuthenticated={markHubAuthenticatedAdmin}
+              API_BASE_URL={API_BASE_URL}
+            />
           )}
 
           {activeTab === "categories" && (

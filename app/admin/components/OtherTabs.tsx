@@ -201,7 +201,7 @@ export function FinancialAuditTab({ ledger, summary, loading, onFilter, onDownlo
   );
 }
 
-export function OrdersTab({ orders, tabLoading, onResolve, API_BASE_URL }) {
+export function OrdersTab({ orders, tabLoading, onResolve, onMarkHubReceived, onMarkHubAuthenticated, API_BASE_URL }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [receiptPreview, setReceiptPreview] = useState(null);
@@ -221,7 +221,7 @@ export function OrdersTab({ orders, tabLoading, onResolve, API_BASE_URL }) {
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search orders..." className="w-full pl-9 pr-4 py-3 bg-background rounded-lg text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 placeholder:text-muted"/>
         </div>
         <div className="flex gap-1 bg-background p-1 rounded-xl overflow-x-auto">
-          {["all","ACCEPTED","SHIPPED","DELIVERED","CONFIRMED","CANCELLED","DISPUTED","RETURNED","EXPIRED"].map(f=>(
+          {["all","ACCEPTED","SHIPPED","HUB_RECEIVED","AUTHENTICATED","DELIVERED","CONFIRMED","CANCELLED","DISPUTED","RETURNED","EXPIRED"].map(f=>(
             <button key={f} onClick={()=>setFilter(f)} className={`px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter===f?"bg-surface text-primary shadow":"text-muted"}`}>{f}</button>
           ))}
         </div>
@@ -269,12 +269,17 @@ export function OrdersTab({ orders, tabLoading, onResolve, API_BASE_URL }) {
                         <span className={`px-2 py-1 rounded-lg text-xs font-black uppercase tracking-widest ${
                           o.status==="CONFIRMED"?"bg-black text-white":
                           o.status==="SHIPPED"?"bg-amber-500 text-white":
+                          o.status==="HUB_RECEIVED"?"bg-blue-500 text-white":
+                          o.status==="AUTHENTICATED"?"bg-purple-500 text-white":
                           o.status==="DELIVERED"?"bg-emerald-500 text-white":
                           o.status==="DISPUTED"?"bg-rose-500 text-white":
                           o.status==="RETURNED"?"bg-gray-400 text-white":
                           o.status==="CANCELLED" || o.status==="EXPIRED"?"bg-background text-muted":
                           "bg-primary text-white"
                         }`}>{
+                          o.status === 'SHIPPED' ? 'IN TRANSIT TO HUB' :
+                          o.status === 'HUB_RECEIVED' ? 'AT HUB (INSPECTING)' :
+                          o.status === 'AUTHENTICATED' ? 'AUTHENTICATED (SHIPPING TO BUYER)' :
                           o.status === 'DELIVERED' ? 'IN 48H INSPECTION' :
                           o.status === 'CONFIRMED' ? 'COMPLETED' :
                           o.status || "—"
@@ -292,19 +297,37 @@ export function OrdersTab({ orders, tabLoading, onResolve, API_BASE_URL }) {
                       </td>
                       <td className="px-4 py-3">
                          <div className="flex gap-2">
-                             {(o.status === 'DISPUTED' || o.status === 'SHIPPED' || o.status === 'DELIVERED') && (
-                                <button 
-                                   onClick={() => onResolve(o.id, 'CONFIRMED')}
-                                   className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
-                                   title="Resolve: Confirm Sale"
-                                >
-                                   <CheckCircle size={14}/>
-                                </button>
+                             {o.status === 'SHIPPED' && !o.has_dispute && (
+                                 <button 
+                                    onClick={() => onMarkHubReceived(o.id)}
+                                    className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                                    title="Mark Received at Hub"
+                                 >
+                                    <CheckCircle size={14}/>
+                                 </button>
+                             )}
+                             {o.status === 'HUB_RECEIVED' && !o.has_dispute && (
+                                 <button 
+                                    onClick={() => onMarkHubAuthenticated(o.id)}
+                                    className="p-1.5 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
+                                    title="Mark Authenticated"
+                                 >
+                                    <CheckCircle size={14}/>
+                                 </button>
+                             )}
+                             {(o.status === 'DISPUTED' || o.status === 'AUTHENTICATED' || o.status === 'DELIVERED') && (
+                                 <button 
+                                    onClick={() => onResolve(o.id, 'CONFIRMED')}
+                                    className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
+                                    title="Resolve: Confirm Sale"
+                                 >
+                                    <CheckCircle size={14}/>
+                                 </button>
                              )}
                              {(o.status === 'DISPUTED' || o.status === 'ACCEPTED') && (
-                                <button 
-                                   onClick={() => onResolve(o.id, 'CANCELLED')}
-                                   className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors"
+                                 <button 
+                                    onClick={() => onResolve(o.id, 'CANCELLED')}
+                                    className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors"
                                   title="Resolve: Cancel Deal"
                                >
                                   <XCircle size={14}/>

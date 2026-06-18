@@ -1,5 +1,16 @@
+import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import MobileBottomNavWrapper from "../components/MobileBottomNavWrapper";
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
 
 export const metadata = {
   title: "AeraVintage | The Ultimate Pre-Owned Watch Marketplace",
@@ -22,13 +33,17 @@ import ErrorBoundary from "../components/ErrorBoundary";
 import NavigationLoader from "../components/NavigationLoader";
 import ScrollToTop from "../components/ScrollToTop";
 import PageTransition from "../components/PageTransition";
+import GoogleAnalytics from "../components/GoogleAnalytics";
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
       <body
         className={`font-sans bg-background text-foreground antialiased transition-colors duration-500 pb-16 lg:pb-0`}
       >
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_ID} />
+        )}
         <NavigationLoader />
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-6 focus:py-3 focus:bg-foreground focus:text-background focus:rounded-xl focus:font-bold focus:text-sm focus:uppercase focus:tracking-widest">
           Skip to main content

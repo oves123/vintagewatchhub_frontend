@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
 import OptimizedImage from "./OptimizedImage";
 import QuickViewModal from "./QuickViewModal";
 import { API_BASE_URL, API_URL, extractList, getUserId, getHeaders } from "../services/api";
@@ -156,7 +157,10 @@ export default function ProductCard({ product, horizontal = false }) {
 
   if (horizontal) {
     return (
-      <div className="card-3d rounded-lg overflow-hidden group flex flex-col sm:flex-row mb-6 fade-up">
+      <motion.div 
+        whileHover={{ y: -4, boxShadow: "0 20px 40px -10px rgba(0,0,0,0.1)", borderColor: "var(--gold-light)" }}
+        className="rounded-lg overflow-hidden group flex flex-col sm:flex-row mb-6 fade-up border border-border bg-background transition-colors"
+      >
         <div className="relative w-full sm:w-48 md:w-64 flex-shrink-0">
           <Link href={`/products/${product.id}`} className="block w-full aspect-[4/3] sm:aspect-square bg-background relative overflow-hidden sm:rounded-l-xl">
             {isVideo(images[currentImageIndex]?.url) ? (
@@ -234,12 +238,15 @@ export default function ProductCard({ product, horizontal = false }) {
             </Link>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="card-3d rounded-lg overflow-hidden group flex flex-col h-full">
+    <motion.div 
+      whileHover={{ y: -4, boxShadow: "0 20px 40px -10px rgba(0,0,0,0.1)", borderColor: "var(--gold-light)" }}
+      className="rounded-lg overflow-hidden group flex flex-col h-full border border-border bg-background transition-colors"
+    >
       <div className="relative">
         <Link href={`/products/${product.id}`} className="block aspect-[5/4] bg-background relative overflow-hidden rounded-t-xl">
         {isVideo(images[currentImageIndex]?.url) ? (
@@ -310,6 +317,6 @@ export default function ProductCard({ product, horizontal = false }) {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

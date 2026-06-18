@@ -1,72 +1,66 @@
-/**
- * Server Component — generates dynamic SEO metadata for product detail pages.
- * Next.js App Router: layout.js runs on the server, so generateMetadata works
- * even though the page.js itself is a client component ("use client").
- */
-
+import { Metadata } from 'next';
 import { API_URL, API_BASE_URL } from "../../../services/api";
 
-export async function generateMetadata({ params: paramsPromise }) {
+type Props = {
+  params: Promise<{ id: string }>
+};
+
+export async function generateMetadata(
+  { params }: Props
+): Promise<Metadata> {
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
   try {
-    const params = await paramsPromise;
-    const res = await fetch(`${API_URL}/products/${params.id}`, {
-      next: { revalidate: 60 }, // Cache for 60s on the CDN edge
-    });
-
-    if (!res.ok) return { title: "Product | AeraVintage" };
-
+    const res = await fetch(`${API_URL}/products/${id}`, { next: { revalidate: 60 } });
+    if (!res.ok) {
+      return {
+        title: "Asset Not Found | AeraVintage",
+        description: "The requested luxury asset could not be found."
+      };
+    }
+    
     const product = await res.json();
+    
+    if (!product || !product.title) {
+       return {
+          title: "Asset Not Found | AeraVintage",
+          description: "The requested luxury asset could not be found."
+       };
+    }
 
-    // Resolve the first non-video image for OG share card
-    const rawImg = Array.isArray(product.images)
-      ? product.images.find(i => !i.match(/\.(mp4|mov|webm)$/i)) || product.images[0]
-      : null;
+    const imageUrl = product.images?.[0] 
+       ? (product.images[0].startsWith('http') ? product.images[0] : `${API_BASE_URL}/uploads/${product.images[0]}`) 
+       : (product.image ? (product.image.startsWith('http') ? product.image : `${API_BASE_URL}/uploads/${product.image}`) : 'https://www.aeravintage.com/placeholder.png');
 
-    const imageUrl = rawImg
-      ? rawImg.startsWith("http")
-        ? rawImg
-        : `${API_BASE_URL}/uploads/${rawImg}`
-      : null;
-
-    const title       = `${product.title} | AeraVintage`;
-    const description = (product.description || "Premium vintage watch available on AeraVintage.").slice(0, 160);
-    const brand       = product.item_specifics?.brand;
-    const price       = product.allow_auction
-      ? product.current_bid || product.starting_bid
-      : product.price;
+    const cleanDescription = product.description ? product.description.replace(/<[^>]*>?/gm, '').substring(0, 160) : `Buy the exquisite ${product.title} on AeraVintage.`;
 
     return {
-      title,
-      description,
-      keywords: [
-        brand, product.category_name, "vintage watch", "luxury watch",
-        "buy watch India", "watch auction"
-      ].filter(Boolean).join(", "),
+      title: `${product.title} | AeraVintage`,
+      description: cleanDescription,
       openGraph: {
-        title,
-        description,
-        type:   "website",
-        url:    `${process.env.NEXT_PUBLIC_SITE_URL || ""}/products/${params.id}`,
-        images: imageUrl ? [{ url: imageUrl, width: 800, height: 800, alt: product.title }] : [],
+        title: `${product.title} | AeraVintage`,
+        description: cleanDescription,
+        images: [imageUrl],
+        type: 'website',
       },
       twitter: {
-        card:        "summary_large_image",
-        title,
-        description,
-        images:      imageUrl ? [imageUrl] : [],
-      },
-      other: {
-        // Structured data hints for Google Shopping
-        "product:price:amount":   price ? String(price) : undefined,
-        "product:price:currency": "INR",
-        "product:availability":   product.status === "sold" ? "out of stock" : "in stock",
+        card: 'summary_large_image',
+        title: `${product.title} | AeraVintage`,
+        description: cleanDescription,
+        images: [imageUrl],
       },
     };
-  } catch {
-    return { title: "Product | AeraVintage" };
+  } catch (err) {
+     return {
+        title: "AeraVintage",
+     };
   }
 }
 
-export default function ProductLayout({ children }) {
-  return children;
+export default function ProductLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return <>{children}</>;
 }

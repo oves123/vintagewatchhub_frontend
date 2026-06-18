@@ -184,9 +184,20 @@ export default function SellPage() {
       return () => clearInterval(interval);
    }, [isRecording]);
 
-   const selectedCategory = useMemo(() =>
-      categories.find(c => c.id === parseInt(formData.category_id)),
-      [categories, formData.category_id]);
+   // Find selected category in flat tree (search top-level + children)
+   const selectedCategory = useMemo(() => {
+      const id = parseInt(formData.category_id);
+      if (isNaN(id)) return null;
+      for (const cat of categories) {
+        if (cat.id === id) return cat;
+        if (cat.children) {
+          const child = cat.children.find(ch => ch.id === id);
+          if (child) return child;
+        }
+      }
+      return null;
+   }, [categories, formData.category_id]);
+
 
    const handleInputChange = (e) => {
       const { name, value, type, checked } = e.target;
@@ -219,11 +230,68 @@ export default function SellPage() {
       if (errors[name]) setErrors(prev => ({...prev, [name]: null}));
    };
 
+   const AI_TEMPLATES = {
+     "rolex": {
+       "submariner": "The Rolex Submariner is the quintessential dive watch. Featuring a robust Oyster case, unidirectional rotatable bezel, and luminescent display, this timepiece represents the perfect blend of luxury and utility. An iconic addition to any serious collector's vault.",
+       "daytona": "The Rolex Cosmograph Daytona is the ultimate tool watch for those with a passion for driving and speed. With its highly reliable chronograph and tachymetric scale, it allows drivers to perfectly measure average speeds. A true marvel of horological engineering.",
+       "datejust": "The Rolex Datejust is the modern archetype of the classic watch. Its timeless aesthetics and functions make it one of the most recognized and recognizable watches in the world.",
+       "default": "A classic timepiece from Rolex, known worldwide for its precision, durability, and timeless elegance. This piece is a testament to the brand's commitment to excellence and a perfect asset for your portfolio."
+     },
+     "omega": {
+       "speedmaster": "The Omega Speedmaster is one of Omega's most iconic timepieces. Having been a part of all six lunar missions, the legendary Speedmaster is an impressive representation of the brand's adventurous pioneering spirit.",
+       "seamaster": "The Omega Seamaster is a testament to the brand's rich maritime legacy. This timepiece combines stunning aesthetics with cutting-edge anti-magnetic technology and legendary water resistance.",
+       "default": "An exceptional timepiece from Omega, showcasing the brand's pioneering spirit and commitment to mechanical excellence."
+     },
+     "patek philippe": {
+       "nautilus": "The Patek Philippe Nautilus epitomizes the elegant sports watch. With its rounded octagonal shape of its bezel and the ingenious porthole construction of its case, it has been the epitome of the elegant sports watch since 1976.",
+       "aquanaut": "The Patek Philippe Aquanaut combines modern sporting elegance with exceptional craftsmanship. A highly sought-after piece for contemporary collectors.",
+       "default": "A masterpiece from Patek Philippe, representing the pinnacle of Haute Horlogerie. Known for their intricate complications and flawless finishing."
+     },
+     "audemars piguet": {
+       "royal oak": "The Audemars Piguet Royal Oak completely revolutionized the luxury watch industry. With its octagonal bezel, tapisserie dial, and integrated bracelet, it remains one of the most coveted watches in the world.",
+       "default": "An extraordinary timepiece from Audemars Piguet, showcasing their mastery of avant-garde design and traditional horological craftsmanship."
+     },
+     "cartier": {
+       "tank": "The Cartier Tank is an absolute icon of watchmaking design. Its clean, crisp lines have made it the watch of choice for elegance and sophistication since its inception.",
+       "santos": "The Cartier Santos was one of the first ever wristwatches. Its bold design and exposed screws make it instantly recognizable and a staple of any luxury collection.",
+       "default": "A masterpiece of jewelry and horology from Cartier, representing the ultimate expression of Parisian elegance."
+     }
+   };
+
    const handleNestedChange = (parent, field, value) => {
-      setFormData(prev => ({
-         ...prev,
-         [parent]: { ...prev[parent], [field]: value }
-      }));
+      setFormData(prev => {
+         const newState = {
+            ...prev,
+            [parent]: { ...prev[parent], [field]: value }
+         };
+         
+         // Concierge Auto-Listings logic
+         if (parent === 'item_specifics' && (field.toLowerCase() === 'brand' || field.toLowerCase() === 'model')) {
+            const currentBrand = (field.toLowerCase() === 'brand' ? value : ((prev.item_specifics as any).brand || (prev.item_specifics as any).Brand || "")).toLowerCase();
+            const currentModel = (field.toLowerCase() === 'model' ? value : ((prev.item_specifics as any).model || (prev.item_specifics as any).Model || "")).toLowerCase();
+            
+            if (currentBrand && !prev.description) {
+               let newDescription = "";
+               const brandKey = Object.keys(AI_TEMPLATES).find(k => currentBrand.includes(k));
+               if (brandKey) {
+                   const brandData = AI_TEMPLATES[brandKey];
+                   const modelTemplate = Object.keys(brandData).find(k => currentModel.includes(k));
+                   if (modelTemplate) {
+                       newDescription = brandData[modelTemplate];
+                   } else if (brandData["default"]) {
+                       newDescription = brandData["default"];
+                   }
+               }
+               
+               if (newDescription) {
+                  newState.description = newDescription;
+                  showToast("AeraVault Concierge has automatically generated a description for this timepiece.", "success");
+               }
+            }
+         }
+         
+         return newState;
+      });
    };
 
    const handleShippingToggle = (type) => {
@@ -347,7 +415,11 @@ export default function SellPage() {
    const validateForm = () => {
       const newErrors: any = {};
       if (!formData.title) newErrors.title = "Title is required";
-      if (!formData.category_id) newErrors.category_id = "Category is required";
+      if (!formData.category_id || formData.category_id.toString().startsWith('super_')) {
+         newErrors.category_id = formData.category_id?.startsWith?.('super_')
+           ? "Please select a sub-category"
+           : "Category is required";
+      }
       if (!formData.condition_code) newErrors.condition_code = "Condition is required";
       
       if (!formData.allow_buy_now && !formData.allow_auction && !formData.allow_offers) {
@@ -543,24 +615,81 @@ export default function SellPage() {
                         {errors.title && <p className="text-rose-500 text-xs font-bold px-1">{errors.title}</p>}
                      </div>
 
-                     <div className="space-y-4">
-                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest ml-1">Select Category <span className="text-rose-500">*</span></label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                           {categories.map(c => (
-                              <button
-                                 key={c.id}
-                                 onClick={() => {
-                                    handleInputChange({ target: { name: 'category_id', value: c.id.toString() } });
-                                    if(errors.category_id) setErrors(prev => ({...prev, category_id: null}));
-                                 }}
-                                 className={`p-4 rounded-xl border transition-all text-center ${formData.category_id === c.id.toString() ? 'border-blue-600 bg-blue-50/50 shadow-sm' : (errors.category_id ? 'border-rose-300 bg-rose-50' : 'border-gray-200 bg-background hover:bg-gray-50')}`}
-                              >
-                                 <p className={`text-[12px] font-bold uppercase tracking-widest ${formData.category_id === c.id.toString() ? 'text-blue-600' : 'text-gray-700'}`}>{c.name}</p>
-                              </button>
-                           ))}
-                        </div>
-                        {errors.category_id && <p className="text-rose-500 text-xs font-bold px-1">{errors.category_id}</p>}
-                     </div>
+                      <div className="space-y-4">
+                         <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest ml-1">Select Category <span className="text-rose-500">*</span></label>
+                         
+                         {/* Step 1: Super Categories */}
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {categories.filter(c => !c.parent_id).map(c => {
+                               const hasChildren = c.children && c.children.length > 0;
+                               // A category is "selected at super level" if either: it is the selected leaf, or one of its children is selected
+                               const isSuperSelected = formData.category_id === c.id.toString() ||
+                                 (hasChildren && c.children.some(ch => formData.category_id === ch.id.toString()));
+                               return (
+                                  <button
+                                     key={c.id}
+                                     type="button"
+                                     onClick={() => {
+                                        if (!hasChildren) {
+                                           handleInputChange({ target: { name: 'category_id', value: c.id.toString() } });
+                                           if(errors.category_id) setErrors(prev => ({...prev, category_id: null}));
+                                        } else {
+                                           // Select super-category but don't set final id yet
+                                           handleInputChange({ target: { name: 'category_id', value: `super_${c.id}` } });
+                                           if(errors.category_id) setErrors(prev => ({...prev, category_id: null}));
+                                        }
+                                     }}
+                                     className={`p-4 rounded-xl border-2 transition-all text-center relative ${isSuperSelected ? 'border-blue-600 bg-blue-50/50 shadow-md' : (errors.category_id ? 'border-rose-300 bg-rose-50' : 'border-gray-200 bg-background hover:bg-gray-50 hover:border-gray-300')}`}
+                                  >
+                                     <p className={`text-[12px] font-bold uppercase tracking-widest ${isSuperSelected ? 'text-blue-600' : 'text-gray-700'}`}>{c.name}</p>
+                                     {hasChildren && <p className={`text-[10px] mt-1 ${isSuperSelected ? 'text-blue-400' : 'text-gray-400'}`}>{c.children.length} sub-types</p>}
+                                  </button>
+                               );
+                            })}
+                         </div>
+
+                         {/* Step 2: Sub-Categories — appear when a super with children is selected */}
+                         {(() => {
+                            // Find which super-category is being browsed
+                            const activeSuperMatch = formData.category_id?.startsWith?.('super_');
+                            const activeSuperIdFromState = activeSuperMatch ? parseInt(formData.category_id.replace('super_', '')) : null;
+                            const selectedAsChild = categories.filter(c => !c.parent_id).find(c =>
+                              c.children && c.children.some(ch => formData.category_id === ch.id.toString())
+                            );
+                            const activeSuperCat = activeSuperIdFromState
+                              ? categories.find(c => c.id === activeSuperIdFromState)
+                              : selectedAsChild;
+
+                            if (!activeSuperCat || !activeSuperCat.children?.length) return null;
+                            return (
+                               <div className="animate-in slide-in-from-top-2 fade-in duration-200">
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 ml-1">
+                                     ↳ Select Sub-Category under <span className="text-blue-600">{activeSuperCat.name}</span>
+                                  </p>
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                     {activeSuperCat.children.map(sub => {
+                                        const isSubSelected = formData.category_id === sub.id.toString();
+                                        return (
+                                           <button
+                                              key={sub.id}
+                                              type="button"
+                                              onClick={() => {
+                                                 handleInputChange({ target: { name: 'category_id', value: sub.id.toString() } });
+                                                 if(errors.category_id) setErrors(prev => ({...prev, category_id: null}));
+                                              }}
+                                              className={`p-3 rounded-lg border-2 transition-all text-center ${isSubSelected ? 'border-blue-600 bg-blue-600 text-white shadow-md' : 'border-gray-200 bg-background text-gray-700 hover:bg-blue-50 hover:border-blue-300'}`}
+                                           >
+                                              <p className="text-[11px] font-bold uppercase tracking-wider">{sub.name}</p>
+                                           </button>
+                                        );
+                                     })}
+                                  </div>
+                               </div>
+                            );
+                         })()}
+                         
+                         {errors.category_id && <p className="text-rose-500 text-xs font-bold px-1">{errors.category_id}</p>}
+                      </div>
                   </div>
                </section>
 

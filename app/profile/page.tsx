@@ -10,6 +10,9 @@ import { X, Camera, CheckCircle, FileText, ExternalLink, Send, Edit2, PieChart, 
 import { useToast } from "../../context/ToastContext";
 import OptimizedImage from "../../components/OptimizedImage";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import AeraVaultPortfolio from "./components/AeraVaultPortfolio";
+import AeraMatchmaker from "./components/AeraMatchmaker";
+import ProfileSettings from "./components/ProfileSettings";
 
 function ProfileContent() {
   const router = useRouter();
@@ -22,7 +25,7 @@ function ProfileContent() {
   const [activeTab, setActiveTab] = useState("personal");
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [buyingSubTab, setBuyingSubTab] = useState("active"); // active, shipped, delivered, completed
+  const [buyingSubTab, setBuyingSubTab] = useState("portfolio"); // portfolio, active, shipped, delivered, completed
   const [sellingSubTab, setSellingSubTab] = useState("inventory"); // inventory, deals
   const [paymentReceiptModal, setPaymentReceiptModal] = useState(null); // URL of receipt to preview
   const [receivedReviews, setReceivedReviews] = useState({ reviews: [], stats: { average_rating: 0, review_count: 0 } });
@@ -726,140 +729,13 @@ function ProfileContent() {
              
              {/* Personal Information Tab */}
              {activeTab === "personal" && (
-                <div className="animate-in fade-in slide-in-from-left-4 duration-500">
-                   <div className="mb-12">
-                      <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Identity Details</h2>
-                      <p className="text-xs text-muted mt-2 font-medium">Manage your personal collector identity and contact link.</p>
-                   </div>
-
-                   <form onSubmit={(e) => { e.preventDefault(); handleProfileUpdate(); }} className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 max-w-4xl">
-                      <div className="space-y-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Legal Name</label>
-                          <input 
-                             type="text" value={profileForm.name}
-                             onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
-                          />
-                      </div>
-                      <div className="space-y-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Mobile Link</label>
-                          <input 
-                             type="text" value={profileForm.phone}
-                             onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors"
-                          />
-                      </div>
-                      <div className="space-y-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">City</label>
-                          <input 
-                             type="text" value={profileForm.city}
-                             onChange={(e) => setProfileForm({...profileForm, city: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
-                          />
-                      </div>
-                      <div className="space-y-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">State</label>
-                          <input 
-                             type="text" value={profileForm.state}
-                             onChange={(e) => setProfileForm({...profileForm, state: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
-                          />
-                      </div>
-                      <div className="space-y-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Pincode</label>
-                          <input 
-                             type="text" value={profileForm.pincode}
-                             onChange={(e) => setProfileForm({...profileForm, pincode: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
-                          />
-                      </div>
-                      <div className="md:col-span-2 space-y-4 pt-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Collector Biography</label>
-                          <textarea 
-                             rows={4} value={profileForm.bio}
-                             onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
-                             className="w-full border border-border bg-background/50 p-6 rounded-lg outline-none text-[13px] font-medium leading-relaxed focus:border-gold focus:bg-surface transition-all"
-                             placeholder="Briefly describe your watch collection interest..."
-                          />
-                      </div>
-
-                      <div className="space-y-4 pt-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Seller Type</label>
-                          <select 
-                             value={profileForm.seller_type}
-                             onChange={(e) => setProfileForm({...profileForm, seller_type: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
-                          >
-                             <option value="individual">Individual</option>
-                             <option value="business">Business</option>
-                          </select>
-                      </div>
-
-                      <div className="space-y-4 pt-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">GST Number (Optional)</label>
-                          <input 
-                             type="text" value={profileForm.gst_number}
-                             onChange={(e) => setProfileForm({...profileForm, gst_number: e.target.value})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
-                             placeholder="e.g. 22AAAAA0000A1Z5"
-                          />
-                      </div>
-
-                      <div className="md:col-span-2 mt-12 mb-6 pt-12 border-t border-border">
-                          <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">Payment Information</h2>
-                          <p className="text-xs text-muted mt-2 font-medium">Add payment methods to receive funds from buyers after a successful deal.</p>
-                      </div>
-
-                      <div className="space-y-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">UPI ID (e.g. name@bank)</label>
-                          <input 
-                             type="text" value={profileForm.payment_methods?.upi || ""}
-                             onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, upi: e.target.value }})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors"
-                             placeholder="Enter UPI ID"
-                          />
-                      </div>
-
-                      <div className="space-y-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Bank Name</label>
-                          <input 
-                             type="text" value={profileForm.payment_methods?.bank_name || ""}
-                             onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, bank_name: e.target.value }})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
-                             placeholder="e.g. HDFC Bank"
-                          />
-                      </div>
-
-                      <div className="space-y-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">Account Number</label>
-                          <input 
-                             type="text" value={profileForm.payment_methods?.account_number || ""}
-                             onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, account_number: e.target.value }})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors"
-                             placeholder="Enter Bank Account Number"
-                          />
-                      </div>
-
-                      <div className="space-y-4">
-                          <label className="text-xs font-bold text-muted uppercase tracking-widest">IFSC Code</label>
-                          <input 
-                             type="text" value={profileForm.payment_methods?.ifsc || ""}
-                             onChange={(e) => setProfileForm({...profileForm, payment_methods: { ...profileForm.payment_methods, ifsc: e.target.value }})}
-                             className="w-full border-b border-border py-3 outline-none text-[13px] font-bold focus:border-gold transition-colors uppercase tracking-tight"
-                             placeholder="Enter Bank IFSC Code"
-                          />
-                      </div>
-                      <div className="md:col-span-2 pt-8">
-                          <button 
-                             type="submit"
-                             disabled={isUpdating}
-                             className="gold-sweep px-12 py-4 text-xs font-bold uppercase tracking-[0.2em] disabled:opacity-30"
-                          >
-                             {isUpdating ? 'Synchronizing Node...' : 'Update Information'}
-                          </button>
-                      </div>
-                   </form>
-                </div>
+                <ProfileSettings 
+                  profileForm={profileForm} 
+                  setProfileForm={setProfileForm} 
+                  handleProfileUpdate={handleProfileUpdate} 
+                  isUpdating={isUpdating} 
+                  user={user} 
+                />
              )}
 
               {/* Buyer Hub */}
@@ -872,25 +748,27 @@ function ProfileContent() {
 
                    {/* Sub Tabs */}
                    <div className="flex gap-8 border-b border-border mb-10 overflow-x-auto no-scrollbar">
-                      {['active', 'shipped', 'delivered', 'completed', 'cancelled', 'negotiations'].map(sub => (
+                      {['portfolio', 'bounties', 'active', 'shipped', 'delivered', 'completed', 'cancelled', 'negotiations'].map(sub => (
                         <button 
                            key={sub}
                            onClick={() => setBuyingSubTab(sub)}
                            className={`pb-4 text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${buyingSubTab === sub ? 'text-primary border-gold' : 'text-muted border-transparent hover:text-foreground'}`}
                         >
                            {sub} {
+                             sub === 'portfolio' ? '' :
+                             sub === 'bounties' ? '' :
                              sub === 'negotiations' ? (
                                 buyerNegotiations.length > 0 && `(${buyerNegotiations.length})`
                              ) :
                              (Array.isArray(deals) && deals.filter(d => d.buyer_id == user.id && (
-                               sub === 'active' ? ['ACCEPTED', 'PAID'].includes(d.status) : 
-                               sub === 'shipped' ? d.status === 'SHIPPED' : 
+                               sub === 'active' ? ['ACCEPTED', 'PAID', 'SHIPPED', 'HUB_RECEIVED', 'AUTHENTICATED'].includes(d.status) : 
+                               sub === 'shipped' ? ['SHIPPED', 'HUB_RECEIVED', 'AUTHENTICATED'].includes(d.status) : 
                                sub === 'delivered' ? d.status === 'DELIVERED' : 
                                sub === 'cancelled' ? d.status === 'CANCELLED' :
                                d.status === 'CONFIRMED'
                              )).length > 0 && `(${deals.filter(d => d.buyer_id == user.id && (
-                               sub === 'active' ? ['ACCEPTED', 'PAID'].includes(d.status) : 
-                               sub === 'shipped' ? d.status === 'SHIPPED' : 
+                               sub === 'active' ? ['ACCEPTED', 'PAID', 'SHIPPED', 'HUB_RECEIVED', 'AUTHENTICATED'].includes(d.status) : 
+                               sub === 'shipped' ? ['SHIPPED', 'HUB_RECEIVED', 'AUTHENTICATED'].includes(d.status) : 
                                sub === 'delivered' ? d.status === 'DELIVERED' : 
                                sub === 'cancelled' ? d.status === 'CANCELLED' :
                                d.status === 'CONFIRMED'
@@ -901,7 +779,11 @@ function ProfileContent() {
                    </div>
 
                    <div className="space-y-8">
-                      {buyingSubTab === 'negotiations' ? (
+                      {buyingSubTab === 'portfolio' ? (
+                        <AeraVaultPortfolio deals={deals} user={user} />
+                      ) : buyingSubTab === 'bounties' ? (
+                        <AeraMatchmaker user={user} />
+                      ) : buyingSubTab === 'negotiations' ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {buyerNegotiations.length > 0 ? (
                               buyerNegotiations.map(offer => (
@@ -990,15 +872,15 @@ function ProfileContent() {
                         </div>
                       ) : (
                         deals.filter(d => d.buyer_id == user.id && (
-                          buyingSubTab === 'active' ? ['ACCEPTED', 'PAID', 'SHIPPED'].includes(d.status) : 
-                          buyingSubTab === 'shipped' ? d.status === 'SHIPPED' : 
+                          buyingSubTab === 'active' ? ['ACCEPTED', 'PAID', 'SHIPPED', 'HUB_RECEIVED', 'AUTHENTICATED'].includes(d.status) : 
+                          buyingSubTab === 'shipped' ? d.status === 'SHIPPED' || d.status === 'HUB_RECEIVED' || d.status === 'AUTHENTICATED' : 
                           buyingSubTab === 'delivered' ? d.status === 'DELIVERED' : 
                           buyingSubTab === 'cancelled' ? d.status === 'CANCELLED' :
                           d.status === 'CONFIRMED'
                         )).length > 0 ? (
                           deals.filter(d => d.buyer_id == user.id && (
-                            buyingSubTab === 'active' ? ['ACCEPTED', 'PAID', 'SHIPPED'].includes(d.status) : 
-                            buyingSubTab === 'shipped' ? d.status === 'SHIPPED' : 
+                            buyingSubTab === 'active' ? ['ACCEPTED', 'PAID', 'SHIPPED', 'HUB_RECEIVED', 'AUTHENTICATED'].includes(d.status) : 
+                            buyingSubTab === 'shipped' ? d.status === 'SHIPPED' || d.status === 'HUB_RECEIVED' || d.status === 'AUTHENTICATED' : 
                             buyingSubTab === 'delivered' ? d.status === 'DELIVERED' : 
                             buyingSubTab === 'cancelled' ? d.status === 'CANCELLED' :
                             d.status === 'CONFIRMED'
@@ -1080,8 +962,8 @@ function ProfileContent() {
                                   {/* Buyer Status Timeline */}
                                   {!['CANCELLED', 'REFUND_PENDING'].includes(deal.status) ? (
                                       <div className="flex items-center gap-1 mb-6">
-                                     {['ACCEPTED', 'PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'].map((s, idx) => {
-                                        const statuses = ['ACCEPTED', 'PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'];
+                                     {['ACCEPTED', 'PAID', 'SHIPPED', 'HUB_RECEIVED', 'AUTHENTICATED', 'DELIVERED', 'CONFIRMED'].map((s, idx) => {
+                                        const statuses = ['ACCEPTED', 'PAID', 'SHIPPED', 'HUB_RECEIVED', 'AUTHENTICATED', 'DELIVERED', 'CONFIRMED'];
                                         const currentIdx = statuses.indexOf(deal.status);
                                         const isPast = idx < currentIdx;
                                         const isCurrent = idx === currentIdx;
@@ -1281,8 +1163,8 @@ function ProfileContent() {
                          {/* Seller Active Deals Tab */}
                          {sellingSubTab === 'deals' && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                               {deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','PAID','SHIPPED','DELIVERED','CONFIRMED','DISPUTED'].includes(d.status)).length > 0 ? (
-                                 deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','PAID','SHIPPED','DELIVERED','CONFIRMED','DISPUTED'].includes(d.status)).map(deal => (
+                               {deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','PAID','SHIPPED','HUB_RECEIVED','AUTHENTICATED','DELIVERED','CONFIRMED','DISPUTED'].includes(d.status)).length > 0 ? (
+                                 deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','PAID','SHIPPED','HUB_RECEIVED','AUTHENTICATED','DELIVERED','CONFIRMED','DISPUTED'].includes(d.status)).map(deal => (
                                    <div key={deal.id} className="bg-surface border border-border rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 hover:shadow-xl transition-all group">
                                       {/* Product Visual */}
                                           <div className="w-full md:w-48 aspect-square rounded-xl bg-background flex-shrink-0 relative overflow-hidden">
@@ -1321,8 +1203,8 @@ function ProfileContent() {
 
                                             {/* Status Timeline */}
                                             <div className="flex items-center gap-1 mt-6">
-                                               {['ACCEPTED', 'PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'].map((s, idx) => {
-                                                  const statuses = ['ACCEPTED', 'PAID', 'SHIPPED', 'DELIVERED', 'CONFIRMED'];
+                                               {['ACCEPTED', 'PAID', 'SHIPPED', 'HUB_RECEIVED', 'AUTHENTICATED', 'DELIVERED', 'CONFIRMED'].map((s, idx) => {
+                                                  const statuses = ['ACCEPTED', 'PAID', 'SHIPPED', 'HUB_RECEIVED', 'AUTHENTICATED', 'DELIVERED', 'CONFIRMED'];
                                                   const currentIdx = statuses.indexOf(deal.status);
                                                   const stepIdx = idx;
                                                   const isPast = stepIdx < currentIdx;
@@ -1345,8 +1227,12 @@ function ProfileContent() {
                                                    <div className="flex items-start gap-3">
                                                       <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center"><CheckCircle className="w-4 h-4 text-emerald-600" /></div>
                                                       <div>
-                                                         <p className="text-sm font-black text-foreground uppercase">Awaiting Payment</p>
-                                                         <p className="text-xs text-muted font-bold uppercase mt-1">Buyer is sending funds to Escrow.</p>
+                                                         <p className="text-sm font-black text-foreground uppercase">
+                                                           {deal.payment_status === 'AWAITING_QUOTE' ? 'Provide Shipping Quote' : 'Awaiting Payment'}
+                                                         </p>
+                                                         <p className="text-xs text-muted font-bold uppercase mt-1">
+                                                           {deal.payment_status === 'AWAITING_QUOTE' ? 'Buyer needs a custom shipping cost before paying.' : 'Buyer is sending funds to Escrow.'}
+                                                         </p>
                                                       </div>
                                                    </div>
                                                 )}
@@ -1408,8 +1294,42 @@ function ProfileContent() {
 
                                             {/* Right - Immediate Action */}
                                             <div className="flex flex-col justify-center">
+                                                {deal.status === 'ACCEPTED' && deal.payment_status === 'AWAITING_QUOTE' && (
+                                                    <div className="space-y-3">
+                                                       <div className="flex items-center gap-2">
+                                                          <span className="text-xs font-bold text-muted">₹</span>
+                                                          <input 
+                                                             type="number"
+                                                             placeholder="Shipping Cost"
+                                                             className="flex-1 px-4 py-3 bg-surface border border-border rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                                                             value={shippingQuoteForm.dealId === deal.id ? shippingQuoteForm.amount : ''}
+                                                             onChange={(e) => setShippingQuoteForm({ dealId: deal.id, amount: e.target.value })}
+                                                          />
+                                                       </div>
+                                                       <button 
+                                                          onClick={() => handleShippingQuote(deal.id)}
+                                                          disabled={isSubmittingQuote || shippingQuoteForm.dealId !== deal.id || !shippingQuoteForm.amount}
+                                                          className="gold-sweep w-full py-4 text-sm font-black uppercase tracking-widest shadow-xl disabled:opacity-50"
+                                                       >
+                                                          {isSubmittingQuote && shippingQuoteForm.dealId === deal.id ? 'Sending...' : 'Send Quote'}
+                                                       </button>
+                                                    </div>
+                                                )}
+
                                                 {(deal.status === 'PAID' || editingTrackingId === deal.id) && (
                                                    <div className="space-y-3">
+                                                      <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-inner">
+                                                        <p className="text-xs font-black text-amber-800 uppercase tracking-widest mb-2 flex items-center gap-2"><CheckCircle size={14}/> Action Required: Ship to Hub</p>
+                                                        <p className="text-sm font-bold text-amber-900 leading-relaxed">
+                                                          Please ship the watch to our <strong>AeraVintage Authentication Hub</strong> for inspection. Do <span className="underline decoration-wavy">not</span> ship directly to the buyer.
+                                                        </p>
+                                                        <div className="mt-3 p-3 bg-white rounded-lg border border-amber-100 font-mono text-xs text-foreground">
+                                                          AeraVintage Auth Hub<br/>
+                                                          Level 4, Prestige Tech Park<br/>
+                                                          Bangalore, KA 560103<br/>
+                                                          Ph: +91 8000 123456
+                                                        </div>
+                                                      </div>
                                                       <div className="flex flex-col gap-2">
                                                          <div className="flex gap-2">
                                                             <select 

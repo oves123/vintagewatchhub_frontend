@@ -13,7 +13,7 @@ import socket from "../../../services/socket";
 import ProfileOnboardingModal from "../../../components/ProfileOnboardingModal";
 import { ShieldCheck, Truck, Clock, CheckCircle, ArrowLeft, ExternalLink, Info, X, Camera, Send, FileText, Edit2 } from "lucide-react";
 import ImageLightbox from "../../../components/ImageLightbox";
-
+import { useAuth } from "../../../context/AuthContext";
 
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,7 +24,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [activeTab, setActiveTab] = useState("description");
   const [notFound, setNotFound] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
-  const [user, setUser] = useState(null);
+  const { user, updateAuthUser } = useAuth();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [sellerListings, setSellerListings] = useState([]);
   const [showItemsModal, setShowItemsModal] = useState(false);
@@ -72,23 +72,16 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [platformSettings, setPlatformSettings] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      if (parsedUser.id) {
-        getUserProfile(parsedUser.id)
-          .then(data => {
-             // Only update state if we got a valid user back (not an error object)
-             if (data && data.id) {
-               setUser(data);
-               localStorage.setItem("user", JSON.stringify({...parsedUser, ...data}));
-             }
-          })
-          .catch(console.error);
-      }
+    if (user && user.id) {
+      getUserProfile(user.id)
+        .then(data => {
+           if (data && data.id && (data.address !== user.address || data.city !== user.city || data.phone !== user.phone)) {
+             updateAuthUser({...user, ...data});
+           }
+        })
+        .catch(console.error);
 
-      fetch(`${API_URL}/watchlist/${parsedUser.id}`, { headers: getHeaders() })
+      fetch(`${API_URL}/watchlist/${user.id}`, { headers: getHeaders() })
         .then(res => res.json())
         .then(data => {
           const list = extractList(data);
@@ -98,7 +91,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         })
         .catch(err => console.error("Failed to fetch watchlist:", err));
     }
-  }, [id]);
+  }, [id, user?.id]);
 
   useEffect(() => {
     if (!id) return;
@@ -125,7 +118,21 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       });
       // Update product end time if extended
       if (data.auction_end) {
-        setProduct(prev => ({ ...prev, auction_end: data.auction_end }));
+        setProduct(prev => ({ ...prev, current_bid: data.bid_amount, auction_end: data.auction_end }));
+      } else {
+        setProduct(prev => ({ ...prev, current_bid: data.bid_amount }));
+      }
+      
+      // Play sound effect and show anti-sniper toast
+      try {
+        const audio = new Audio('/sounds/bid.mp3');
+        audio.play().catch(e => console.log('Audio play blocked by browser.'));
+      } catch(e) {}
+      
+      if (data.isExtended) {
+        showToast("Anti-Sniper Active! Auction extended by 2 minutes.", "warning", 6000);
+      } else {
+        showToast(`New Bid: ₹${parseFloat(data.bid_amount).toLocaleString()} from ${data.user_name || 'Someone'}!`, "success");
       }
     };
 
@@ -555,9 +562,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
 
   const handleOnboardingComplete = (updatedUser) => {
-     setUser(updatedUser);
-     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-     localStorage.setItem("user", JSON.stringify({...currentUser, ...updatedUser}));
+     updateAuthUser(updatedUser);
      setShowOnboarding(false);
      if (pendingAction) {
         pendingAction();
@@ -664,7 +669,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                             </svg>
                          </div>
                        ) : (
-                         <img src={item.url} className="w-full h-full object-cover" />
+                         <OptimizedImage 
+                           src={item.url} 
+                           alt={`Thumbnail ${i + 1}`} 
+                           fill 
+                           className="object-cover p-0" 
+                           size="small" 
+                         />
                        )}
                     </button>
                  ))}

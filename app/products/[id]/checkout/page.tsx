@@ -8,6 +8,7 @@ import Navbar from "../../../../components/Navbar";
 import OptimizedImage from "../../../../components/OptimizedImage";
 
 import { API_URL, API_BASE_URL } from "../../../../services/api";
+import { useAuth } from "../../../../context/AuthContext";
 const STEPS = ["Review Order", "Payment", "Confirmation"];
 
 export default function CheckoutPage({ params: paramsPromise }: any) {
@@ -15,7 +16,7 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
   const id = params.id;
   const router = useRouter();
   const [product, setProduct] = useState(null);
-  const [user, setUser] = useState(null);
+  const { user, loading: authLoading } = useAuth();
   const [platformSettings, setPlatformSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSecuring, setIsSecuring] = useState(false);
@@ -29,10 +30,7 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
   const [couponApplying, setCouponApplying] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    } else {
+    if (!authLoading && !user) {
       router.push("/login?redirect=/products/" + id);
     }
 
@@ -50,8 +48,10 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [id, router]);
+    if (user) {
+      fetchData();
+    }
+  }, [id, router, user, authLoading]);
 
   const handleApplyCoupon = async () => {
     if (!couponCode || !user) return;
@@ -177,9 +177,18 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
         prefill: { name: user.name, email: user.email, contact: user.phone },
         theme: { color: "#C6A87C" },
         modal: {
-          ondismiss: function () {
+          ondismiss: async function () {
+            // Instantly free up the inventory by cancelling the pending deal
+            try {
+              await fetch(`${API_URL}/orders/deal/${data.deal.id}/cancel`, {
+                method: 'DELETE',
+                headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+              });
+            } catch (e) {
+              console.error("Failed to cancel deal:", e);
+            }
             setIsSecuring(false);
-            router.push("/profile?tab=buying");
+            router.push(`/products/${id}`);
           }
         }
       };
@@ -196,7 +205,7 @@ export default function CheckoutPage({ params: paramsPromise }: any) {
     }
   };
 
-  if (loading) return (
+  if (loading || authLoading) return (
     <div className="bg-background min-h-screen flex flex-col">
       <Navbar />
       <div className="flex-1 flex items-center justify-center">
