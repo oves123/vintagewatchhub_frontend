@@ -13,7 +13,10 @@ export function RecentlyViewedProvider({ children }) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setRecentItems(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setRecentItems(parsed.filter((p: any) => p.status !== 'sold'));
+      }
     } catch {}
     setLoaded(true);
   }, []);

@@ -12,8 +12,9 @@ import { useRouter } from "next/navigation";
 import socket from "../../../services/socket";
 import ProfileOnboardingModal from "../../../components/ProfileOnboardingModal";
 import { ShieldCheck, Truck, Clock, CheckCircle, ArrowLeft, ExternalLink, Info, X, Camera, Send, FileText, Edit2 } from "lucide-react";
-import ImageLightbox from "../../../components/ImageLightbox";
+
 import { useAuth } from "../../../context/AuthContext";
+import { useCart } from "../../../context/CartContext";
 
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -63,6 +64,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [toast, setToast] = useState(null);
   const [showDealSecured, setShowDealSecured] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const { addToCart, isInCart } = useCart();
   
   const showToast = (message, type = 'success', duration = 4500) => {
     setToast({ message, type });
@@ -606,7 +608,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             <div className="lg:col-span-7 bg-surface/50 lg:rounded-2xl lg:p-8 -mx-4 md:mx-0">
               <div 
                 className="aspect-square sm:aspect-[4/3] lg:aspect-[4/3] bg-surface rounded-none overflow-hidden relative group/gallery cursor-pointer"
-                onClick={() => setLightboxOpen(true)}
+                onClick={() => window.open(mediaItems[selectedImage]?.url, '_blank')}
               >
                 {mediaItems[selectedImage]?.type === 'video' ? (
                   <video 
@@ -629,26 +631,31 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   </div>
                 )}
 
+                {/* Zoom Icon */}
+                <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all z-20 pointer-events-none">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                </div>
+
                 {/* Navigation Arrows */}
                 {mediaItems.length > 1 && (
                   <>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-10"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-20"
                       title="Previous Photo"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-10"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-20"
                       title="Next Photo"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
                     </button>
 
                     {/* Counter Indicator */}
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-black/70 backdrop-blur-md rounded-full text-xs font-black text-white uppercase tracking-widest pointer-events-none shadow-xl">
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-black/70 backdrop-blur-md rounded-full text-xs font-black text-white uppercase tracking-widest pointer-events-none shadow-xl z-20">
                        {selectedImage + 1} <span className="text-white/40 mx-1">/</span> {mediaItems.length}
                     </div>
                   </>
@@ -680,6 +687,34 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     </button>
                  ))}
               </div>
+
+              {/* Technical Grid (Specs & Condition) - Moved here */}
+              <section className="mt-12 px-4 md:px-0">
+                 <h2 className="text-xl font-bold text-foreground tracking-tight mb-6">Technical Asset Specifications</h2>
+                 <div className="bg-surface rounded-none border border-border shadow-sm divide-y divide-border">
+                    {Object.entries(product.item_specifics || {})
+                      .filter(([key]) => !key.endsWith('_manual_mode'))
+                      .map(([key, value], i) => (
+                      <div key={key} className="flex flex-col sm:flex-row sm:items-center py-5 px-6 sm:px-8">
+                         <p className="text-[11px] font-bold text-muted uppercase tracking-widest sm:w-1/3 mb-1 sm:mb-0">{key.replace(/_/g, ' ')}</p>
+                         <p className="text-sm font-bold text-foreground uppercase sm:w-2/3">{String(value)}</p>
+                      </div>
+                    ))}
+                    {/* Fallback internal fields */}
+                    {!product.item_specifics && [
+                      { l: "Ref", v: product.reference_number },
+                      { l: "Year", v: product.year },
+                      { l: "Case", v: product.case_size + "mm" },
+                      { l: "Movement", v: product.movement_type }
+                    ].map((s, i) => (
+                      <div key={i} className="flex flex-col sm:flex-row sm:items-center py-5 px-6 sm:px-8">
+                         <p className="text-[11px] font-bold text-muted uppercase tracking-widest sm:w-1/3 mb-1 sm:mb-0">{s.l}</p>
+                         <p className="text-sm font-bold text-foreground uppercase sm:w-2/3">{s.v || "N/A"}</p>
+                      </div>
+                    ))}
+                 </div>
+              </section>
+
             </div>
 
             {/* Content & sticky sidebar */}
@@ -747,15 +782,40 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                         ) : (
                            <>
                               {product.allow_buy_now && bidHistory.length === 0 && (
-                                <button 
-                                  onClick={handleBuyNow}
-                                  className="hover-3d w-full h-14 rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all border flex items-center justify-center gap-3 group bg-foreground text-background border-foreground hover:bg-gold hover:border-gold hover:text-white shadow-xl"
-                                >
-                                   <>
-                                      <span>Buy Now</span>
-                                      <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                                   </>
-                                </button>
+                                <div className="flex flex-col gap-3">
+                                  <button 
+                                    onClick={handleBuyNow}
+                                    className="hover-3d w-full h-14 rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all border flex items-center justify-center gap-3 group bg-foreground text-background border-foreground hover:bg-gold hover:border-gold hover:text-white shadow-xl"
+                                  >
+                                     <>
+                                        <span>Buy Now</span>
+                                        <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                     </>
+                                  </button>
+                                  <button 
+                                    onClick={() => {
+                                      addToCart({
+                                        id: product.id,
+                                        title: product.title,
+                                        price: product.price,
+                                        shipping_fee: product.shipping_fee,
+                                        shipping_type: product.shipping_type,
+                                        condition_code: product.condition_code,
+                                        image_url: product.images?.[0] || product.image || "",
+                                        seller_id: product.seller_id
+                                      });
+                                    }}
+                                    disabled={isInCart(product.id)}
+                                    className={`hover-3d w-full h-14 rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all border flex items-center justify-center gap-3 shadow-sm ${
+                                      isInCart(product.id) 
+                                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" 
+                                        : "bg-surface text-foreground border-border hover:bg-gray-50 hover:border-gray-300"
+                                    }`}
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                    <span>{isInCart(product.id) ? "Added to Cart" : "Add to Cart"}</span>
+                                  </button>
+                                </div>
                               )}
 
                               {product.allow_auction && (
@@ -919,32 +979,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             </div>
           </div>
 
-        {/* Technical Grid (Specs & Condition) */}
-        <section className="mt-20">
-           <h2 className="text-xl font-bold text-foreground tracking-tight mb-6">Technical Asset Specifications</h2>
-           <div className="bg-surface rounded-none border border-border shadow-sm divide-y divide-border">
-              {Object.entries(product.item_specifics || {})
-                .filter(([key]) => !key.endsWith('_manual_mode'))
-                .map(([key, value], i) => (
-                <div key={key} className="flex flex-col sm:flex-row sm:items-center py-5 px-6 sm:px-8">
-                   <p className="text-[11px] font-bold text-muted uppercase tracking-widest sm:w-1/3 mb-1 sm:mb-0">{key.replace(/_/g, ' ')}</p>
-                   <p className="text-sm font-bold text-foreground uppercase sm:w-2/3">{String(value)}</p>
-                </div>
-              ))}
-              {/* Fallback internal fields */}
-              {!product.item_specifics && [
-                { l: "Ref", v: product.reference_number },
-                { l: "Year", v: product.year },
-                { l: "Case", v: product.case_size + "mm" },
-                { l: "Movement", v: product.movement_type }
-              ].map((s, i) => (
-                <div key={i} className="flex flex-col sm:flex-row sm:items-center py-5 px-6 sm:px-8">
-                   <p className="text-[11px] font-bold text-muted uppercase tracking-widest sm:w-1/3 mb-1 sm:mb-0">{s.l}</p>
-                   <p className="text-sm font-bold text-foreground uppercase sm:w-2/3">{s.v || "N/A"}</p>
-                </div>
-              ))}
-           </div>
-        </section>
 
         {/* Extended Data Tabs */}
         <section className="mt-20">
@@ -1611,14 +1645,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
        </div>
    </div>
 
-      {/* Lightbox for Zoom */}
-      {lightboxOpen && (
-        <ImageLightbox 
-          images={mediaItems} 
-          initialIndex={selectedImage} 
-          onClose={() => setLightboxOpen(false)} 
-        />
-      )}
+
 
 
    </div>

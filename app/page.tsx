@@ -56,7 +56,10 @@ function HomeContent() {
   useEffect(() => {
     try {
       const storedViewed = localStorage.getItem("recentlyViewed");
-      if (storedViewed) setRecentlyViewed(JSON.parse(storedViewed));
+      if (storedViewed) {
+        const parsed = JSON.parse(storedViewed);
+        setRecentlyViewed(parsed.filter(p => p.status !== 'sold'));
+      }
     } catch (e) {
       console.error("Error loading recently viewed", e);
     }
@@ -400,6 +403,32 @@ function HomeContent() {
 
             {/* Results Area */}
             <div className="flex-grow">
+              
+              {/* Mobile Search Input (Visible only on mobile/tablet) */}
+              <div className="lg:hidden mb-6">
+                <form 
+                  onSubmit={(e) => { 
+                    e.preventDefault(); 
+                    const formData = new FormData(e.currentTarget); 
+                    updateFilters('search', formData.get('search') as string); 
+                  }}
+                  className="flex items-center border border-border bg-surface hover:border-gold focus-within:border-gold transition-colors group"
+                >
+                  <div className="px-3 py-3 text-muted group-hover:text-gold transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  </div>
+                  <input 
+                    name="search" 
+                    defaultValue={search || ''} 
+                    type="text" 
+                    placeholder="Search timepieces, brands..." 
+                    className="flex-1 bg-transparent outline-none text-[13px] font-medium placeholder:text-muted py-3"
+                  />
+                  <button type="submit" className="px-4 py-3 bg-primary text-white text-[10px] font-bold uppercase tracking-widest border-l border-primary hover:bg-[#2e538a] transition-colors">
+                    Search
+                  </button>
+                </form>
+              </div>
 
               {/* Top Bar (eBay style info & sort) */}
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-border pb-4">
@@ -498,7 +527,7 @@ function HomeContent() {
                     )}
                   </>
                 ) : (
-                  <div className="bg-surface p-20 text-center border border-border shadow-sm">
+                  <div className="bg-surface p-8 md:p-20 text-center border border-border shadow-sm">
                     <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-6">
                       <svg className="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </div>

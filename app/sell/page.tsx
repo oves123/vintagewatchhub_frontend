@@ -184,7 +184,6 @@ export default function SellPage() {
       return () => clearInterval(interval);
    }, [isRecording]);
 
-   // Find selected category in flat tree (search top-level + children)
    const selectedCategory = useMemo(() => {
       const id = parseInt(formData.category_id);
       if (isNaN(id)) return null;
@@ -192,7 +191,13 @@ export default function SellPage() {
         if (cat.id === id) return cat;
         if (cat.children) {
           const child = cat.children.find(ch => ch.id === id);
-          if (child) return child;
+          if (child) {
+            return {
+              ...child,
+              specs: child.specs?.length ? child.specs : cat.specs,
+              conditions: child.conditions?.length ? child.conditions : cat.conditions,
+            };
+          }
         }
       }
       return null;

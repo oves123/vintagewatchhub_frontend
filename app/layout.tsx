@@ -28,6 +28,7 @@ import { ComparisonProvider } from "../context/ComparisonContext";
 import { AuthProvider } from "../context/AuthContext";
 import { RecentlyViewedProvider } from "../context/RecentlyViewedContext";
 import { ToastProvider } from "../context/ToastContext";
+import { CartProvider } from "../context/CartContext";
 import ToastContainer from "../components/ToastContainer";
 import ErrorBoundary from "../components/ErrorBoundary";
 import NavigationLoader from "../components/NavigationLoader";
@@ -69,6 +70,7 @@ export default function RootLayout({ children }) {
             <ToastProvider>
 
               <ToastContainer />
+              <CartProvider>
               <TermsGuard>
               <ErrorBoundary>
                 <PageTransition>
@@ -78,6 +80,7 @@ export default function RootLayout({ children }) {
                 </PageTransition>
               </ErrorBoundary>
               </TermsGuard>
+              </CartProvider>
               <ScrollToTop />
               <MobileBottomNavWrapper />
             </ToastProvider>
