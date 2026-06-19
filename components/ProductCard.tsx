@@ -298,9 +298,9 @@ export default function ProductCard({ product, horizontal = false }) {
 
       {quickViewOpen && <QuickViewModal product={product} onClose={() => setQuickViewOpen(false)} />}
 
-      <div className="p-5 flex-grow flex flex-col">
+      <div className="p-3 sm:p-5 flex-grow flex flex-col">
         <Link href={`/products/${product.id}`}>
-          <h3 className="font-serif tracking-wide text-foreground line-clamp-2 hover:text-gold transition-colors text-[16px] leading-tight mb-2">
+          <h3 className="font-serif tracking-wide text-foreground line-clamp-2 hover:text-gold transition-colors text-sm sm:text-base leading-tight mb-2">
             {product.title}
           </h3>
         </Link>
@@ -308,10 +308,10 @@ export default function ProductCard({ product, horizontal = false }) {
           <p className="text-[10px] uppercase tracking-widest text-muted font-bold">{product.category_name || "Timepiece"}</p>
         </div>
 
-        <div className="mt-auto pt-5">
+        <div className="mt-auto pt-3 sm:pt-5">
           <div className="flex items-center justify-between">
-            <span className="font-serif text-xl tracking-tight">₹{price}</span>
-            <Link href={`/products/${product.id}`} className="text-[10px] font-bold uppercase tracking-widest text-muted hover:text-gold transition-colors">
+            <span className="font-serif text-base sm:text-xl tracking-tight">₹{price}</span>
+            <Link href={`/products/${product.id}`} className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-muted hover:text-gold transition-colors">
               Explore
             </Link>
           </div>

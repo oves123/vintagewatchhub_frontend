@@ -217,7 +217,7 @@ function HomeContent() {
                     <p className="text-[11px] text-gold font-bold uppercase tracking-widest mt-2">Curated assets from across all categories</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                   {isLoading ? (
                     <ProductGridSkeleton count={4} />
                   ) : (
@@ -238,7 +238,7 @@ function HomeContent() {
                     <p className="text-[11px] text-muted font-bold uppercase tracking-widest mt-2">Exceptional pre-owned pieces in prime condition</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                   {isLoading ? (
                     <ProductGridSkeleton count={4} />
                   ) : (
@@ -259,7 +259,7 @@ function HomeContent() {
                     <p className="text-[11px] text-muted font-bold uppercase tracking-widest mt-2">Pick up right where you left off</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                   {recentlyViewed.map((p: any) => (
                     <ProductCard key={p.id} product={p} />
                   ))}
@@ -485,7 +485,7 @@ function HomeContent() {
                   <ProductGridSkeleton count={8} />
                 ) : products.length > 0 ? (
                   <>
-                    <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6' : 'grid-cols-1 gap-4'}`}>
+                    <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6' : 'grid-cols-1 gap-4'}`}>
                       {products.map(p => (
                         <ProductCard key={p.id} product={p} horizontal={viewMode === 'list'} />
                       ))}

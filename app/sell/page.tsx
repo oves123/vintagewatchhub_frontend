@@ -57,7 +57,8 @@ export default function SellPage() {
       auction_duration: "3",
       shipping_fee: "",
       shipping_type: "fixed",
-      shipping_scope: "LOCAL"
+      shipping_scope: "LOCAL",
+      minimum_offer_amount: ""
    });
 
    const [images, setImages] = useState([]);
@@ -130,7 +131,8 @@ export default function SellPage() {
                   auction_duration: data.auction_duration || "3",
                   shipping_fee: data.shipping_fee ? data.shipping_fee.toString() : "",
                   shipping_type: data.shipping_type || "fixed",
-                  shipping_scope: data.shipping_scope || "LOCAL"
+                  shipping_scope: data.shipping_scope || "LOCAL",
+                  minimum_offer_amount: data.minimum_offer_amount ? data.minimum_offer_amount.toString() : ""
                });
                if (data.status) setProductStatus(data.status);
                if (data.rejection_reason) setRejectionReason(data.rejection_reason);
@@ -206,7 +208,7 @@ export default function SellPage() {
 
    const handleInputChange = (e) => {
       const { name, value, type, checked } = e.target;
-      if (name === "price" || name === "buy_it_now_price" || name === "starting_bid" || name === "reserve_price" || name === "shipping_fee") {
+      if (name === "price" || name === "buy_it_now_price" || name === "starting_bid" || name === "reserve_price" || name === "shipping_fee" || name === "minimum_offer_amount") {
          const cleanValue = value.replace(/[^0-9.]/g, '');
          const parts = cleanValue.split('.');
          if (parts.length > 2) return;
@@ -436,6 +438,9 @@ export default function SellPage() {
       if (formData.allow_auction && (!formData.starting_bid || !formData.auction_duration)) {
          newErrors.auction = "Auction starting bid and duration are required";
       }
+      if (formData.allow_offers && !formData.minimum_offer_amount) {
+         newErrors.minimum_offer_amount = "Auto-Reject Minimum is required";
+      }
       if (previews.length === 0) {
          newErrors.media = "At least one photo or video is required";
       }
@@ -483,6 +488,7 @@ export default function SellPage() {
          finalData.append("allow_auction", String(formData.allow_auction));
          finalData.append("starting_bid", String(formData.starting_bid || 0));
          finalData.append("reserve_price", String(formData.reserve_price || 0));
+         finalData.append("minimum_offer_amount", String(formData.minimum_offer_amount || 0));
          
          if (formData.allow_auction && !editId) {
             const durationDays = parseInt(formData.auction_duration || "3");
@@ -950,7 +956,18 @@ export default function SellPage() {
                                  <span className="text-sm font-black uppercase tracking-widest text-gray-900">Accept Offers</span>
                                  <input type="checkbox" name="allow_offers" checked={formData.allow_offers} onChange={handleInputChange} className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"/>
                               </div>
-                              <p className="text-[10px] font-medium text-gray-500 mt-2">Allow buyers to send offers.</p>
+                              <p className="text-[10px] font-medium text-gray-500 mt-2 mb-4">Allow buyers to send offers.</p>
+                              {formData.allow_offers && (
+                                 <div className="space-y-2 pt-2 border-t border-emerald-100">
+                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Auto-Reject Minimum (₹) <span className="text-rose-500">*</span></p>
+                                    <input type="text" name="minimum_offer_amount" value={formData.minimum_offer_amount} onChange={handleInputChange} placeholder="0.00" className={`w-full bg-background border ${errors.minimum_offer_amount ? 'border-rose-500' : 'border-gray-300'} p-3 rounded-lg font-bold text-lg outline-none focus:border-emerald-500`} />
+                                    {errors.minimum_offer_amount ? (
+                                       <p className="text-rose-500 text-xs font-bold">{errors.minimum_offer_amount}</p>
+                                    ) : (
+                                       <p className="text-[9px] text-gray-500">Offers below this amount will be automatically rejected.</p>
+                                    )}
+                                 </div>
+                              )}
                            </label>
                         </div>
                         {errors.pricing && <p className="text-rose-500 text-xs font-bold mt-4">{errors.pricing}</p>}
