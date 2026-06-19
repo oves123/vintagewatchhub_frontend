@@ -408,7 +408,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="fixed inset-0 z-[200] md:hidden">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm touch-none" onClick={() => setMobileOpen(false)} />
-          <div className="absolute right-0 top-0 bottom-0 w-4/5 max-w-xs bg-surface shadow-2xl flex flex-col slide-in-right overscroll-none">
+          <div className="absolute right-0 top-0 w-4/5 max-w-xs bg-surface shadow-2xl flex flex-col slide-in-right h-[100dvh]">
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-border">
               <WCHLogo onClick={() => setMobileOpen(false)} />
@@ -475,7 +475,7 @@ export default function Navbar() {
             </div>
 
             {/* Nav Links with accordion sub-categories */}
-            <nav className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-4 space-y-1">
+            <nav className="flex-1 overflow-y-auto p-4 space-y-1 pb-20">
               <Link
                 href="/"
                 onClick={() => setMobileOpen(false)}
