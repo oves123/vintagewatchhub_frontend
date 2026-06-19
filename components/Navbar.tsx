@@ -375,9 +375,13 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile Hamburger */}
-          <div className="flex md:hidden items-center gap-3">
-            <button onClick={() => setMobileOpen(true)} className="p-2 text-foreground">
+          {/* Mobile Hamburger & Actions */}
+          <div className="flex md:hidden items-center gap-4">
+            <Link href="/cart" className="relative text-foreground p-1">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+              {cartItems.length > 0 && <span className="absolute -top-1 -right-1 bg-gold text-white text-[8px] px-1.5 py-0.5 rounded-full font-black">{cartItems.length}</span>}
+            </Link>
+            <button onClick={() => setMobileOpen(true)} className="p-1 text-foreground">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
           </div>
@@ -413,6 +417,38 @@ export default function Navbar() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
+            </div>
+
+            {/* Auth Header (Moved from Footer) */}
+            <div className="p-4 border-b border-border bg-gray-50/50">
+              {user ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 px-3 py-2">
+                    <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-black text-sm shadow-inner">
+                      {(user.name || "U")[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[14px] font-bold text-foreground">{user.name || "User"}</p>
+                      <p className="text-[11px] text-muted">{user.email}</p>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-full transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1 py-2.5 text-center text-sm font-bold text-primary border border-[#1e3a5f] hover:bg-blue-50 transition-colors">
+                    Sign In
+                  </Link>
+                  <Link href="/register" onClick={() => setMobileOpen(false)} className="flex-1 py-2.5 text-center text-sm font-bold text-white bg-primary hover:bg-[#2e538a] transition-colors">
+                    Register
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Search */}
@@ -511,38 +547,6 @@ export default function Navbar() {
                 )}
               </div>
             </nav>
-
-            {/* Auth Footer */}
-            <div className="p-4 border-t border-border safe-bottom">
-              {user ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 rounded-none">
-                    <div className="w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center font-black text-sm">
-                      {user.name?.[0]?.toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-[13px] font-bold text-foreground">{user.name}</p>
-                      <p className="text-[11px] text-muted">{user.email}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full py-3 text-center text-sm font-bold text-rose-600 border border-rose-200 hover:bg-rose-50 transition-colors"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-3">
-                  <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1 py-3 text-center text-sm font-bold text-primary border border-[#1e3a5f] hover:bg-blue-50">
-                    Sign In
-                  </Link>
-                  <Link href="/register" onClick={() => setMobileOpen(false)} className="flex-1 py-3 text-center text-sm font-bold text-white bg-primary hover:bg-[#2e538a]">
-                    Register
-                  </Link>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       )}
