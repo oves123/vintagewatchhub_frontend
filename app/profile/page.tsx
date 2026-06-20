@@ -56,8 +56,8 @@ function ProfileContent() {
   const [verifDocType, setVerifDocType] = useState("");
   const [verifDocUrl, setVerifDocUrl] = useState("");
   const [counterForm, setCounterForm] = useState({ offerId: null, amount: "" });
-  const [buyerNegotiations, setBuyerNegotiations] = useState([]);
-  const [sellerNegotiations, setSellerNegotiations] = useState([]);
+  const buyerNegotiations = useMemo(() => offers.filter(o => o.buyer_id === user?.id && ['pending', 'countered', 'buyer_countered'].includes(o.status)), [offers, user]);
+  const sellerNegotiations = useMemo(() => offers.filter(o => o.seller_id === user?.id && ['pending', 'countered', 'buyer_countered'].includes(o.status)), [offers, user]);
   const { addToast: showToast } = useToast();
 
   const isVideo = (url) => url?.match?.(/\.(mp4|mov|webm|quicktime|avi|mkv)$/i);

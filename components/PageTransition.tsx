@@ -18,7 +18,10 @@ export default function PageTransition({ children }) {
   }, [pathname]);
 
   return (
-    <div className={`transition-all duration-300 ease-out ${animating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+    <div 
+      className={`transition-all duration-300 ease-out ${animating ? 'opacity-0 translate-y-2' : 'opacity-100'}`}
+      style={{ transform: animating ? undefined : 'none' }}
+    >
       {children}
     </div>
   );

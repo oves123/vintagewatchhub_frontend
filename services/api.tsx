@@ -735,6 +735,16 @@ export const createOffer = async (offerData) => {
   return res.json();
 };
 
+export const getUserOffers = async (userId) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/offers/user/${userId}`, {
+    headers: {
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    }
+  });
+  return res.json();
+};
+
 export const respondToOffer = async (offerId, status, counter_amount = null) => {
   const token = localStorage.getItem("token");
   const res = await fetch(`${API_URL}/offers/${offerId}/respond`, {
