@@ -636,12 +636,7 @@ function AdminPageContent() {
   const rawRevenue = stats?.totalRevenue ?? (Array.isArray(analytics?.orders) ? analytics.orders.reduce((sum, o) => sum + (parseFloat(o.total_amount ?? o.amount ?? 0) || 0), 0) : 0);
   const formatRevenue = (val) => `Rs. ${parseFloat(val || 0).toLocaleString()}`;
 
-  const statCards = [
-    { icon: Users, label: "Total Users", value: totalUsers.toLocaleString() },
-    { icon: Package, label: "Total Products", value: totalProducts.toLocaleString() },
-    { icon: ShoppingCart, label: "Total Orders", value: totalOrders.toLocaleString() },
-    { icon: IndianRupee, label: "Total Revenue", value: formatRevenue(rawRevenue) },
-  ];
+
 
   if (loading || !adminUser) {
     return (
@@ -661,7 +656,7 @@ function AdminPageContent() {
   }
 
   return (
-    <div className="flex bg-[#f8fafc] min-h-screen text-foreground antialiased">
+    <div className="flex bg-[#f8fafc] min-h-screen text-foreground antialiased admin-theme">
       <AdminSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -773,25 +768,7 @@ function AdminPageContent() {
             <h1 className="text-2xl font-bold text-foreground">{TAB_LABELS[activeTab]}</h1>
           </div>
 
-          {/* Stat Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {statCards.map((card, idx) => (
-              <div
-                key={idx}
-                className="bg-surface border border-border rounded-xl p-6 hover:border-amber-200 hover:shadow-md transition-all"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-amber-100/80 flex items-center justify-center shrink-0">
-                    <card.icon size={22} className="text-amber-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-3xl font-bold text-foreground truncate">{card.value}</p>
-                    <p className="text-xs font-bold text-muted uppercase tracking-widest">{card.label}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+
 
           {activeTab === "overview" && (
             <Overview

@@ -107,7 +107,7 @@ export default function DashboardPage() {
   };
 
   const submitCounterOffer = async () => {
-    if (!counterModal.amount || isNaN(counterModal.amount) || Number(counterModal.amount) <= 0) {
+    if (!counterModal.amount || isNaN(Number(counterModal.amount)) || Number(counterModal.amount) <= 0) {
       alert("Please enter a valid counter offer amount.");
       return;
     }

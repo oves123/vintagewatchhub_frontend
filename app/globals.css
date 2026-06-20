@@ -605,3 +605,52 @@ body {
   animation-duration: 0.25s;
   animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
 }
+
+/* 
+ * ADMIN THEME OVERRIDES 
+ * These rules apply only to the admin panel to flatten the design,
+ * mimicking a clean enterprise UI (e.g. eBay) without heavy shadows/colors.
+ */
+.admin-theme .bg-surface { background-color: #ffffff !important; }
+.admin-theme .bg-background { background-color: #f9fafb !important; }
+.admin-theme .border-border { border-color: #e5e7eb !important; }
+.admin-theme .text-foreground { color: #111827 !important; }
+.admin-theme .text-muted { color: #6b7280 !important; }
+
+/* Remove heavy shadows & rounded borders */
+.admin-theme .shadow-sm, 
+.admin-theme .shadow-md, 
+.admin-theme .shadow-xl, 
+.admin-theme .shadow-2xl,
+.admin-theme .hover\:shadow-md:hover,
+.admin-theme .hover\:shadow-2xl:hover { 
+  box-shadow: none !important; 
+}
+.admin-theme .rounded-xl, 
+.admin-theme .rounded-2xl, 
+.admin-theme .rounded-3xl { 
+  border-radius: 4px !important; 
+}
+.admin-theme .rounded-lg {
+  border-radius: 4px !important;
+}
+
+/* Remove colored backgrounds for cards/badges to keep it flat & clean */
+.admin-theme .bg-amber-50, 
+.admin-theme .bg-blue-50, 
+.admin-theme .bg-emerald-50, 
+.admin-theme .bg-rose-50,
+.admin-theme .bg-purple-50 {
+  background-color: transparent !important;
+  border: 1px solid #e5e7eb !important;
+}
+.admin-theme .text-amber-600,
+.admin-theme .text-amber-700,
+.admin-theme .text-emerald-600,
+.admin-theme .text-emerald-700,
+.admin-theme .text-rose-600,
+.admin-theme .text-rose-700,
+.admin-theme .text-purple-600,
+.admin-theme .text-purple-700 {
+  color: #374151 !important;
+}
