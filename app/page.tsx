@@ -208,9 +208,26 @@ function HomeContent() {
         {/* Curated Sections - Only show on Home without filters */}
         {!isCatalogView && (
           <div className="space-y-16 mb-16">
+            {/* Recently Viewed Section */}
+            {recentlyViewed.length > 0 && (
+              <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center justify-between mb-8 border-b border-border pb-4">
+                  <div>
+                    <h2 className="text-3xl font-serif text-foreground tracking-wide">Recently Viewed</h2>
+                    <p className="text-[11px] text-muted font-bold uppercase tracking-widest mt-2">Pick up right where you left off</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+                  {recentlyViewed.map((p: any) => (
+                    <ProductCard key={p.id} product={p} />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Ending Soon Section */}
             {featuredSelection.length > 0 && (
-              <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
                 <div className="flex items-center justify-between mb-8 border-b border-border pb-4">
                   <div>
                     <h2 className="text-3xl font-serif text-foreground tracking-wide">Featured Selection</h2>
@@ -231,7 +248,7 @@ function HomeContent() {
 
             {/* Pre-Owned Excellence Section */}
             {newArrivals.length > 0 && (
-              <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
+              <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
                 <div className="flex items-center justify-between mb-8 border-b border-border pb-4">
                   <div>
                     <h2 className="text-3xl font-serif text-foreground tracking-wide">Pre-Owned Excellence</h2>
@@ -246,23 +263,6 @@ function HomeContent() {
                       <ProductCard key={p.id} product={p} />
                     ))
                   )}
-                </div>
-              </section>
-            )}
-
-            {/* Recently Viewed Section */}
-            {recentlyViewed.length > 0 && (
-              <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
-                <div className="flex items-center justify-between mb-8 border-b border-border pb-4">
-                  <div>
-                    <h2 className="text-3xl font-serif text-foreground tracking-wide">Recently Viewed</h2>
-                    <p className="text-[11px] text-muted font-bold uppercase tracking-widest mt-2">Pick up right where you left off</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                  {recentlyViewed.map((p: any) => (
-                    <ProductCard key={p.id} product={p} />
-                  ))}
                 </div>
               </section>
             )}
