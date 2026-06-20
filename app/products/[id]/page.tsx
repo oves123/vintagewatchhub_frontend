@@ -606,86 +606,90 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             
             {/* Gallery - Edge to Edge on Mobile */}
             <div className="lg:col-span-7 bg-surface/50 lg:rounded-2xl lg:p-8 -mx-4 md:mx-0">
-              <div 
-                className="aspect-square sm:aspect-[4/3] lg:aspect-[4/3] bg-surface rounded-none overflow-hidden relative group/gallery cursor-pointer"
-                onClick={() => window.open(mediaItems[selectedImage]?.url, '_blank')}
-              >
-                {mediaItems[selectedImage]?.type === 'video' ? (
-                  <video 
-                    src={mediaItems[selectedImage].url} 
-                    className="w-full h-full object-contain" 
-                    controls 
-                    autoPlay 
-                    muted={product.video_settings?.[mediaItems[selectedImage].path]?.muted ?? true} 
-                  />
-                ) : (
-                  <div className="w-full h-full relative cursor-pointer">
-                    <OptimizedImage
-                      src={mediaItems[selectedImage]?.url}
-                      alt={product.title}
-                      fill
-                      priority
-                      className="object-contain p-0"
-                      size="large"
-                    />
-                  </div>
-                )}
-
-                {/* Zoom Icon */}
-                <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all z-20 pointer-events-none">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+              <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                {/* Thumbnails */}
+                <div className="flex lg:flex-col overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden snap-x lg:snap-y snap-mandatory gap-3 pb-2 lg:pb-0 lg:pr-2 no-scrollbar px-4 md:px-0 order-2 lg:order-1 lg:max-h-[500px] xl:max-h-[600px]">
+                   {mediaItems.map((item, i) => (
+                      <button 
+                        key={i} 
+                        onClick={() => setSelectedImage(i)}
+                        className={`flex-none w-[80px] sm:w-[100px] lg:w-[80px] xl:w-[100px] aspect-square snap-start bg-surface border rounded-none overflow-hidden transition-all relative ${selectedImage === i ? "border-gold shadow-md ring-1 ring-gold/20 opacity-100" : "border-border opacity-60 hover:opacity-100"}`}
+                      >
+                         {item.type === 'video' ? (
+                           <div className="w-full h-full bg-foreground flex items-center justify-center">
+                              <svg className="w-6 h-6 text-white opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                              </svg>
+                           </div>
+                         ) : (
+                           <OptimizedImage 
+                             src={item.url} 
+                             alt={`Thumbnail ${i + 1}`} 
+                             fill 
+                             className="object-cover p-0" 
+                             size="small" 
+                           />
+                         )}
+                      </button>
+                   ))}
                 </div>
 
-                {/* Navigation Arrows */}
-                {mediaItems.length > 1 && (
-                  <>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-20"
-                      title="Previous Photo"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-20"
-                      title="Next Photo"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
-                    </button>
-
-                    {/* Counter Indicator */}
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-black/70 backdrop-blur-md rounded-full text-xs font-black text-white uppercase tracking-widest pointer-events-none shadow-xl z-20">
-                       {selectedImage + 1} <span className="text-white/40 mx-1">/</span> {mediaItems.length}
+                {/* Main Image */}
+                <div 
+                  className="flex-1 aspect-square sm:aspect-[4/3] lg:aspect-[4/3] bg-surface rounded-none overflow-hidden relative group/gallery cursor-pointer order-1 lg:order-2"
+                  onClick={() => window.open(mediaItems[selectedImage]?.url, '_blank')}
+                >
+                  {mediaItems[selectedImage]?.type === 'video' ? (
+                    <video 
+                      src={mediaItems[selectedImage].url} 
+                      className="w-full h-full object-contain" 
+                      controls 
+                      autoPlay 
+                      muted={product.video_settings?.[mediaItems[selectedImage].path]?.muted ?? true} 
+                    />
+                  ) : (
+                    <div className="w-full h-full relative cursor-pointer">
+                      <OptimizedImage
+                        src={mediaItems[selectedImage]?.url}
+                        alt={product.title}
+                        fill
+                        priority
+                        className="object-contain p-0"
+                        size="large"
+                      />
                     </div>
-                  </>
-                )}
-              </div>
-              
-              <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 mt-6 pb-2 no-scrollbar px-4 md:px-0">
-                 {mediaItems.map((item, i) => (
-                    <button 
-                      key={i} 
-                      onClick={() => setSelectedImage(i)}
-                      className={`flex-none w-[80px] sm:w-[100px] aspect-square snap-start bg-surface border rounded-none overflow-hidden transition-all relative ${selectedImage === i ? "border-gold shadow-md ring-1 ring-gold/20 opacity-100" : "border-border opacity-60 hover:opacity-100"}`}
-                    >
-                       {item.type === 'video' ? (
-                         <div className="w-full h-full bg-foreground flex items-center justify-center">
-                            <svg className="w-6 h-6 text-white opacity-50" fill="currentColor" viewBox="0 0 20 20">
-                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                            </svg>
-                         </div>
-                       ) : (
-                         <OptimizedImage 
-                           src={item.url} 
-                           alt={`Thumbnail ${i + 1}`} 
-                           fill 
-                           className="object-cover p-0" 
-                           size="small" 
-                         />
-                       )}
-                    </button>
-                 ))}
+                  )}
+
+                  {/* Zoom Icon */}
+                  <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all z-20 pointer-events-none">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                  </div>
+
+                  {/* Navigation Arrows */}
+                  {mediaItems.length > 1 && (
+                    <>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-20"
+                        title="Previous Photo"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all hover:bg-surface hover:scale-110 active:scale-95 z-20"
+                        title="Next Photo"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+                      </button>
+
+                      {/* Counter Indicator */}
+                      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-black/70 backdrop-blur-md rounded-full text-xs font-black text-white uppercase tracking-widest pointer-events-none shadow-xl z-20">
+                         {selectedImage + 1} <span className="text-white/40 mx-1">/</span> {mediaItems.length}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Technical Grid (Specs & Condition) - Moved here */}
@@ -735,7 +739,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     </div>
                  </div>
 
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold tracking-widest text-foreground leading-tight mb-4 uppercase">
+                <h1 className="text-3xl lg:text-4xl xl:text-5xl font-serif font-bold tracking-wider text-foreground leading-tight mb-4 uppercase break-words">
                   {product.title}
                 </h1>
                 
