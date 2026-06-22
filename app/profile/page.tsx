@@ -56,8 +56,29 @@ function ProfileContent() {
   const [verifDocType, setVerifDocType] = useState("");
   const [verifDocUrl, setVerifDocUrl] = useState("");
   const [counterForm, setCounterForm] = useState({ offerId: null, amount: "" });
-  const buyerNegotiations = useMemo(() => offers.filter(o => o.buyer_id === user?.id && ['pending', 'countered', 'buyer_countered'].includes(o.status)), [offers, user]);
-  const sellerNegotiations = useMemo(() => offers.filter(o => o.seller_id === user?.id && ['pending', 'countered', 'buyer_countered'].includes(o.status)), [offers, user]);
+  const groupedBuyerNegotiations = useMemo(() => {
+    const raw = offers.filter(o => o.buyer_id === user?.id && ['pending', 'countered', 'buyer_countered', 'declined', 'rejected'].includes(o.status));
+    const groups: Record<string, any[]> = {};
+    raw.forEach(o => {
+      const key = `${o.product_id}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(o);
+    });
+    Object.values(groups).forEach(g => g.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+    return Object.values(groups).sort((a,b) => new Date(b[0].created_at).getTime() - new Date(a[0].created_at).getTime());
+  }, [offers, user]);
+
+  const groupedSellerNegotiations = useMemo(() => {
+    const raw = offers.filter(o => o.seller_id === user?.id && ['pending', 'countered', 'buyer_countered', 'declined', 'rejected'].includes(o.status));
+    const groups: Record<string, any[]> = {};
+    raw.forEach(o => {
+      const key = `${o.product_id}_${o.buyer_id}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(o);
+    });
+    Object.values(groups).forEach(g => g.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+    return Object.values(groups).sort((a,b) => new Date(b[0].created_at).getTime() - new Date(a[0].created_at).getTime());
+  }, [offers, user]);
   const { addToast: showToast } = useToast();
 
   const isVideo = (url) => url?.match?.(/\.(mp4|mov|webm|quicktime|avi|mkv)$/i);
@@ -754,11 +775,11 @@ function ProfileContent() {
                            onClick={() => setBuyingSubTab(sub)}
                            className={`pb-4 text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${buyingSubTab === sub ? 'text-primary border-gold' : 'text-muted border-transparent hover:text-foreground'}`}
                         >
-                           {sub} {
+                           {sub === 'negotiations' ? 'offers' : sub} {
                              sub === 'portfolio' ? '' :
                              sub === 'bounties' ? '' :
                              sub === 'negotiations' ? (
-                                buyerNegotiations.length > 0 && `(${buyerNegotiations.length})`
+                                groupedBuyerNegotiations.length > 0 && `(${groupedBuyerNegotiations.length})`
                              ) :
                              (Array.isArray(deals) && deals.filter(d => d.buyer_id == user.id && (
                                sub === 'active' ? ['ACCEPTED', 'PAID', 'SHIPPED', 'HUB_RECEIVED', 'AUTHENTICATED'].includes(d.status) : 
@@ -785,8 +806,11 @@ function ProfileContent() {
                         <AeraMatchmaker user={user} />
                       ) : buyingSubTab === 'negotiations' ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {buyerNegotiations.length > 0 ? (
-                              buyerNegotiations.map(offer => (
+                            {groupedBuyerNegotiations.length > 0 ? (
+                              groupedBuyerNegotiations.map(group => {
+                                const offer = group[0];
+                                const history = group.slice(1);
+                                return (
                                 <div key={offer.id} className="bg-surface border border-border rounded-xl p-6 hover:shadow-md transition-all">
                                    <div className="flex items-center gap-4 mb-4">
                                        <div className="w-12 h-12 bg-background rounded-lg overflow-hidden relative">
@@ -857,16 +881,43 @@ function ProfileContent() {
                                               <Send className="w-3 h-3" /> Chat & Negotiate
                                            </button>
                                         )}
-                                        {offer.status === 'declined' && <p className="text-xs font-bold text-rose-500 uppercase tracking-widest text-center w-full mt-2">Declined</p>}
-                                        {offer.status === 'rejected' && <p className="text-xs font-bold text-rose-500 uppercase tracking-widest text-center w-full mt-2">Rejected/Expired</p>}
+                                        {(offer.status === 'declined' || offer.status === 'rejected') && (
+                                           <div className="flex flex-col items-end gap-1 w-full mt-2">
+                                              <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Seller didn't accept</p>
+                                              <Link href={`/products/${offer.product_id}`} className="bg-gold text-black px-5 py-2.5 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-gold/20 hover:bg-yellow-500 transition w-full text-center rounded-lg">Make Another Offer</Link>
+                                           </div>
+                                        )}
                                      </div>
                                   </div>
 
+                                  {/* History Section */}
+                                  {history && history.length > 0 && (
+                                    <div className="w-full mt-4 pt-4 border-t border-dashed border-border/50">
+                                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-3">History</p>
+                                       <div className="space-y-2">
+                                          {history.map((h: any, idx: number) => (
+                                            <div key={h.id} className="flex justify-between items-center bg-background rounded-lg p-2 border border-border/30">
+                                               <div>
+                                                 <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Offer {history.length - idx}</p>
+                                                 <p className="text-xs font-black text-foreground">₹{parseFloat(h.amount).toLocaleString()}</p>
+                                               </div>
+                                               <div className="text-right">
+                                                 <p className={`text-[9px] font-black uppercase tracking-widest ${h.status === 'declined' || h.status === 'rejected' ? 'text-rose-500' : 'text-muted'}`}>{h.status.replace('_', ' ')}</p>
+                                                 {h.counter_amount && parseFloat(h.counter_amount) > 0 && (
+                                                   <p className="text-[10px] font-bold text-amber-500 mt-0.5">Countered: ₹{parseFloat(h.counter_amount).toLocaleString()}</p>
+                                                 )}
+                                               </div>
+                                            </div>
+                                          ))}
+                                       </div>
+                                    </div>
+                                  )}
+
                                </div>
-                             ))
+                             )})
                            ) : (
                               <div className="md:col-span-2 py-10 text-center bg-background/50 rounded-xl border border-border border-dashed">
-                                 <p className="text-xs font-bold text-muted uppercase tracking-widest">No pending negotiations</p>
+                                 <p className="text-xs font-bold text-muted uppercase tracking-widest">No pending offers</p>
                               </div>
                            )}
                         </div>
@@ -1105,7 +1156,7 @@ function ProfileContent() {
                              {sub === 'inventory' ? `Inventory (${activity.listings?.length || 0})` : 
                               sub === 'deals' ? `Active Deals${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length > 0 ? ` (${deals.filter(d => d.seller_id == user?.id && ['ACCEPTED','SHIPPED'].includes(d.status)).length})` : ''}` :
                               sub === 'cancelled' ? `Cancelled${deals.filter(d => d.seller_id == user?.id && d.status === 'CANCELLED').length > 0 ? ` (${deals.filter(d => d.seller_id == user?.id && d.status === 'CANCELLED').length})` : ''}` :
-                              `Negotiations${sellerNegotiations.length > 0 ? ` (${sellerNegotiations.length})` : ''}`}
+                              `Offers${groupedSellerNegotiations.length > 0 ? ` (${groupedSellerNegotiations.length})` : ''}`}
                           </button>
                         ))}
                      </div>
@@ -1128,9 +1179,9 @@ function ProfileContent() {
                                          {item.images?.[0] ? <OptimizedImage src={getImg(item.images)} alt={item.title || 'Product image'} fill className="object-contain group-hover:scale-110 transition-transform duration-500" size="small" /> : <div className="w-full h-full bg-background" />}
                                         <div className={`absolute top-3 left-3 px-2 py-1 rounded text-xs font-black uppercase tracking-widest ${
                                           item.status === 'approved' || item.status === 'active' ? 'bg-black text-white' : 
-                                          item.status === 'sold' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
+                                          item.status === 'sold' || item.status === 'under_offer' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
                                         }`}>
-                                           {item.status}
+                                           {item.status === 'under_offer' ? 'SOLD' : item.status}
                                         </div>
                                      </div>
                                      <h4 className="text-sm font-bold uppercase tracking-tight truncate leading-none mb-2">{item.title}</h4>
@@ -1458,8 +1509,11 @@ function ProfileContent() {
                           {/* Seller Negotiations Tab */}
                           {sellingSubTab === 'negotiations' && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                               {sellerNegotiations.length > 0 ? (
-                                 sellerNegotiations.map(offer => (
+                               {groupedSellerNegotiations.length > 0 ? (
+                                 groupedSellerNegotiations.map(group => {
+                                   const offer = group[0];
+                                   const history = group.slice(1);
+                                   return (
                                    <div key={offer.id} className="bg-surface border border-border rounded-3xl p-6 hover:shadow-xl transition-all flex flex-col md:flex-row gap-6">
                                         <div className="w-24 h-24 bg-background rounded-xl overflow-hidden flex-shrink-0 relative">
                                           {offer.images?.[0] ? <OptimizedImage src={getImg(offer.images)} alt={offer.title || 'Offer product image'} fill className="object-cover" size="thumbnail" /> : <div className="w-full h-full bg-background" />}
@@ -1493,17 +1547,23 @@ function ProfileContent() {
                                             {(offer.status === 'pending' || offer.status === 'buyer_countered') && (
                                                 <>
                                                    {counterForm.offerId === offer.id ? (
-                                                      <div className="flex items-center gap-2">
-                                                         <span className="text-sm font-bold text-muted">₹</span>
-                                                         <input 
-                                                            type="number" 
-                                                            value={counterForm.amount} 
-                                                            onChange={e => setCounterForm({...counterForm, amount: e.target.value})}
-                                                            className="flex-1 py-2 px-3 border border-border rounded outline-none text-xs font-bold"
-                                                            placeholder="Counter Amount"
-                                                         />
-                                                         <button onClick={() => handleOfferResponse(offer.id, 'countered', counterForm.amount)} className="px-4 py-2 bg-primary text-white rounded text-xs font-bold uppercase hover:bg-blue-700">Send</button>
-                                                         <button onClick={() => setCounterForm({offerId: null, amount: ""})} className="px-4 py-2 bg-background text-muted rounded text-xs font-bold uppercase hover:bg-gray-200">Cancel</button>
+                                                      <div className="flex items-center gap-2 mt-2 w-full">
+                                                         <div className="flex-1 flex items-center border border-border rounded-lg bg-background px-3 py-2">
+                                                            <span className="text-sm font-black text-muted mr-2">₹</span>
+                                                            <input 
+                                                               type="number" 
+                                                               value={counterForm.amount} 
+                                                               onChange={e => setCounterForm({...counterForm, amount: e.target.value})}
+                                                               className="flex-1 outline-none text-xs font-black bg-transparent"
+                                                               placeholder="Your Counter Amount"
+                                                            />
+                                                         </div>
+                                                         <button 
+                                                            onClick={() => handleOfferResponse(offer.id, 'countered', counterForm.amount)} 
+                                                            disabled={!counterForm.amount}
+                                                            className="gold-sweep px-6 py-2.5 text-xs font-black uppercase tracking-widest shadow-none disabled:opacity-50"
+                                                         >Send</button>
+                                                         <button onClick={() => setCounterForm({offerId: null, amount: ""})} className="px-4 py-2.5 border border-border bg-surface text-muted rounded-lg text-xs font-black uppercase hover:bg-background tracking-widest">Cancel</button>
                                                       </div>
                                                    ) : (
                                                       <div className="flex w-full gap-2">
@@ -1524,8 +1584,32 @@ function ProfileContent() {
                                             </button>
                                          </div>
                                       </div>
+
+                                      {/* History Section */}
+                                      {history && history.length > 0 && (
+                                         <div className="w-full mt-4 pt-4 border-t border-dashed border-border/50">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-3">History</p>
+                                            <div className="space-y-2">
+                                               {history.map((h: any, idx: number) => (
+                                                 <div key={h.id} className="flex justify-between items-center bg-background rounded-lg p-2 border border-border/30">
+                                                    <div>
+                                                      <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Offer {history.length - idx}</p>
+                                                      <p className="text-xs font-black text-foreground">₹{parseFloat(h.amount).toLocaleString()}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                      <p className={`text-[9px] font-black uppercase tracking-widest ${h.status === 'declined' || h.status === 'rejected' ? 'text-rose-500' : 'text-muted'}`}>{h.status.replace('_', ' ')}</p>
+                                                      {h.counter_amount && parseFloat(h.counter_amount) > 0 && (
+                                                        <p className="text-[10px] font-bold text-amber-500 mt-0.5">Countered: ₹{parseFloat(h.counter_amount).toLocaleString()}</p>
+                                                      )}
+                                                    </div>
+                                                 </div>
+                                               ))}
+                                            </div>
+                                         </div>
+                                      )}
+
                                    </div>
-                                 ))
+                                 )})
                                ) : (
                                  <div className="bg-surface rounded-3xl p-8 md:p-12 text-center border border-border shadow-sm border-dashed">
                                     <p className="text-xs font-bold text-muted uppercase tracking-widest">No pending offers received</p>
@@ -1567,11 +1651,10 @@ function ProfileContent() {
                                                  <p className="text-sm font-bold text-rose-800 leading-tight">{deal.cancel_reason || 'Transaction terminated by either party or administrator.'}</p>
                                                  <p className="text-xs font-medium text-rose-400 uppercase mt-2 italic">Buyer: {deal.buyer_name}</p>
                                               </div>
-                                           </div>
+                                            </div>
                                         </div>
-                                     </div>
-                                   ))
-                                 ) : (
+                                    </div>
+                                 )) ) : (
                                      <div className="bg-surface rounded-3xl p-8 md:p-12 text-center border border-border shadow-sm border-dashed">
                                         <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mx-auto mb-6">
                                            <XCircle className="w-8 h-8 text-gray-200" />

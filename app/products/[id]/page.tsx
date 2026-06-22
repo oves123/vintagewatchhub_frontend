@@ -42,6 +42,21 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [offerAmount, setOfferAmount] = useState("");
   const [offerMessage, setOfferMessage] = useState("");
   const [offerSending, setOfferSending] = useState(false);
+  const [remainingChances, setRemainingChances] = useState(5);
+
+  useEffect(() => {
+    if (showOfferModal && user) {
+       fetch(`${API_URL}/offers/user/${user.id}`, { headers: getHeaders() })
+         .then(res => res.json())
+         .then(data => {
+           if (Array.isArray(data)) {
+              const history = data.filter(o => o.product_id === parseInt(id) && o.buyer_id === user.id);
+              setRemainingChances(Math.max(0, 5 - history.length));
+           }
+         })
+         .catch(err => console.error("Failed to fetch offer history", err));
+    }
+  }, [showOfferModal, user, id]);
   
   // Report State
   const [showReportModal, setShowReportModal] = useState(false);
@@ -660,6 +675,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     </div>
                   )}
 
+                  {product.status !== 'approved' && (
+                     <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] flex items-center justify-center z-10 pointer-events-none">
+                        <span className="bg-red-600 text-white text-2xl md:text-4xl font-black uppercase tracking-[0.2em] px-8 py-4 shadow-2xl border-2 border-white/20 transform -rotate-12 select-none">
+                           {product.status === 'under_offer' || product.status === 'sold' ? 'SOLD' : 'LISTING ENDED'}
+                        </span>
+                     </div>
+                  )}
+
                   {/* Zoom Icon */}
                   <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-surface/80 backdrop-blur-md border border-border flex items-center justify-center text-foreground shadow-lg opacity-0 group-hover/gallery:opacity-100 transition-all z-20 pointer-events-none">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
@@ -783,6 +806,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                               <span>Manage This Listing</span>
                            </Link>
+                        ) : product.status !== 'approved' ? (
+                           <div className="p-6 border-2 border-dashed border-border rounded-lg bg-background text-center">
+                              <p className="text-sm font-black text-foreground uppercase tracking-widest">
+                                 {product.status === 'under_offer' || product.status === 'sold' ? 'Asset Sold' : 'Listing Ended'}
+                              </p>
+                              <p className="text-[10px] text-muted font-bold mt-2 uppercase tracking-widest">
+                                 {product.status === 'under_offer' || product.status === 'sold' ? 'This asset has been successfully secured by a collector.' : 'This listing has been cancelled or removed by the seller.'}
+                              </p>
+                           </div>
                         ) : (
                            <>
                               {product.allow_buy_now && bidHistory.length === 0 && (
@@ -1345,7 +1377,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               </div>
               <div className="p-8 space-y-6">
                  <div>
-                    <label className="block text-[10px] font-black text-muted uppercase tracking-widest mb-2">Offer Amount (₹)</label>
+                    <label className="block text-[10px] font-black text-muted uppercase tracking-widest mb-2 flex justify-between items-center">
+                      <span>Offer Amount (₹)</span>
+                      <span className="text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">{remainingChances} Chances Remaining</span>
+                    </label>
                     <input 
                       type="number" 
                       value={offerAmount}

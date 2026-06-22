@@ -191,10 +191,10 @@ export default function ProductCard({ product, horizontal = false }) {
                 </button>
               </>
             )}
-            {product.status === 'sold' && (
+            {product.status !== 'approved' && (
               <div className="absolute inset-0 z-30 bg-background/80 flex items-center justify-center backdrop-blur-sm">
                 <span className="text-gold-dark font-black uppercase tracking-[0.25em] px-6 py-2 border border-gold/30 rotate-[-8deg]">
-                  Sold
+                  {(product.status === 'under_offer' || product.status === 'sold') ? 'Sold' : 'Ended'}
                 </span>
               </div>
             )}
@@ -277,10 +277,10 @@ export default function ProductCard({ product, horizontal = false }) {
             </button>
           </>
         )}
-        {product.status === 'sold' && (
+        {product.status !== 'approved' && (
           <div className="absolute inset-0 z-30 bg-background/80 flex items-center justify-center backdrop-blur-sm">
             <span className="text-gold-dark font-black uppercase tracking-[0.25em] px-6 py-2 border border-gold/30 rotate-[-8deg]">
-              Sold
+              {(product.status === 'under_offer' || product.status === 'sold') ? 'Sold' : 'Ended'}
             </span>
           </div>
         )}

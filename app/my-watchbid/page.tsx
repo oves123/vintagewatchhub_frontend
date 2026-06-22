@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Navbar from "../../components/Navbar";
 import Link from "next/link";
 import { API_URL, API_BASE_URL, getMyListings, deleteProduct, extractList, getUserOffers, respondToOffer } from "../../services/api";
@@ -125,6 +125,19 @@ export default function DashboardPage() {
       alert("Error sending counter offer.");
     }
   };
+  const groupedOffers = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    const activeOffers = offers.filter(o => ['pending', 'countered', 'buyer_countered', 'declined', 'rejected'].includes(o.status));
+    activeOffers.forEach(o => {
+      const key = `${o.product_id}_${o.buyer_id}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(o);
+    });
+    Object.values(groups).forEach(group => {
+      group.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    });
+    return Object.values(groups).sort((a, b) => new Date(b[0].created_at).getTime() - new Date(a[0].created_at).getTime());
+  }, [offers]);
 
   return (
     <div className="bg-background min-h-screen pb-20">
@@ -142,7 +155,7 @@ export default function DashboardPage() {
             { id: "watchlist", label: "Vault Watchlist", count: watchlist.length },
             { id: "purchases", label: "Acquisitions", count: orders.length },
             { id: "selling", label: "Selling Hub", count: myListings.length },
-            { id: "negotiations", label: "Offers & Negotiations", count: offers.filter(o => o.status === 'pending' || o.status === 'countered' || o.status === 'buyer_countered').length },
+            { id: "negotiations", label: "Offers", count: groupedOffers.length },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -238,13 +251,14 @@ export default function DashboardPage() {
 
             {activeTab === "negotiations" && (
               <div className="divide-y divide-gray-50">
-                {offers.length === 0 ? (
-                  <EmptyState title="No Active Offers" description="You have no active negotiations." actionLabel="Browse Watches" actionHref="/" />
+                {groupedOffers.length === 0 ? (
+                  <EmptyState title="No Active Offers" description="You have no active offers." actionLabel="Browse Watches" actionHref="/" />
                 ) : (
-                  offers.map((offer) => (
+                  groupedOffers.map((group) => (
                     <OfferItem 
-                      key={offer.id}
-                      offer={offer}
+                      key={group[0].id}
+                      offer={group[0]}
+                      history={group.slice(1)}
                       currentUser={user}
                       onAction={handleOfferAction}
                     />
@@ -347,7 +361,7 @@ function DashboardItem({ title, image, price, status, id, statusColor, label, is
   );
 }
 
-function OfferItem({ offer, currentUser, onAction }: any) {
+function OfferItem({ offer, history = [], currentUser, onAction }: any) {
   const isSeller = currentUser.id === offer.seller_id;
   const isBuyer = currentUser.id === offer.buyer_id;
   
@@ -371,7 +385,7 @@ function OfferItem({ offer, currentUser, onAction }: any) {
       
       <div className="flex-grow flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div className="max-w-md">
-          <p className={`text-xs font-black uppercase tracking-widest ${offer.status === 'accepted' ? 'text-emerald-500' : offer.status === 'rejected' ? 'text-rose-500' : 'text-amber-500'} mb-2`}>
+          <p className={`text-xs font-black uppercase tracking-widest ${offer.status === 'accepted' ? 'text-emerald-500' : (offer.status === 'rejected' || offer.status === 'declined') ? 'text-rose-500' : 'text-amber-500'} mb-2`}>
             {offer.status.replace('_', ' ')}
           </p>
           <h3 className="text-xl font-black text-foreground tracking-tighter leading-tight uppercase italic mb-1">
@@ -400,11 +414,41 @@ function OfferItem({ offer, currentUser, onAction }: any) {
             {offer.status === 'accepted' && isBuyer && (
                  <Link href={`/products/${offer.product_id}/checkout?deal=${offer.deal_id}`} className="bg-black text-white px-6 py-2.5 font-black text-xs uppercase tracking-widest hover:bg-primary transition shadow-xl">Complete Payment</Link>
             )}
-            {!canAction && offer.status !== 'accepted' && offer.status !== 'rejected' && (
+            {!canAction && offer.status !== 'accepted' && offer.status !== 'rejected' && offer.status !== 'declined' && (
               <span className="text-[10px] font-black text-muted uppercase tracking-widest px-4 py-2 bg-surface rounded-full border border-border">Waiting for Response</span>
+            )}
+            {isBuyer && (offer.status === 'declined' || offer.status === 'rejected') && (
+              <div className="flex flex-col items-end gap-1">
+                 <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Seller didn't accept</p>
+                 <Link href={`/products/${offer.product_id}`} className="bg-gold text-black px-5 py-2.5 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-gold/20 hover:bg-yellow-500 transition">Make Another Offer</Link>
+              </div>
             )}
           </div>
         </div>
+
+        {/* History Section */}
+        {history && history.length > 0 && (
+          <div className="w-full mt-6 pt-6 border-t border-dashed border-border/50">
+             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-4">Negotiation History</p>
+             <div className="space-y-3">
+                {history.map((h: any, idx: number) => (
+                  <div key={h.id} className="flex justify-between items-center bg-surface border border-border/50 rounded-lg p-3">
+                     <div>
+                       <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Offer {history.length - idx}</p>
+                       <p className="text-sm font-black text-foreground">₹{parseFloat(h.amount).toLocaleString()}</p>
+                     </div>
+                     <div className="text-right">
+                       <p className={`text-[10px] font-black uppercase tracking-widest ${h.status === 'declined' || h.status === 'rejected' ? 'text-rose-500' : 'text-muted'}`}>{h.status.replace('_', ' ')}</p>
+                       {h.counter_amount && parseFloat(h.counter_amount) > 0 && (
+                         <p className="text-xs font-bold text-amber-500 mt-0.5">Countered: ₹{parseFloat(h.counter_amount).toLocaleString()}</p>
+                       )}
+                     </div>
+                  </div>
+                ))}
+             </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
